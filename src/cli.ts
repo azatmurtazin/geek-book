@@ -79,6 +79,12 @@ function printConfig(): void {
       outputPdf: rel(CONFIG.outputPdf),
       docs: CONFIG.docs.map(rel),
       fonts: CONFIG.fonts,
+      tex: {
+        geometry: CONFIG.tex.geometry,
+        colors: CONFIG.tex.colors,
+        type: CONFIG.tex.type,
+        preamble: CONFIG.tex.preamble ? rel(CONFIG.tex.preamble) : "",
+      },
       languages: [...CONFIG.languages],
     },
     null,

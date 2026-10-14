@@ -83,6 +83,43 @@ it names a stylesheet under `web` (or `""` for none) when the site should load
 them, and spells out `bold` when bold is a weight instance of a variable font
 rather than a face of its own.
 
+The printed edition has a `tex` block of its own. Nothing in it is required —
+the defaults are the sample's:
+
+```json
+{
+  "tex": {
+    "geometry": { "paper": "a4", "top": 19, "bottom": 19, "left": 18, "right": 18 },
+    "colors": { "fg": "#242a37", "muted": "#667085" },
+    "type": { "base": 11, "chapter": 20, "section": 15 }
+  }
+}
+```
+
+`geometry` is a paper — `a4`, `a5`, `letter` or `legal` — and four margins in
+millimetres. The text block pictures are scaled against is derived from those,
+so a book that changes its page changes what fits with it and says nothing
+else. `colors` is the palette as `#rrggbb`: `fg`, `muted`, `rule`,
+`codeBackground`, `codeForeground`, `codeComment`, `calloutBackground`,
+`calloutBorder` and `calloutForeground`. `type` is the heading scale in points,
+where `base` is the document class size (10, 11 or 12) and a heading's leading
+is its size times 1.2, rounded up. Any key may be left out; the engine's
+defaults stand in.
+
+For anything those knobs do not reach, `tex.preamble` names a file of plain
+LaTeX, relative to the book root, that is appended after the built-in preamble
+and before `\begin{document}` — a book can redefine what the engine ships
+without copying it:
+
+```tex
+% tex/book.tex
+\renewcommand{\pefolio}{\fontsize{9}{11}\selectfont\color{muted}\thepage}
+\titleformat{\chapter}[block]{\normalfont\LARGE\bfseries\color{fg}}{}{0em}{}
+```
+
+Both are print-only: the website's look is CSS, so these settings never touch
+the HTML. `npx geek-book config` prints everything the engine resolved.
+
 The website carries the one script the engine ships: it puts the reader's
 day/night choice — their system preference on a first visit, remembered in local
 storage from then on — and their folded panel on `<html>` before the first
@@ -170,7 +207,9 @@ PDF build reads the warnings back and fails on any that survive the last pass.
 CSS is plain `.css` rather than a preprocessor: the stylesheets sit beside the
 code that reads them (`src/build-web-book/site.css`, `src/lib/content.css`) and
 are pasted into the page at build time, so there is no CSS build step and an
-editor can highlight the styles in full.
+editor can highlight the styles in full. The printed edition's preamble is
+plain `.tex` for the same reason: `src/build-tex-book/preamble.tex` sits beside
+the loader that fills it from the config.
 
 ## Licence
 

@@ -1,5 +1,5 @@
-\documentclass[11pt,a4paper,oneside]{book}
-\usepackage[top=19mm,bottom=19mm,left=18mm,right=18mm]{geometry}
+\documentclass[<<base-size>>,<<paper>>,oneside]{book}
+\usepackage[<<geometry>>]{geometry}
 \usepackage{fontspec}
 \usepackage{microtype}
 \setmainfont{<<text-font>>}<<text-font-options>>
@@ -54,20 +54,7 @@
   \itemsep \parsep}
 \makeatother
 
-\definecolor{fg}{HTML}{242a37}
-\definecolor{muted}{HTML}{667085}
-\definecolor{rule}{HTML}{e4e7ec}
-\definecolor{codebg}{HTML}{f6f7f9}
-\definecolor{codefg}{HTML}{20304c}
-\definecolor{codecomment}{HTML}{6b7280}
-\definecolor{calloutbg}{HTML}{f8fafc}
-\definecolor{calloutborder}{HTML}{cbd5e1}
-\definecolor{calloutfg}{HTML}{3b4252}
-% \MakeUppercase (table headers, headings) uppercases character tokens
-% inside \incode's arguments, including color names — give it aliases.
-\definecolor{RULE}{HTML}{e4e7ec}
-\definecolor{CODEBG}{HTML}{f6f7f9}
-\definecolor{CODEFG}{HTML}{20304c}
+<<colors>>
 
 \setlength{\fboxrule}{0.5pt}
 \setlength{\fboxsep}{1.5pt}
@@ -122,20 +109,20 @@
 % tinted rule; sections below stay bold at the sizes the HTML uses. Spacing
 % mirrors the CSS margins (1.1rem above a section, 0.4rem below).
 \titleformat{\chapter}[block]
-  {\normalfont\bfseries\fontsize{20}{24}\selectfont\color{fg}}{}{0pt}{}%
+  {\normalfont\bfseries\fontsize{<<chapter-size>>}{<<chapter-leading>>}\selectfont\color{fg}}{}{0pt}{}%
   [\vspace{0.25em}{\color{rule}\titlerule[1.5pt]}]
 % The contents page heading is \chapter* and carries no rule.
 \titleformat{name=\chapter,numberless}[block]
-  {\normalfont\bfseries\fontsize{20}{24}\selectfont\color{fg}}{}{0pt}{}
+  {\normalfont\bfseries\fontsize{<<chapter-size>>}{<<chapter-leading>>}\selectfont\color{fg}}{}{0pt}{}
 \titleformat{\section}
-  {\normalfont\bfseries\fontsize{15}{18}\selectfont\color{fg}}{}{0pt}{}%
+  {\normalfont\bfseries\fontsize{<<section-size>>}{<<section-leading>>}\selectfont\color{fg}}{}{0pt}{}%
   [\vspace{0.2em}{\color{rule}\titlerule[0.6pt]}]
 \titleformat{\subsection}
-  {\normalfont\bfseries\fontsize{12.5}{15}\selectfont\color{fg}}{}{0pt}{}
+  {\normalfont\bfseries\fontsize{<<subsection-size>>}{<<subsection-leading>>}\selectfont\color{fg}}{}{0pt}{}
 \titleformat{\subsubsection}
-  {\normalfont\bfseries\fontsize{11.5}{14}\selectfont\color{fg}}{}{0pt}{}
+  {\normalfont\bfseries\fontsize{<<subsubsection-size>>}{<<subsubsection-leading>>}\selectfont\color{fg}}{}{0pt}{}
 \titleformat{\paragraph}[block]
-  {\normalfont\fontsize{9.5}{12}\selectfont\color{muted}\MakeUppercase}{}{0pt}{}
+  {\normalfont\fontsize{<<paragraph-size>>}{<<paragraph-leading>>}\selectfont\color{muted}\MakeUppercase}{}{0pt}{}
 \titlespacing*{\chapter}{0pt}{0pt}{10pt}
 \titlespacing*{\section}{0pt}{13pt}{5pt}
 \titlespacing*{\subsection}{0pt}{11pt}{4pt}

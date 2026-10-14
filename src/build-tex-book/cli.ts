@@ -20,7 +20,7 @@ import { pdfPages } from "../pdf-info/pdf.js";
 import { RemoteImages } from "../lib/remote-images.js";
 import { parseChapter } from "./parse.js";
 import { chapterTex, texEscape } from "./tex.js";
-import { PREAMBLE } from "./preamble.js";
+import { preambleTex } from "./preamble.js";
 import type { Chapter, ChapterContext } from "./ir.js";
 
 /** Absolute locations for tools that macOS may not put on a non-login PATH. */
@@ -108,6 +108,16 @@ export async function main(args: string[]): Promise<number> {
 
   fs.mkdirSync(figuresDir, { recursive: true });
 
+  // The preamble is derived from the config, and a book's own extra LaTeX is
+  // read here: stop early if that file is missing, before any chapter work.
+  let preamble: string;
+  try {
+    preamble = preambleTex();
+  } catch (error) {
+    process.stderr.write(`geek-book: ${(error as Error).message}\n`);
+    return 1;
+  }
+
   const body: string[] = [];
   for (const item of items) {
     if (item.kind === "group") {
@@ -159,7 +169,7 @@ export async function main(args: string[]): Promise<number> {
   }
 
   const document = [
-    PREAMBLE.trimEnd(),
+    preamble,
     "\\begin{document}",
     // Front matter (cover, contents) is bare; \pecnumberedplain restores the
     // chapter-opener page style once the contents are past.

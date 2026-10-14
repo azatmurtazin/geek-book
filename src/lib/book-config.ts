@@ -40,6 +40,76 @@ export interface FontsConfig {
   web: string;
 }
 
+/** The papers a book may set, with their dimensions in millimetres. */
+export const PAPERS = {
+  a4: { option: "a4paper", widthMm: 210, heightMm: 297 },
+  a5: { option: "a5paper", widthMm: 148, heightMm: 210 },
+  letter: { option: "letterpaper", widthMm: 215.9, heightMm: 279.4 },
+  legal: { option: "legalpaper", widthMm: 215.9, heightMm: 355.6 },
+} as const;
+
+export type PaperName = keyof typeof PAPERS;
+
+/**
+ * The printed edition's page: a paper and its margins, all in millimetres. The
+ * text block the PDF builder measures pictures against is derived from these,
+ * so a book that changes its margins does not have to say anything else.
+ */
+export interface GeometryConfig {
+  /** Paper name: `a4`, `a5`, `letter` or `legal`. */
+  paper: PaperName;
+  /** Margins in millimetres. */
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  /** Text block width: the paper width less the side margins. */
+  textWidthMm: number;
+  /** Text block height: the paper height less the top and bottom margins. */
+  textHeightMm: number;
+}
+
+/** The printed edition's palette, each value `#rrggbb`. */
+export type ColorKey =
+  | "fg"
+  | "muted"
+  | "rule"
+  | "codeBackground"
+  | "codeForeground"
+  | "codeComment"
+  | "calloutBackground"
+  | "calloutBorder"
+  | "calloutForeground";
+
+export type ColorsConfig = Record<ColorKey, string>;
+
+/**
+ * The printed edition's type scale, in points. Heading leading is 1.2× the
+ * size, rounded up to a whole point; `base` is the document class size, one of
+ * 10, 11 or 12.
+ */
+export interface TypeConfig {
+  base: number;
+  chapter: number;
+  section: number;
+  subsection: number;
+  subsubsection: number;
+  paragraph: number;
+}
+
+/**
+ * What a book may change about the printed edition: its page, its palette and
+ * its type scale, plus a file of extra LaTeX for anything else. None of it
+ * touches the website, whose look lives in CSS.
+ */
+export interface TexConfig {
+  geometry: GeometryConfig;
+  colors: ColorsConfig;
+  type: TypeConfig;
+  /** Absolute path of extra LaTeX appended after the built-in preamble, or "". */
+  preamble: string;
+}
+
 export interface BookConfig {
   /** The book root: the directory the CLI runs from. */
   root: string;
@@ -63,6 +133,8 @@ export interface BookConfig {
   languages: Set<string>;
   /** The typefaces both editions are set in. */
   fonts: FontsConfig;
+  /** The printed edition's page, palette and type scale. */
+  tex: TexConfig;
 }
 
 const DEFAULTS = {
@@ -75,6 +147,28 @@ const DEFAULTS = {
     bold: "Literata:mode=harf;wght=700",
     code: "JetBrains Mono",
     web: "https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..700&family=JetBrains+Mono:wght@400;500&display=swap",
+  },
+  tex: {
+    geometry: { paper: "a4" as PaperName, top: 19, bottom: 19, left: 18, right: 18 },
+    colors: {
+      fg: "#242a37",
+      muted: "#667085",
+      rule: "#e4e7ec",
+      codeBackground: "#f6f7f9",
+      codeForeground: "#20304c",
+      codeComment: "#6b7280",
+      calloutBackground: "#f8fafc",
+      calloutBorder: "#cbd5e1",
+      calloutForeground: "#3b4252",
+    } satisfies ColorsConfig,
+    type: {
+      base: 11,
+      chapter: 20,
+      section: 15,
+      subsection: 12.5,
+      subsubsection: 11.5,
+      paragraph: 9.5,
+    } satisfies TypeConfig,
   },
 };
 
@@ -102,11 +196,69 @@ function asStringList(value: unknown): string[] | null {
   return list.length ? list : null;
 }
 
+/** A length in millimetres: a non-negative finite number, else the default. */
+function asMillimetres(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
+/** A point size: a positive finite number, else the default. */
+function asPoints(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+/** The document class size: LaTeX takes 10, 11 or 12. */
+function asBaseSize(value: unknown, fallback: number): number {
+  return value === 10 || value === 11 || value === 12 ? value : fallback;
+}
+
+/** Round to hundredths, so derived lengths read cleanly in the config dump. */
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/** A `#rrggbb` colour, normalized to lower case, else the default. */
+function asColor(value: unknown, fallback: string): string {
+  if (typeof value !== "string") return fallback;
+  const hex = value.trim();
+  return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex.toLowerCase() : fallback;
+}
+
+function asPaper(value: unknown, fallback: PaperName): PaperName {
+  return typeof value === "string" && value in PAPERS ? (value as PaperName) : fallback;
+}
+
+function readColors(raw: Record<string, unknown>): ColorsConfig {
+  return {
+    fg: asColor(raw.fg, DEFAULTS.tex.colors.fg),
+    muted: asColor(raw.muted, DEFAULTS.tex.colors.muted),
+    rule: asColor(raw.rule, DEFAULTS.tex.colors.rule),
+    codeBackground: asColor(raw.codeBackground, DEFAULTS.tex.colors.codeBackground),
+    codeForeground: asColor(raw.codeForeground, DEFAULTS.tex.colors.codeForeground),
+    codeComment: asColor(raw.codeComment, DEFAULTS.tex.colors.codeComment),
+    calloutBackground: asColor(raw.calloutBackground, DEFAULTS.tex.colors.calloutBackground),
+    calloutBorder: asColor(raw.calloutBorder, DEFAULTS.tex.colors.calloutBorder),
+    calloutForeground: asColor(raw.calloutForeground, DEFAULTS.tex.colors.calloutForeground),
+  };
+}
+
+function readType(raw: Record<string, unknown>): TypeConfig {
+  return {
+    base: asBaseSize(raw.base, DEFAULTS.tex.type.base),
+    chapter: asPoints(raw.chapter, DEFAULTS.tex.type.chapter),
+    section: asPoints(raw.section, DEFAULTS.tex.type.section),
+    subsection: asPoints(raw.subsection, DEFAULTS.tex.type.subsection),
+    subsubsection: asPoints(raw.subsubsection, DEFAULTS.tex.type.subsubsection),
+    paragraph: asPoints(raw.paragraph, DEFAULTS.tex.type.paragraph),
+  };
+}
+
 function load(): BookConfig {
   const root = process.cwd();
   const raw = readJson(path.join(root, "book.config.json")) ?? {};
   const fonts = (raw.fonts ?? {}) as Record<string, unknown>;
   const output = (raw.output ?? {}) as Record<string, unknown>;
+  const tex = (raw.tex ?? {}) as Record<string, unknown>;
+  const geometryRaw = (tex.geometry ?? {}) as Record<string, unknown>;
   const packageJson = readJson(path.join(root, "package.json")) ?? {};
 
   const bookDir = path.resolve(root, asString(raw.bookDir, DEFAULTS.bookDir));
@@ -114,6 +266,14 @@ function load(): BookConfig {
   const text = asString(fonts.text, DEFAULTS.fonts.text);
   const code = asString(fonts.code, DEFAULTS.fonts.code);
   const builtIn = text === DEFAULTS.fonts.text && code === DEFAULTS.fonts.code;
+
+  const paper = asPaper(geometryRaw.paper, DEFAULTS.tex.geometry.paper);
+  const top = asMillimetres(geometryRaw.top, DEFAULTS.tex.geometry.top);
+  const bottom = asMillimetres(geometryRaw.bottom, DEFAULTS.tex.geometry.bottom);
+  const left = asMillimetres(geometryRaw.left, DEFAULTS.tex.geometry.left);
+  const right = asMillimetres(geometryRaw.right, DEFAULTS.tex.geometry.right);
+  const paperSize = PAPERS[paper];
+  const extraPreamble = asString(tex.preamble, "");
 
   return {
     root,
@@ -141,6 +301,22 @@ function load(): BookConfig {
       // them: a book that names its own families starts with no webfont and can
       // name one (or say "" for none) under `web`.
       web: asOptionalString(fonts.web, builtIn ? DEFAULTS.fonts.web : ""),
+    },
+    tex: {
+      geometry: {
+        paper,
+        top,
+        bottom,
+        left,
+        right,
+        // A margin wider than the paper clamps to a hairline rather than a
+        // non-positive block, which would break the picture scaling.
+        textWidthMm: round2(Math.max(1, paperSize.widthMm - left - right)),
+        textHeightMm: round2(Math.max(1, paperSize.heightMm - top - bottom)),
+      },
+      colors: readColors((tex.colors ?? {}) as Record<string, unknown>),
+      type: readType((tex.type ?? {}) as Record<string, unknown>),
+      preamble: extraPreamble ? path.resolve(root, extraPreamble) : "",
     },
   };
 }

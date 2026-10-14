@@ -8,6 +8,7 @@
 import { imagePixels } from "../lib/image-size.js";
 import { tokenizeCode } from "../lib/code-tokens.js";
 import { CODE_LABELS } from "../lib/langs.js";
+import { CONFIG } from "../lib/book-config.js";
 import type {
   Block,
   Chapter,
@@ -22,9 +23,13 @@ import type {
   TableRow,
 } from "./ir.js";
 
-/** Text block of an A4 page with the book's margins: 174mm × 259mm. */
-const TEXT_WIDTH_MM = 174;
-const TEXT_HEIGHT_MM = 259;
+/**
+ * The text block pictures are measured against: the paper less the configured
+ * margins (see book-config.ts), the same geometry preamble.tex sets. A book
+ * that changes its page changes what "fits" means with it.
+ */
+const TEXT_WIDTH_MM = CONFIG.tex.geometry.textWidthMm;
+const TEXT_HEIGHT_MM = CONFIG.tex.geometry.textHeightMm;
 
 /** What a drawing with no viewBox is taken to measure, in the text block's terms. */
 const UNMEASURED_FIGURE_MM = { widthMm: TEXT_WIDTH_MM, heightMm: 100 };
