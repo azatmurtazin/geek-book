@@ -79,7 +79,7 @@ export function checkChapter(reporter: Reporter, file: string): void {
         if (line.length > MAX_TABLE_LINE) {
           reporter.error(file, i, `table row is ${line.length} columns, budget is ${MAX_TABLE_LINE}`);
         }
-      } else {
+      } else if (!hasUnbreakableRun(line)) {
         reporter.error(file, i, `line is ${line.length} columns, budget is ${MAX_LINE}`);
       }
     }
@@ -95,6 +95,16 @@ export function checkChapter(reporter: Reporter, file: string): void {
   }
 
   checkHeadings(reporter, file, headings);
+}
+
+/**
+ * True when no wrapping could bring the line inside the budget: one run of
+ * non-space characters is longer than the budget itself, so it fits on no line.
+ * A URL destination or a pasted identifier is the usual reason, and there is
+ * nothing in the line for the writer to cut.
+ */
+function hasUnbreakableRun(line: string): boolean {
+  return line.split(/\s+/).some((run) => run.length > MAX_LINE);
 }
 
 export function checkHeadings(reporter: Reporter, file: string, headings: Heading[]): void {

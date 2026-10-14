@@ -25,7 +25,10 @@
 //                fences are verified to parse by the build-time renderer
 //                (src/diagrams/render.ts)
 //             6. housekeeping: no tabs, no trailing whitespace, file ends with
-//                a newline, prose lines stay inside the 100-column budget
+//                a newline, prose lines stay inside the 100-column budget —
+//                unless the line carries a run of non-space characters longer
+//                than the budget, which no wrapping could bring inside it (a
+//                long URL destination, most of the time)
 //   links     7. internal links and anchors resolve
 
 import fs from "node:fs";
