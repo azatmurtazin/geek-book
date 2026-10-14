@@ -1,0 +1,31 @@
+name: Link check
+
+# External-link (link-rot) check for the book and the repo docs. Internal links
+# and #anchors are covered offline by the linter; this job is the only one that
+# needs the network, so it runs on demand, on pushes/PRs and on a weekly
+# schedule. It is independent of the lint/build checks and is not required to
+# merge; the config lives in lychee.toml.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lychee:
+    name: Check external links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --config lychee.toml
+            'book/**/*.md' README.md CHANGELOG.md
+          fail: true

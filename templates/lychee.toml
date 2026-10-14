@@ -1,0 +1,35 @@
+# External-link (link-rot) checking for the book and the repo docs.
+#
+#   just link-check                    # host lychee, else the lychee Docker image
+#   .github/workflows/link-check.yml   # the same on push / PR / weekly / on demand
+#
+# Internal links and #anchors are checked offline by the linter (`just lint`),
+# so this is deliberately kept out of `just lint` and the pre-commit hooks — it
+# is the only check that reaches the network. Config keys follow the reference
+# at https://github.com/lycheeverse/lychee/blob/master/lychee.example.toml
+
+# Remote links only — local file links and #anchors belong to `just lint`.
+scheme = ["https", "http"]
+
+# A 429 is "slow down", not a dead link.
+accept = ["200..=299", "429"]
+
+# Be patient with slow hosts, and retry transient failures.
+timeout = 20
+max_retries = 2
+retry_wait_time = 2
+
+# Quiet, CI-friendly output.
+no_progress = true
+
+# `example.com` hosts in prose samples are placeholders, not real links. Add the
+# project's own compare links here while the repo is private (an unauthenticated
+# checker sees 404), and drop the entry once it is public. cppreference is
+# behind Cloudflare, which answers the datacenter IPs CI runners use with 403
+# for automated clients — the pages are public and reachable from a normal
+# connection, so exclude it rather than fail the check.
+exclude = [
+  '(^|\.)example\.com',
+  '^https://github\.com/<owner>/<book>',
+  '^https://en\.cppreference\.com',
+]

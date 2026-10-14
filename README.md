@@ -78,6 +78,19 @@ A book depends on the engine by path and calls its binary from a thin Justfile:
 { "devDependencies": { "geek-book": "file:../geek-book" } }
 ```
 
+`templates/` holds the book-side files to copy into a new book repository — a
+`book.config.json`, a `Justfile`, a compose service for the `book` image, a
+pre-commit config and three workflows (lint+build, release, link check) — with
+`<owner>`/`<book>` standing in for the GitHub account and repository. See
+[`templates/README.md`](./templates/README.md).
+
+## How the engine is tested
+
+The sample under `book/` is the fixture: `just lint`, `just html` and `just pdf`
+in this repository exercise the linter and both editions on every change, and CI
+runs the same three in the `book` image. There are no unit tests; a book that
+builds is the contract.
+
 ## Layout of this repository
 
 | Path            | What lives there                                                    |
@@ -89,7 +102,9 @@ A book depends on the engine by path and calls its binary from a thin Justfile:
 | `src/md-to-html/` | The Markdown→HTML renderer, and a one-file CLI.                    |
 | `_layouts/`     | The standalone HTML shell (previews and `geek-book md`).             |
 | `docker/`       | The build image: Node + LuaLaTeX + the fonts.                        |
+| `templates/`    | Book-side scaffolding (config, Justfile, CI) for a new book repo.    |
 | `book/`         | The lorem ipsum sample.                                              |
+| `images/`       | Artwork for the sample (its cover, plus any images it uses).          |
 
 ## Licence
 

@@ -1,0 +1,146 @@
+# <Book Title> — build the book.
+#
+#   just                build/html/ (the book as a static website)
+#   just pdf            build/book.pdf (single-file PDF via the LaTeX pipeline)
+#   just docker-book    build/html/ + build/book.pdf inside Docker
+#   just serve          preview build/html/ on http://localhost:4000
+#   just lint           structure / link / style checks
+#   just link-check     check the external links (needs the network)
+#   just clean          remove build/ and the PDF
+#   just install-tools  report the toolchain
+#
+# The book is built by geek-book, the build engine this repo depends on
+# (package.json: "geek-book": "file:../geek-book") — so a geek-book checkout
+# must sit next to this one. Its binary produces both editions: the website
+# (build/html/) and the LaTeX/PDF build. Only Node.js + `npm install` are needed
+# for the website; the PDF also wants LuaLaTeX and rsvg-convert. Inside the
+# Docker image the engine is already on PATH, so GEEK_BOOK=geek-book and nothing
+# is installed.
+#
+# Overridable:  just --set build-dir out --set pdf out.pdf
+#               (plus GEEK_BOOK / NODE / NPM environment variables)
+
+build-dir := env_var_or_default("BUILD", "build")
+pdf := env_var_or_default("PDF", "build/book.pdf")
+node := env_var_or_default("NODE", "node")
+npm := env_var_or_default("NPM", "npm")
+
+book := "book"
+html := build-dir + "/html"
+engine := env_var_or_default("GEEK_BOOK", "node_modules/.bin/geek-book")
+engine-src := env_var_or_default("GEEK_BOOK_SRC", "node_modules/geek-book/src")
+
+# default action is `list`
+default: list
+
+# list all available commands
+list:
+  @just --list
+
+# Make the engine available. A path (the host's node_modules/.bin/geek-book) is
+# installed when this clone has no node_modules; a bare name (the Docker image
+# links the engine onto PATH) is assumed to be there already.
+[private]
+_engine:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "{{engine}}" == */* && ! -x "{{engine}}" ]]; then
+        echo "installing the engine (npm install)…" >&2
+        "{{npm}}" install --no-audit --no-fund
+    fi
+
+# --- website -----------------------------------------------------------------
+
+# build/html/ — the book as a static website. Rebuilds only when a source, the
+# book's config or the engine is newer than the last build.
+html: _engine
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ -f "{{html}}/index.html" ]] && \
+       [[ -z "$(find "{{book}}" -name '*.md' -newer "{{html}}/index.html" -print -quit)" ]] && \
+       [[ -z "$(find book.config.json package.json -newer "{{html}}/index.html" -print -quit)" ]] && \
+       [[ ! -d "{{engine-src}}" || \
+          -z "$(find "{{engine-src}}" -type f -newer "{{html}}/index.html" -print -quit)" ]]; then
+        echo "html -> {{html}}/ (up to date)"
+    else
+        "{{engine}}" web "{{html}}"
+    fi
+
+# Static preview of the built site (no auto-rebuild). Rebuild first with `just`.
+serve: _engine
+    "{{engine}}" serve "{{html}}" 4000
+
+# --- pdf ---------------------------------------------------------------------
+
+# build/book.pdf — cover + table of contents + all chapters in one print-ready
+# file, typeset by the engine's LaTeX build (LuaLaTeX). Rebuilds only when a
+# source, the book's config or the engine changes.
+pdf: _engine
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ -f "{{pdf}}" ]] && \
+       [[ -z "$(find "{{book}}" \( -name '*.md' -o -name 'cover.jpg' \) \
+                 -newer "{{pdf}}" -print -quit)" ]] && \
+       [[ -z "$(find book.config.json package.json -newer "{{pdf}}" -print -quit)" ]] && \
+       [[ ! -d "{{engine-src}}" || \
+          -z "$(find "{{engine-src}}" -type f -newer "{{pdf}}" -print -quit)" ]]; then
+        echo "pdf -> {{pdf}} (up to date)"
+    else
+        "{{engine}}" pdf "{{pdf}}"
+        echo "pdf -> {{pdf}}"
+    fi
+
+# --- docker ------------------------------------------------------------------
+
+# build/html/ and build/book.pdf in the "book" Docker image (a Linux toolchain,
+# built from the engine's checkout, with no host setup).
+docker-book:
+    docker compose run --rm --build book
+
+# --- checks -----------------------------------------------------------------
+
+# the engine's structural checks: the SUMMARY tree, the chapters and the links.
+lint: _engine
+    "{{engine}}" lint
+
+# check the external links in the book and repo docs (link rot; needs the
+# network). Kept out of `just lint` (which stays offline) and the pre-commit
+# hooks. Uses a host `lychee` when installed, else the lychee Docker image.
+link-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    inputs=('book/**/*.md' README.md CHANGELOG.md)
+    if command -v lychee >/dev/null 2>&1; then
+        lychee "${inputs[@]}"
+    elif command -v docker >/dev/null 2>&1; then
+        docker run --rm -w /input -v "$PWD:/input" lycheeverse/lychee:0.24.2 "${inputs[@]}"
+    else
+        echo "link-check: need lychee (brew install lychee) or docker" >&2
+        exit 1
+    fi
+
+# --- housekeeping -----------------------------------------------------------
+
+# cleaning up
+clean:
+    rm -rf "{{build-dir}}" "{{pdf}}"
+    echo "clean -> removed {{build-dir}}/ and {{pdf}}"
+
+# report the required tools
+install-tools:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    printf 'required\n'
+    for t in "{{node}}" "{{npm}}"; do
+        if command -v "$t" >/dev/null 2>&1; then
+            printf '  %-12s %s\n' "$t" "$($t --version 2>&1 | head -1)"
+        else
+            printf '  %-12s MISSING\n' "$t"
+        fi
+    done
+    printf '\noptional\n'
+    printf '  lualatex      typesets build/book.pdf (install MacTeX or TeX Live)\n'
+    printf '  rsvg-convert  mermaid figures in the PDF (brew install librsvg)\n'
+    printf '  pdfinfo       poppler; PDF page count (brew install poppler)\n'
+    printf '  pre-commit    git hooks: lint + build on commit (pipx install pre-commit)\n'
+    printf '  lychee        external link checks (brew install lychee)\n'

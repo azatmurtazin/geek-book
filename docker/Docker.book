@@ -1,14 +1,18 @@
 # geek-book — full book build in Docker: the static website (build/html/) and the
-# print PDF (build/book.pdf).
+# print PDF (build/book.pdf), with no host toolchain beyond Docker.
 #
-# Alpine-based. Node.js runs the engine's own TypeScript through tsx. The PDF is
-# typeset by LuaLaTeX (texlive-luatex + texlive-latexextra + texlive-plaingeneric
-# for ulem), with poppler's pdfinfo for the page count and rsvg-convert for the
-# Mermaid figures. JetBrains Mono comes from an Alpine package and Literata from
-# Google Fonts; fontconfig registers both.
+# Alpine-based. The engine itself — source plus its runtime dependencies — is
+# installed into the image and put on PATH as `geek-book`, so a book repo mounts
+# only its own sources and never needs the engine's checkout at run time. The
+# PDF is typeset by LuaLaTeX (texlive-luatex + texlive-latexextra +
+# texlive-plaingeneric for ulem), with poppler's pdfinfo for the page count and
+# rsvg-convert for the Mermaid figures. JetBrains Mono comes from an Alpine
+# package and Literata from Google Fonts; fontconfig registers both.
 #
-# compose mounts the book into /workspace and keeps node_modules in a named
-# volume, so the container's npm install produces Linux binaries.
+# The build context is the engine's own repository (a consuming book points
+# `context:` at its geek-book checkout). compose mounts the book into /workspace
+# and keeps node_modules in a named volume, so the container's npm install
+# produces Linux binaries instead of reusing the host's.
 
 FROM node:26-alpine
 
@@ -30,7 +34,19 @@ RUN apk add --no-cache \
         "https://raw.githubusercontent.com/google/fonts/main/ofl/literata/Literata-Italic%5Bopsz,wght%5D.ttf" \
  && fc-cache -f
 
-# Compose mounts node_modules in a named volume (fresh volumes are root-owned);
+# The engine, with its runtime dependencies, baked in and linked onto PATH.
+# Copied before `npm link` and ordered so the dependency layer is cached until
+# package-lock.json changes. tsx is a runtime dependency (the engine ships
+# TypeScript source), so `--omit=dev` still leaves a working binary.
+WORKDIR /opt/geek-book
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+COPY bin ./bin
+COPY src ./src
+COPY _layouts ./_layouts
+RUN npm link && rm -rf /root/.npm
+
+# compose mounts node_modules in a named volume (fresh volumes are root-owned);
 # the entrypoint chowns it + the npm cache to `node` and then runs as that user,
 # so npm install and the build can write without root-owned artifacts on the host.
 COPY docker/entrypoint.book /usr/local/bin/entrypoint.book

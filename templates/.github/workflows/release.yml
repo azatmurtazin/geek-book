@@ -1,0 +1,73 @@
+name: Release
+
+# On a version tag (v*), build both editions with the engine's Docker image and
+# publish them as assets on the GitHub Release: the print PDF (book.pdf) and the
+# website packed as a zip (my-book-<version>-web.zip). Downloads then live with
+# the tag instead of expiring with a workflow run; re-running the workflow
+# updates the release in place.
+#
+# The engine (geek-book) is checked out next to this repo — package.json depends
+# on it by path, and the `book` compose service builds its image from it.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  ENGINE_REPO: azatmurtazin/geek-book
+
+jobs:
+  release:
+    name: Build and publish the book
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check out the engine (geek-book)
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.ENGINE_REPO }}
+          path: ../geek-book
+
+      # Cache the LaTeX-heavy engine image, then run the compose service the
+      # `just docker-book` recipe uses to produce build/html/ and build/book.pdf.
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: ../geek-book
+          file: ../geek-book/docker/Docker.book
+          tags: geek-book/book:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The `book` service drops to the image's `node` user (uid 1000) but the
+      # GitHub workspace is owned by uid 1001, so hand it to 1000 first, then
+      # back to the runner so the steps below can read and write `build/`.
+      - name: Build the book
+        run: |
+          sudo chown -R 1000:1000 .
+          docker compose run --rm book
+          sudo chown -R "$(id -u):$(id -g)" .
+
+      - name: Pack the website
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          ( cd build/html && zip -qr "${GITHUB_WORKSPACE}/build/my-book-${version}-web.zip" . )
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          zip="build/my-book-${version}-web.zip"
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" build/book.pdf "$zip" --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" build/book.pdf "$zip" \
+              --title "<Book Title> ${version}" \
+              --generate-notes
+          fi

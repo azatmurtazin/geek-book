@@ -1,0 +1,33 @@
+# Docker Compose for a book repo: the `book` service builds both editions in the
+# engine's image, so no toolchain is needed on the host.
+#
+#   docker compose run --rm book     # build build/html/ + build/book.pdf
+#
+# The image is built from the engine's checkout (../geek-book), which bakes
+# geek-book and its dependencies in and links it onto PATH as `geek-book`. This
+# repo therefore mounts only its own sources — no node_modules volume, no
+# install — and GEEK_BOOK tells the Justfile to use the linked binary.
+#
+# Extra services (per-language sample toolchains, a preview server, …) go
+# alongside `book`.
+
+name: my-book
+
+services:
+  book:
+    build:
+      context: ../geek-book
+      dockerfile: docker/Docker.book
+    image: geek-book/book:latest
+    # entrypoint runs the per-container setup as root and then drops to node
+    # (uid/gid 1000 == the host user) before the build command runs.
+    user: "root"
+    working_dir: /workspace
+    environment:
+      # The engine is on PATH in the image; the Justfile calls it as-is.
+      GEEK_BOOK: geek-book
+    volumes:
+      - .:/workspace
+    command: >-
+      /bin/sh -c
+      'just html && just pdf'

@@ -1,0 +1,6 @@
+{
+  "title": "<Book Title>",
+  "tagline": "a book built with geek-book",
+  "author": "<Author>",
+  "docs": ["README.md", "CHANGELOG.md"]
+}

@@ -1,0 +1,94 @@
+name: CI
+
+# Lint the book, then build both editions — website (build/html/) and print PDF
+# (build/book.pdf) — in the engine's Docker image, the same service the
+# `just docker-book` recipe runs, with the image layers cached between runs.
+#
+# The engine (geek-book) is checked out next to this repo, because package.json
+# depends on it by path ("geek-book": "file:../geek-book") and the `book` compose
+# service builds its image from that checkout. The external-link check lives in
+# its own workflow (link-check.yml). Action and tool versions here match the ones
+# the engine is developed against.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # The build engine, checked out next to this repo.
+  ENGINE_REPO: azatmurtazin/geek-book
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check out the engine (geek-book)
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.ENGINE_REPO }}
+          path: ../geek-book
+      - uses: extractions/setup-just@v4
+        with:
+          just-version: "1.58.0"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "26"
+          cache: npm
+      - run: npm ci
+      - run: just lint
+
+  book:
+    name: Build the book (website + PDF)
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check out the engine (geek-book)
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.ENGINE_REPO }}
+          path: ../geek-book
+
+      # Cache the LaTeX-heavy engine image so it is not rebuilt from scratch.
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: ../geek-book
+          file: ../geek-book/docker/Docker.book
+          tags: geek-book/book:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The `book` service starts as root and drops to the image's `node` user
+      # (uid 1000) to run the build. The GitHub workspace is owned by uid 1001,
+      # so hand it to 1000 first; the compose service (the same one
+      # `just docker-book` runs) then builds build/html/ and build/book.pdf on
+      # the bind-mounted repo.
+      - name: Build the book
+        run: |
+          sudo chown -R 1000:1000 .
+          docker compose run --rm book
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web-book
+          path: build/html
+          retention-days: 7
+      - uses: actions/upload-artifact@v7
+        with:
+          name: printed-book
+          path: build/book.pdf
+          retention-days: 7
