@@ -27,5 +27,5 @@ jobs:
         with:
           args: >-
             --config lychee.toml
-            'book/**/*.md' README.md CHANGELOG.md
+            'book/**/*.md' README.md
           fail: true

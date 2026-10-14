@@ -106,10 +106,12 @@ lint: _engine
 # check the external links in the book and repo docs (link rot; needs the
 # network). Kept out of `just lint` (which stays offline) and the pre-commit
 # hooks. Uses a host `lychee` when installed, else the lychee Docker image.
+# README.md is always there; add CHANGELOG.md (and any other root doc) once the
+# book has one — lychee fails on an input path that does not exist.
 link-check:
     #!/usr/bin/env bash
     set -euo pipefail
-    inputs=('book/**/*.md' README.md CHANGELOG.md)
+    inputs=('book/**/*.md' README.md)
     if command -v lychee >/dev/null 2>&1; then
         lychee "${inputs[@]}"
     elif command -v docker >/dev/null 2>&1; then
