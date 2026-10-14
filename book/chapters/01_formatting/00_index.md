@@ -9,7 +9,8 @@ once for the PDF.
 ## One of everything
 
 [A sample page](01_sample_page.md) collects a table, a quote, a numbered list, an
-anchor link and a couple of fenced blocks on a single screen.
+anchor link, a link off the site and a couple of fenced blocks on a single
+screen.
 
 ## Fenced blocks are always tagged
 

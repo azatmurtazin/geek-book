@@ -27,6 +27,13 @@ set, on both editions.
 Link to [the table above](#a-table) or to the
 [introduction](../00_intro/00_index.md).
 
+## An external link
+
+Not every link stays inside the book: [the CommonMark
+spec](https://commonmark.org/) is off the site and out of the PDF. The site hands
+the address to the browser, the printed page marks it as a link that leaves the
+book, and the link check is what actually visits it.
+
 ```python
 def lorem(words: int = 3) -> str:
     """Return a few words of nothing in particular."""
