@@ -4,7 +4,7 @@
 // as TeX and free of the escaping a TypeScript template literal demands
 // (`\setmainfont`, `$`, a stray backtick). The few values that come from the
 // book's config (the text, bold and code faces, and the running-head title) are
-// `{{ … }}` placeholders, filled in when the module loads.
+// `<< … >>` placeholders, filled in when the module loads.
 //
 // It sits apart from the serializer (tex.ts) because the walk does not write
 // it — it is the same LaTeX on every build. The text block its geometry sets is
@@ -25,8 +25,8 @@ const PLACEHOLDERS: Record<string, string> = {
   "book-title": texEscape(CONFIG.title),
 };
 
-/** `{{ key }}`, the placeholders preamble.tex carries. */
-const PLACEHOLDER = /\{\{\s*([a-z][a-z0-9-]*)\s*\}\}/g;
+/** `<< key >>`, the placeholders preamble.tex carries. */
+const PLACEHOLDER = /<<\s*([a-z][a-z0-9-]*)\s*>>/g;
 
 /**
  * Everything the document needs before `\begin{document}`: A4 with the web

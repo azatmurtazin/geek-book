@@ -2,8 +2,8 @@
 \usepackage[top=19mm,bottom=19mm,left=18mm,right=18mm]{geometry}
 \usepackage{fontspec}
 \usepackage{microtype}
-\setmainfont{{{text-font}}}{{text-font-options}}
-\setmonofont{{{code-font}}}[Ligatures=NoCommon,Contextuals=NoAlternate]
+\setmainfont{<<text-font>>}<<text-font-options>>
+\setmonofont{<<code-font>>}[Ligatures=NoCommon,Contextuals=NoAlternate]
 \usepackage[table]{xcolor}
 \usepackage{titlesec}
 \usepackage{fancyvrb}
@@ -160,7 +160,7 @@
 \newcommand{\pefolio}{\fontsize{9}{11}\selectfont\color{muted}\thepage}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\fontsize{8.5}{10}\selectfont\color{muted}{{book-title}}}
+\fancyhead[L]{\fontsize{8.5}{10}\selectfont\color{muted}<<book-title>>}
 \fancyhead[R]{\fontsize{8.5}{10}\selectfont\color{muted}\leftmark}
 \fancyfoot[C]{\pefolio}
 \renewcommand{\headrulewidth}{0.4pt}
