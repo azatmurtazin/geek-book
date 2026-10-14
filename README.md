@@ -98,6 +98,11 @@ in this repository exercise the linter and both editions on every change, and CI
 runs the same three in the `book` image. There are no unit tests; a book that
 builds is the contract.
 
+One check has no source to lint against: whether the printed edition's internal
+links land where they claim to. A link whose heading the PDF never labels is not
+an error to LaTeX — it reads as unlinked text and the page looks right — so the
+PDF build reads the warnings back and fails on any that survive the last pass.
+
 ## Layout of this repository
 
 | Path            | What lives there                                                    |

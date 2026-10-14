@@ -181,10 +181,17 @@ function renderInline(tokens: Token[], ctx: TexContext, mode: InlineMode): strin
 }
 
 /**
- * External targets become `\href`; intra-book targets become `\hyperlink` at
- * the destination label the web build uses — same resolution rules
- * (relative `.md` paths, bare `#anchor`), so a link that works on the site
- * works here. Link text is underlined.
+ * External targets become `\href`; intra-book targets become a `\hyperref` to
+ * the label the web build's ids already name — same resolution rules (relative
+ * `.md` paths, bare `#anchor`), so a link that works on the site works here.
+ * Link text is underlined.
+ *
+ * `\hyperref` and not `\hyperlink`: the latter needs a `\hypertarget` to exist
+ * on the page it points at, and this document has none. LuaTeX answers a
+ * `\hyperlink` to a name it never saw by writing a destination at the end of
+ * the file, so every intra-book link landed on the last page. `\hyperref`
+ * reads the anchor out of the previous pass's `.aux`, which resolves links in
+ * either direction.
  */
 function renderLink(token: Tokens.Link, ctx: TexContext, mode: InlineMode): string {
   const inner = renderInline(token.tokens, ctx, mode);
@@ -195,7 +202,7 @@ function renderLink(token: Tokens.Link, ctx: TexContext, mode: InlineMode): stri
     // through \href untouched, which probe builds confirmed.
     return `\\href{${href.replace(/%/g, "\\%")}}{\\uplink{${inner}}}`;
   }
-  return `\\hyperlink{${target}}{\\uplink{${inner}}}`;
+  return `\\hyperref[${target}]{\\uplink{${inner}}}`;
 }
 
 function resolveLink(href: string, ctx: TexContext): string | null {

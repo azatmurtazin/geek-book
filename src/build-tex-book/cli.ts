@@ -87,10 +87,12 @@ export async function main(args: string[]): Promise<number> {
   const items = parseSummary(fs.readFileSync(SUMMARY, "utf8"));
 
   const idOf = new Map<string, number>();
+  const chapterOf = new Map<number, string>();
   let chapterCount = 0;
   for (const item of items) {
     if (item.kind !== "entry" || !item.relBook || !fs.existsSync(path.join(BOOK, item.relBook))) continue;
     idOf.set(item.relBook, chapterCount);
+    chapterOf.set(chapterCount, item.relBook);
     chapterCount++;
   }
   if (chapterCount === 0) {
@@ -170,7 +172,39 @@ export async function main(args: string[]): Promise<number> {
       return 1;
     }
   }
+  const broken = unresolvedRefs(fs.readFileSync(logFile, "utf8"));
+  if (broken.length > 0) {
+    process.stderr.write(`geek-book: ${broken.length} link(s) point at a heading the book never labels:\n`);
+    for (const label of broken.slice(0, 20)) {
+      process.stderr.write(`  ${label}${labelChapter(label, chapterOf)}\n`);
+    }
+    return 1;
+  }
+
   const pages = await pdfPages(outputPdf);
   console.log(`geek-book: ${path.relative(CONFIG.root, outputPdf)} (${chapterCount} chapters, ${pages} pages)`);
   return 0;
+}
+
+/**
+ * Labels a `\hyperref` could not resolve, as the last pass's log reports them.
+ *
+ * A link to a heading whose label is missing is not an error to LaTeX: it sets
+ * the text unlinked and warns "Hyper reference `<label>' ... undefined", which
+ * leaves a dead link in a PDF that otherwise looks perfect — the failure this
+ * model hides. Reading that warning back makes the build stop instead, and it
+ * is the one check that compares the anchors `geek-book lint` knows against the
+ * ones this builder actually labels.
+ */
+function unresolvedRefs(log: string): string[] {
+  const labels = new Set<string>();
+  for (const match of log.matchAll(/Hyper reference `([^']+)' on page /g)) labels.add(match[1]);
+  return [...labels];
+}
+
+/** ` (chapter/file.md)` for a `c<id>…` label, so the name points at a file. */
+function labelChapter(label: string, chapterOf: Map<number, string>): string {
+  const id = /^c(\d+)/.exec(label);
+  const file = id ? chapterOf.get(Number(id[1])) : undefined;
+  return file ? ` (${file})` : "";
 }
