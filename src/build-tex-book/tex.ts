@@ -639,32 +639,26 @@ export const PREAMBLE = String.raw`\documentclass[11pt,a4paper,oneside]{book}
   {\fontsize{10}{13}\selectfont\@dottedtocline{0}{1em}{0em}{#1}{#2}}}
 \makeatother
 
-% Running heads mirror the folio: the book title sits on even (verso) pages,
-% the current chapter on odd (recto) ones, each in the outer corner over a
-% hairline rule. The version number is not printed here — the introduction
-% names the edition instead. The folio sits in the outer bottom corner — right
-% on odd (recto) pages, left on even (verso) ones — so it falls outside the
-% text block when the book is printed double-sided. The document stays oneside
-% (its margins are symmetric anyway), so both the side and the parity come from
-% the page counter rather than fancyhdr's odd/even fields, which need twoside to
-% take effect. Chapter openers (plain) drop the head but keep the folio; front
-% matter pages use empty, and \pecnumberedplain flips plain back once they are
-% past.
+% Running heads sit over the hairline rule on every body page: the book title on
+% the left, the current chapter on the right. The folio is centered under the
+% text block, the same on every page, so the layout reads the same in a one- or
+% two-sided print and nothing depends on the page's parity. The version number
+% is not printed here — the introduction names the edition instead. Chapter
+% openers (plain) drop the head but keep the centered folio; front matter pages
+% use empty, and \pecnumberedplain flips plain back once they are past.
 \newcommand{\pefolio}{\fontsize{9}{11}\selectfont\color{muted}\thepage}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\ifodd\value{page}\else{\fontsize{8.5}{10}\selectfont\color{muted}${texEscape(CONFIG.title)}}\fi}
-\fancyhead[R]{\ifodd\value{page}{\fontsize{8.5}{10}\selectfont\color{muted}\leftmark}\fi}
-\fancyfoot[L]{\ifodd\value{page}\else\pefolio\fi}
-\fancyfoot[R]{\ifodd\value{page}\pefolio\fi}
+\fancyhead[L]{\fontsize{8.5}{10}\selectfont\color{muted}${texEscape(CONFIG.title)}}
+\fancyhead[R]{\fontsize{8.5}{10}\selectfont\color{muted}\leftmark}
+\fancyfoot[C]{\pefolio}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\headrule}{\color{rule}\hrule height\headrulewidth width\headwidth}
 \renewcommand{\footrulewidth}{0pt}
 \makeatletter
 \fancypagestyle{plain}{%
   \fancyhf{}%
-  \fancyfoot[L]{\ifodd\value{page}\else\pefolio\fi}%
-  \fancyfoot[R]{\ifodd\value{page}\pefolio\fi}%
+  \fancyfoot[C]{\pefolio}%
   \renewcommand{\headrulewidth}{0pt}%
   \renewcommand{\footrulewidth}{0pt}%
 }
