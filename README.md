@@ -84,13 +84,16 @@ it names a stylesheet under `web` (or `""` for none) when the site should load
 them, and spells out `bold` when bold is a weight instance of a variable font
 rather than a face of its own.
 
-The website is the one place the engine carries a script: it reads the reader's
+The website carries the one script the engine ships: it puts the reader's
 day/night choice — their system preference on a first visit, remembered in local
-storage from then on — before the first paint, and a button in the header flips
-it. Everything else works without JavaScript: the sidebar folds because every
-SUMMARY group is a `<details>`, and the group the current page belongs to
-arrives open, so a long book shows its parts rather than every one of its
-chapters at once.
+storage from then on — and their folded panel on `<html>` before the first
+paint, then wires the two header controls that flip them. The rest of the page
+needs no JavaScript. A SUMMARY group folds because it is a `<details>` — the
+group the current page belongs to arrives open, so a long book shows its parts
+rather than every one of its chapters at once — and the header's hamburger folds
+the whole panel away, handing the window to the text and centring the reading
+column. With scripts off that hamburger still folds the panel, for the page in
+hand, and the theme button stays out of the way.
 
 ## Commands
 

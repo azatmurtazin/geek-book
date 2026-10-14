@@ -156,33 +156,56 @@ function sidebarHtml(
 </nav>`;
 }
 
-/** The storage key the reader's day/night choice is remembered under. */
+/** The storage keys the reader's two choices are remembered under. */
 const THEME_KEY = "geek-book-theme";
+const NAV_KEY = "geek-book-nav";
 
-// The one script the site carries: it puts the reader's theme on <html> before
-// the first paint (their stored choice, else the system preference) and wires
-// the header button to flip it. Everything else on the page — including the
-// foldable sidebar — works without it, so a reader with scripts off gets the
-// light theme and a `<details>` tree that still folds. Storage is guarded
-// because a browser in private mode (or with cookies off) throws on access —
-// then the choice is simply not kept.
-const THEME_SCRIPT = `(() => {
-  const KEY = "${THEME_KEY}";
+// The one script the site carries, in the page head so it runs before the first
+// paint: it puts the reader's theme and their folded-panel choice on <html>,
+// then wires the two header controls that flip them. Everything else on the
+// page — including the foldable sidebar — works without it, so a reader with
+// scripts off gets the light theme, a `<details>` tree that still folds, and a
+// nav checkbox that still folds the whole panel for the page they are on.
+// Storage is guarded because a browser in private mode (or with cookies off)
+// throws on access — then the choice is simply not kept.
+const SITE_SCRIPT = `(() => {
+  const THEME = "${THEME_KEY}";
+  const NAV = "${NAV_KEY}";
   const root = document.documentElement;
-  const read = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
-  const write = (value) => { try { localStorage.setItem(KEY, value); } catch { /* not kept */ } };
-  root.dataset.theme = read() ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const read = (key) => { try { return localStorage.getItem(key); } catch { return null; } };
+  const write = (key, value) => { try { localStorage.setItem(key, value); } catch { /* not kept */ } };
+  const wide = matchMedia("(min-width: 801px)");
+
+  root.dataset.theme = read(THEME) ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  if (wide.matches && read(NAV) === "folded") root.dataset.nav = "folded";
+
   addEventListener("DOMContentLoaded", () => {
-    const button = document.querySelector(".theme-toggle");
-    if (!button) return;
-    const mark = () => button.setAttribute("aria-pressed", String(root.dataset.theme === "dark"));
-    mark();
-    button.addEventListener("click", () => {
-      const dark = root.dataset.theme !== "dark";
-      root.dataset.theme = dark ? "dark" : "light";
-      write(root.dataset.theme);
-      mark();
+    const theme = document.querySelector(".theme-toggle");
+    if (theme) {
+      const pressed = () => theme.setAttribute("aria-pressed", String(root.dataset.theme === "dark"));
+      pressed();
+      theme.addEventListener("click", () => {
+        root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+        write(THEME, root.dataset.theme);
+        pressed();
+      });
+    }
+
+    // The nav checkbox means two things: on a phone the docked panel is a
+    // slide-over and checked puts it in view, which is not worth remembering;
+    // on a desktop checked folds the docked panel away, and that we keep.
+    const box = document.querySelector("#sidebar-toggle");
+    if (!box) return;
+    const apply = () => {
+      box.checked = wide.matches && read(NAV) === "folded";
+      root.dataset.nav = box.checked ? "folded" : "open";
+    };
+    apply();
+    box.addEventListener("change", () => {
+      if (wide.matches) write(NAV, box.checked ? "folded" : "open");
+      root.dataset.nav = box.checked ? "folded" : "open";
     });
+    wide.addEventListener("change", apply);
   });
 })();`;
 
@@ -206,18 +229,18 @@ function pageDocument(opts: {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script>${THEME_SCRIPT}</script>
+<script>${SITE_SCRIPT}</script>
 <title>${escapeHtml(opts.title)}</title>
 ${FONT_LINKS}
 <link rel="stylesheet" href="${opts.styleHref}">
 <noscript><style>.theme-toggle { display: none; }</style></noscript>
 </head>
 <body>
-<input type="checkbox" id="sidebar-toggle">
+<input type="checkbox" id="sidebar-toggle" aria-label="Toggle navigation">
 ${opts.sidebar}
 <div class="page-wrapper">
   <header class="book-header">
-    <label for="sidebar-toggle" class="menu-toggle" title="Toggle navigation">&#9776;</label>
+    <label for="sidebar-toggle" class="menu-toggle" title="Toggle the navigation panel">&#9776;</label>
     <span class="header-title">${escapeHtml(opts.headerTitle)}</span>
     <span class="header-nav">
       ${opts.prev ? `<a href="${opts.prev.href}">&#8592; Previous</a>` : ""}

@@ -65,7 +65,14 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 /* --- sidebar -------------------------------------------------------------- */
 
-#sidebar-toggle { display: none; }
+/* The nav toggle's real control: the checkbox the header's hamburger label
+   points at. It is kept off-screen rather than hidden with display: none so the
+   keyboard can reach it, which the label alone never could. */
+#sidebar-toggle {
+  position: fixed; top: 0; left: 0; width: 1px; height: 1px;
+  margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none;
+}
+#sidebar-toggle:focus-visible ~ .page-wrapper .menu-toggle { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .sidebar {
   position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
@@ -106,7 +113,8 @@ details[open] > .sidebar-part::before { content: "\\25BE"; }
   padding: 0.7rem 1.75rem; background: var(--page-bg);
   border-bottom: 1px solid var(--rule);
 }
-.book-header .menu-toggle { display: none; cursor: pointer; border: 1px solid var(--rule); border-radius: 6px; padding: 0.15rem 0.5rem; background: var(--page-bg); color: var(--fg); font-size: 1.1rem; line-height: 1.4; }
+.book-header .menu-toggle { cursor: pointer; border: 1px solid var(--rule); border-radius: 6px; padding: 0.15rem 0.5rem; background: var(--page-bg); color: var(--fg); font-size: 1.1rem; line-height: 1.4; }
+.book-header .menu-toggle:hover { color: var(--accent); }
 .book-header .header-title { font-size: 0.85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .book-header .header-nav { margin-left: auto; font-size: 0.85rem; white-space: nowrap; }
 .book-header .header-nav a + a { margin-left: 0.9rem; }
@@ -165,12 +173,38 @@ ${diagramCss(".book-body")}
 
 .book-footer { padding: 1.25rem 1.75rem 2rem; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--rule); }
 
+/* --- a docked panel, folded ------------------------------------------------ */
+
+/* On a phone the panel is a slide-over that starts hidden, and its checkbox
+   says "in view". On a desktop the panel is a docked column, so the same
+   checkbox says the opposite — "folded away, let the text have the width". The
+   reader's choice is kept across pages by the script in the page head, which
+   puts data-nav on <html> before the first paint; without scripts the
+   checkbox alone still folds the panel, for that page. */
+@media (min-width: 801px) {
+  #sidebar-toggle:checked ~ .sidebar,
+  html[data-nav="folded"] .sidebar { transform: translateX(-100%); visibility: hidden; }
+  #sidebar-toggle:checked ~ .page-wrapper,
+  html[data-nav="folded"] .page-wrapper { margin-left: 0; }
+  /* A folded panel leaves the reading column against the left edge of a wide
+     window, so the column — and the rules the footer and the previous/next
+     links draw — take the middle of what is left instead. */
+  #sidebar-toggle:checked ~ .page-wrapper .book-body,
+  html[data-nav="folded"] .book-body { margin-left: auto; margin-right: auto; }
+  #sidebar-toggle:checked ~ .page-wrapper .chapter-nav,
+  #sidebar-toggle:checked ~ .page-wrapper .book-footer,
+  html[data-nav="folded"] .chapter-nav,
+  html[data-nav="folded"] .book-footer {
+    width: 100%; max-width: 46rem; margin-left: auto; margin-right: auto;
+    padding-left: 1.75rem; padding-right: 1.75rem;
+  }
+}
+
 /* --- mobile ---------------------------------------------------------------- */
 
 @media (max-width: 800px) {
   .sidebar { transform: translateX(-100%); transition: transform 0.2s ease; width: 280px; }
   .page-wrapper { margin-left: 0; }
-  .book-header .menu-toggle { display: inline-block; }
   #sidebar-toggle:checked ~ .sidebar { transform: translateX(0); }
   #sidebar-toggle:checked ~ .page-wrapper { margin-left: 0; }
   .book-body { padding: 1.5rem 1.1rem 2.5rem; }
