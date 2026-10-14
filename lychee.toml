@@ -1,11 +1,25 @@
 # Link check configuration for the engine's own docs (https://lychee.cli.rs).
 #
-# Only the engine's README and the sample book are checked. The sample is
-# placeholder prose and links nowhere, so this file is mostly a starting point
-# for a book that copies the link-check workflow.
+# Remote links only. Local file paths and #anchors are `geek-book lint`'s job —
+# it resolves them offline, and it understands the book-root absolute image
+# sources (`/images/…`) the prose may use.
+#
+# `root_dir` still has to be set: lychee reads root-relative links while parsing
+# the Markdown, before the scheme filter runs, and refuses to parse one without
+# a directory to resolve it against. It points at the book, which is what a
+# root-relative path in a book repo counts from.
+#
+# The sample is placeholder prose and links nowhere, so this file is mostly a
+# starting point for a book that copies the link-check workflow.
+
+scheme = ["https", "http"]
+root_dir = "book"
 
 max_redirects = 10
 timeout = 20
+
+# A 429 is "slow down", not a dead link.
+accept = ["200..=299", "429"]
 
 # The sample book is a fixture; do not let a dead link outside this repo fail
 # the engine's own pipeline while the book repos keep their own configs.

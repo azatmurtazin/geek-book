@@ -11,6 +11,12 @@
 # Remote links only — local file links and #anchors belong to `just lint`.
 scheme = ["https", "http"]
 
+# lychee reads root-relative links (`/images/photo.jpg`) while parsing the
+# Markdown, before the scheme filter runs, and refuses one without a directory
+# to resolve it against. Point it at the book — what a root-relative path counts
+# from, and what `just lint` checks those paths against.
+root_dir = "book"
+
 # A 429 is "slow down", not a dead link.
 accept = ["200..=299", "429"]
 
