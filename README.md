@@ -79,7 +79,18 @@ Literata's bold as a fontspec declaration (`Family:options`). A book that names
 its own families therefore starts with no webfont and its families' own bold —
 it names a stylesheet under `web` (or `""` for none) when the site should load
 them, and spells out `bold` when bold is a weight instance of a variable font
+its own families therefore starts with no webfont and its families' own bold —
+it names a stylesheet under `web` (or `""` for none) when the site should load
+them, and spells out `bold` when bold is a weight instance of a variable font
 rather than a face of its own.
+
+The website is the one place the engine carries a script: it reads the reader's
+day/night choice — their system preference on a first visit, remembered in local
+storage from then on — before the first paint, and a button in the header flips
+it. Everything else works without JavaScript: the sidebar folds because every
+SUMMARY group is a `<details>`, and the group the current page belongs to
+arrives open, so a long book shows its parts rather than every one of its
+chapters at once.
 
 ## Commands
 

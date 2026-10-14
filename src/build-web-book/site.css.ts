@@ -10,12 +10,17 @@ import { CODE_STACK, TEXT_STACK } from "../lib/fonts.js";
 
 export const SITE_CSS = `
 :root {
+  color-scheme: light;
+  --page-bg: #fff;
   --fg: #242a37;
   --muted: #6b7280;
   --accent: #4183c4;
   --accent-soft: #eef4fb;
   --rule: #e5e8ed;
   --sidebar-bg: #f9fafb;
+  --sidebar-link: #3b4b52;
+  --quote-fg: #3b4252;
+  --zebra-bg: #fafbfc;
   --code-bg: #f6f7f9;
   --code-fg: #20304c;
   ${CODE_COMMENT_VAR}
@@ -25,9 +30,34 @@ export const SITE_CSS = `
   --font-mono: ${CODE_STACK};
 }
 
+/* The reader's day/night choice, put on <html> by the script in the page head
+   before the first paint. Every colour rule below reads a variable, so the
+   night palette is this one block. It is scoped to screens so that printing a
+   page — or the PDF build, which carries its own palette — stays light. */
+@media screen {
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --page-bg: #0d1117;
+    --fg: #d7dbe4;
+    --muted: #8b93a5;
+    --accent: #7fb0e0;
+    --accent-soft: #1d2633;
+    --rule: #2b3240;
+    --sidebar-bg: #12161d;
+    --sidebar-link: #c3cbd8;
+    --quote-fg: #c3cbd8;
+    --zebra-bg: #161b23;
+    --code-bg: #161b23;
+    --code-fg: #c8d2e0;
+    --code-comment: #7f8b9e;
+    --callout-bg: #151a22;
+    --callout-border: #2f3745;
+  }
+}
+
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; font-family: var(--font-sans); font-size: 16px; line-height: 1.65; color: var(--fg); }
+html { -webkit-text-size-adjust: 100%; background: var(--page-bg); }
+body { margin: 0; font-family: var(--font-sans); font-size: 16px; line-height: 1.65; color: var(--fg); background: var(--page-bg); }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 2px; }
@@ -47,13 +77,19 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
 .sidebar-brand em { font-style: normal; color: var(--accent); }
 .sidebar ul { list-style: none; margin: 0; padding: 0; }
 .sidebar li { margin: 0; }
+.sidebar summary { list-style: none; cursor: pointer; }
+.sidebar summary::-webkit-details-marker { display: none; }
+.sidebar summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .sidebar-part {
   padding: 1.1rem 1.25rem 0.35rem;
   font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
   color: var(--muted);
 }
+.sidebar-part::before { content: "\\25B8"; display: inline-block; width: 0.85em; margin-left: -0.85em; }
+details[open] > .sidebar-part::before { content: "\\25BE"; }
+.sidebar-part:hover { color: var(--fg); }
 .sidebar li a {
-  display: block; padding: 0.28rem 1.25rem; color: #3b4b52; border-right: 3px solid transparent;
+  display: block; padding: 0.28rem 1.25rem; color: var(--sidebar-link); border-right: 3px solid transparent;
 }
 .sidebar li a:hover { background: var(--accent-soft); text-decoration: none; }
 .sidebar li a.active { color: var(--accent); background: var(--accent-soft); border-right-color: var(--accent); font-weight: 600; }
@@ -67,13 +103,22 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
 .book-header {
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: center; gap: 1rem;
-  padding: 0.7rem 1.75rem; background: #fff;
+  padding: 0.7rem 1.75rem; background: var(--page-bg);
   border-bottom: 1px solid var(--rule);
 }
-.book-header .menu-toggle { display: none; cursor: pointer; border: 1px solid var(--rule); border-radius: 6px; padding: 0.15rem 0.5rem; background: #fff; font-size: 1.1rem; line-height: 1.4; }
+.book-header .menu-toggle { display: none; cursor: pointer; border: 1px solid var(--rule); border-radius: 6px; padding: 0.15rem 0.5rem; background: var(--page-bg); color: var(--fg); font-size: 1.1rem; line-height: 1.4; }
 .book-header .header-title { font-size: 0.85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .book-header .header-nav { margin-left: auto; font-size: 0.85rem; white-space: nowrap; }
 .book-header .header-nav a + a { margin-left: 0.9rem; }
+.theme-toggle {
+  flex: none; cursor: pointer; border: 1px solid var(--rule); border-radius: 6px;
+  padding: 0.15rem 0.5rem; background: var(--page-bg); color: var(--muted);
+  font-size: 1rem; line-height: 1.4;
+}
+.theme-toggle:hover { color: var(--fg); }
+.theme-icon-sun { display: none; }
+[data-theme="dark"] .theme-icon-sun { display: inline; }
+[data-theme="dark"] .theme-icon-moon { display: none; }
 
 .book-body { flex: 1; max-width: 46rem; padding: 2.25rem 1.75rem 3rem; width: 100%; }
 
@@ -90,7 +135,7 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
 .book-body blockquote {
   margin: 1.1rem 0; padding: 0.7rem 1rem 0.7rem 1.1rem;
   border-left: 4px solid var(--callout-border); background: var(--callout-bg);
-  border-radius: 0 8px 8px 0; color: #3b4252;
+  border-radius: 0 8px 8px 0; color: var(--quote-fg);
 }
 .book-body blockquote p:first-child { margin-top: 0; }
 .book-body blockquote p:last-child { margin-bottom: 0; }
@@ -105,7 +150,7 @@ ${codeCss(".book-body")}
 .book-body table { width: 100%; border-collapse: collapse; margin: 1.1rem 0; font-size: 0.9rem; }
 .book-body th { text-align: left; font-size: 0.72rem; letter-spacing: 0.05em; color: var(--muted); border-bottom: 2px solid var(--rule); padding: 0.45rem 0.65rem; }
 .book-body td { border-bottom: 1px solid var(--rule); padding: 0.5rem 0.65rem; vertical-align: top; }
-.book-body tbody tr:nth-child(even) { background: #fafbfc; }
+.book-body tbody tr:nth-child(even) { background: var(--zebra-bg); }
 .book-body img { max-width: 100%; border-radius: 8px; }
 
 ${diagramCss(".book-body")}

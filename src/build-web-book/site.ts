@@ -88,31 +88,103 @@ function footerHtml(): string {
   return CONFIG.tagline ? `${head} — ${escapeHtml(CONFIG.tagline)}` : head;
 }
 
-/** The sidebar tree, links computed relative to the page being rendered. */
+/**
+ * The SUMMARY tree as sidebar rows. A group heading opens a `<details>` that
+ * folds its chapters away, so the tree stays short on a long book; the part the
+ * current page belongs to is left open, and entries that precede the first
+ * heading stay in the open.
+ */
 function sidebarHtml(
   items: { kind: "group" | "entry"; label: string; relBook?: string; indent?: number }[],
   pages: Map<string, string>,
   activeOutputRel: string | null,
   homeHref: string,
 ): string {
-  const rows = items.map((item) => {
+  const fromDir = path.posix.dirname(activeOutputRel ?? "index.html");
+
+  interface Part {
+    label: string;
+    rows: string[];
+    active: boolean;
+  }
+  const parts: Part[] = [];
+  const blocks: ({ row: string } | { part: Part })[] = [];
+  let part: Part | null = null;
+
+  for (const item of items) {
     if (item.kind === "group") {
-      return `<li class="sidebar-part">${escapeHtml(item.label)}</li>`;
+      part = { label: item.label, rows: [], active: false };
+      parts.push(part);
+      blocks.push({ part });
+      continue;
     }
     const outputRel = pages.get(item.relBook ?? "");
-    if (!outputRel) return "";
-    const fromDir = path.posix.dirname(activeOutputRel ?? "index.html");
+    if (!outputRel) continue;
+    const active = outputRel === activeOutputRel;
     const href = path.posix.relative(fromDir, outputRel) || path.posix.basename(outputRel);
-    const active = outputRel === activeOutputRel ? ' class="active"' : "";
-    return `<li class="sidebar-chapter depth-${Math.min(item.indent ?? 0, 2)}"><a href="${href}"${active}>${escapeHtml(item.label)}</a></li>`;
+    const row = `<li class="sidebar-chapter depth-${Math.min(item.indent ?? 0, 2)}"><a href="${href}"${active ? ' class="active"' : ""}>${escapeHtml(item.label)}</a></li>`;
+    if (part) {
+      part.rows.push(row);
+      part.active ||= active;
+    } else {
+      blocks.push({ row });
+    }
+  }
+
+  // The part the current page lives in unfolds itself; a page outside the tree
+  // (the front page) opens the first part with chapters instead, so the sidebar
+  // never opens empty.
+  const openPart = parts.find((candidate) => candidate.active)
+    ?? parts.find((candidate) => candidate.rows.length > 0)
+    ?? null;
+
+  const rows = blocks.map((block) => {
+    if ("row" in block) return block.row;
+    const open = block.part === openPart ? " open" : "";
+    const entries = block.part.rows;
+    const list = entries.length
+      ? `\n      <ul>\n        ${entries.join("\n        ")}\n      </ul>\n    `
+      : "";
+    return `<li><details${open}>\n    <summary class="sidebar-part">${escapeHtml(block.part.label)}</summary>${list}</details></li>`;
   });
+
   return `<nav class="sidebar">
   <div class="sidebar-brand"><a href="${homeHref}">${brandHtml(CONFIG.title)}</a></div>
   <ul>
-${rows.join("\n")}
+    ${rows.join("\n    ")}
   </ul>
 </nav>`;
 }
+
+/** The storage key the reader's day/night choice is remembered under. */
+const THEME_KEY = "geek-book-theme";
+
+// The one script the site carries: it puts the reader's theme on <html> before
+// the first paint (their stored choice, else the system preference) and wires
+// the header button to flip it. Everything else on the page — including the
+// foldable sidebar — works without it, so a reader with scripts off gets the
+// light theme and a `<details>` tree that still folds. Storage is guarded
+// because a browser in private mode (or with cookies off) throws on access —
+// then the choice is simply not kept.
+const THEME_SCRIPT = `(() => {
+  const KEY = "${THEME_KEY}";
+  const root = document.documentElement;
+  const read = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
+  const write = (value) => { try { localStorage.setItem(KEY, value); } catch { /* not kept */ } };
+  root.dataset.theme = read() ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  addEventListener("DOMContentLoaded", () => {
+    const button = document.querySelector(".theme-toggle");
+    if (!button) return;
+    const mark = () => button.setAttribute("aria-pressed", String(root.dataset.theme === "dark"));
+    mark();
+    button.addEventListener("click", () => {
+      const dark = root.dataset.theme !== "dark";
+      root.dataset.theme = dark ? "dark" : "light";
+      write(root.dataset.theme);
+      mark();
+    });
+  });
+})();`;
 
 function pageDocument(opts: {
   title: string;
@@ -134,9 +206,11 @@ function pageDocument(opts: {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>${THEME_SCRIPT}</script>
 <title>${escapeHtml(opts.title)}</title>
 ${FONT_LINKS}
 <link rel="stylesheet" href="${opts.styleHref}">
+<noscript><style>.theme-toggle { display: none; }</style></noscript>
 </head>
 <body>
 <input type="checkbox" id="sidebar-toggle">
@@ -149,6 +223,10 @@ ${opts.sidebar}
       ${opts.prev ? `<a href="${opts.prev.href}">&#8592; Previous</a>` : ""}
       ${opts.next ? `<a href="${opts.next.href}">Next &#8594;</a>` : ""}
     </span>
+    <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Toggle day/night theme" title="Toggle day/night theme">
+      <span class="theme-icon-sun" aria-hidden="true">&#9728;</span>
+      <span class="theme-icon-moon" aria-hidden="true">&#9790;</span>
+    </button>
   </header>
   <main class="book-body">${opts.content}</main>
   <nav class="chapter-nav">${prevNav}${nextNav}</nav>
