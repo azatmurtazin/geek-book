@@ -16,7 +16,7 @@ three placeholders to replace when you copy a file:
 
 | File | What it is |
 | --- | --- |
-| `book.config.json` | The only book-specific configuration: title, tagline, sources, outputs. |
+| `book.config.json` | The only book-specific configuration: title, tagline, sources, outputs, fonts. |
 | `Justfile` | The build recipes; thin wrappers over the engine's binary. |
 | `docker-compose.yml` | The `book` service: builds the engine's image and runs the build in it. |
 | `.pre-commit-config.yaml` | File hygiene plus "lint and build both editions" on every commit. |

@@ -12,8 +12,8 @@
 // identical diagram.
 
 import { JSDOM } from "jsdom";
+import { DIAGRAM_FAMILY } from "../lib/fonts.js";
 
-const FONT_FAMILY = "Literata, 'DejaVu Serif', serif";
 const FONT_SIZE = 13;
 const LABEL_FILL = "#202020";
 
@@ -155,8 +155,8 @@ async function mermaid(): Promise<typeof import("mermaid")> {
     startOnLoad: false,
     theme: "default",
     securityLevel: "loose",
-    fontFamily: FONT_FAMILY,
-    themeVariables: { fontSize: `${FONT_SIZE}px`, fontFamily: FONT_FAMILY, ...THEME_VARIABLES },
+    fontFamily: DIAGRAM_FAMILY,
+    themeVariables: { fontSize: `${FONT_SIZE}px`, fontFamily: DIAGRAM_FAMILY, ...THEME_VARIABLES },
     flowchart: { htmlLabels: true },
   });
   return mod;
@@ -189,7 +189,7 @@ function foreignObjectToText(attrs: string, inner: string): string {
     )
     .join("");
   return (
-    `<text text-anchor="middle" font-family="${FONT_FAMILY}" font-size="${FONT_SIZE}" ` +
+    `<text text-anchor="middle" font-family="${DIAGRAM_FAMILY}" font-size="${FONT_SIZE}" ` +
     `fill="${LABEL_FILL}">${tspans}</text>`
   );
 }

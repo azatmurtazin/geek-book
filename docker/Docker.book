@@ -7,7 +7,9 @@
 # PDF is typeset by LuaLaTeX (texlive-luatex + texlive-latexextra +
 # texlive-plaingeneric for ulem), with poppler's pdfinfo for the page count and
 # rsvg-convert for the Mermaid figures. JetBrains Mono comes from an Alpine
-# package and Literata from Google Fonts; fontconfig registers both.
+# package and Literata from Google Fonts; fontconfig registers both. These are
+# the families a book gets by default — one that names its own under `fonts` in
+# book.config.json has to have them installed here, or on the host that builds.
 #
 # The build context is the engine's own repository (a consuming book points
 # `context:` at its geek-book checkout). compose mounts the book into /workspace

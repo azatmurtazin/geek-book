@@ -7,6 +7,7 @@ import { escapeHtml, brandHtml } from "../lib/html.js";
 import { CONFIG } from "../lib/book-config.js";
 import { resolveImagePath } from "../lib/images.js";
 import { REMOTE_IMAGE_DIR, type RemoteImages } from "../lib/remote-images.js";
+import { FONT_LINKS } from "../lib/fonts.js";
 import { SITE_CSS } from "./site.css.js";
 
 export interface MappedChapter {
@@ -134,9 +135,7 @@ function pageDocument(opts: {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(opts.title)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+${FONT_LINKS}
 <link rel="stylesheet" href="${opts.styleHref}">
 </head>
 <body>

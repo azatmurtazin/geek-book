@@ -53,6 +53,34 @@ hook), which `geek-book lint` reports; a fetch that fails stops the build with
 the URL. The print edition reads png and jpeg only — anything else is refused
 with a message, since LaTeX cannot embed it.
 
+The two editions are set in the families `book.config.json` names under `fonts`:
+`text` for the body, the headings and the diagrams, `code` for code. They
+default to Literata and JetBrains Mono, so a book that does not care says
+nothing:
+
+```json
+{
+  "fonts": {
+    "text": "Literata",
+    "code": "JetBrains Mono",
+    "bold": "Literata:mode=harf;wght=700",
+    "web": "https://fonts.googleapis.com/css2?family=…&display=swap"
+  }
+}
+```
+
+The website and the standalone previews load the families from `fonts.web` — a
+stylesheet, usually a Google Fonts URL — while the printed edition asks the
+build machine for the family by name, so the fonts have to be installed where
+the PDF is built, and the engine's Docker image carries the defaults. Two
+defaults belong to the default families and travel with them: the built-in
+stylesheet asks Google for Literata and JetBrains Mono, and `fonts.bold` names
+Literata's bold as a fontspec declaration (`Family:options`). A book that names
+its own families therefore starts with no webfont and its families' own bold —
+it names a stylesheet under `web` (or `""` for none) when the site should load
+them, and spells out `bold` when bold is a weight instance of a variable font
+rather than a face of its own.
+
 ## Commands
 
 | Command                   | What it does                                              |

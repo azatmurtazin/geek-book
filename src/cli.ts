@@ -78,6 +78,7 @@ function printConfig(): void {
       outputWeb: rel(CONFIG.outputWeb),
       outputPdf: rel(CONFIG.outputPdf),
       docs: CONFIG.docs.map(rel),
+      fonts: CONFIG.fonts,
       languages: [...CONFIG.languages],
     },
     null,

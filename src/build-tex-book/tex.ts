@@ -476,10 +476,11 @@ export async function chapterToTex(source: string, ctx: TexContext): Promise<Cha
 
 /**
  * Everything the document needs before `\begin{document}`: A4 with the web
- * edition's margins, Literata and JetBrains Mono (bold Literata
- * comes from the variable font's 700 instance via harfbuzz), the callout and
- * code-panel environments, the heading shapes and spacing of the site's type
- * scale, and the running heads and footers the printed edition carries.
+ * edition's margins, the text and code families the book names (bold text comes
+ * from the face the book names for it — for the default Literata that is the
+ * variable font's 700 instance, through harfbuzz), the callout and code-panel
+ * environments, the heading shapes and spacing of the site's type scale, and
+ * the running heads and footers the printed edition carries.
  *
  * Chapter and section numbers are off (`secnumdepth`), like the web edition,
  * but chapters still land in the table of contents. `plain` (chapter openers)
@@ -491,8 +492,8 @@ export const PREAMBLE = String.raw`\documentclass[11pt,a4paper,oneside]{book}
 \usepackage[top=19mm,bottom=19mm,left=18mm,right=18mm]{geometry}
 \usepackage{fontspec}
 \usepackage{microtype}
-\setmainfont{Literata}[BoldFont={Literata:mode=harf;wght=700}]
-\setmonofont{JetBrains Mono}[Ligatures=NoCommon,Contextuals=NoAlternate]
+\setmainfont{${texEscape(CONFIG.fonts.text)}}${CONFIG.fonts.bold ? `[BoldFont={${texEscape(CONFIG.fonts.bold)}}]` : ""}
+\setmonofont{${texEscape(CONFIG.fonts.code)}}[Ligatures=NoCommon,Contextuals=NoAlternate]
 \usepackage[table]{xcolor}
 \usepackage{titlesec}
 \usepackage{fancyvrb}

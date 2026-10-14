@@ -6,6 +6,7 @@
 // (_layouts/default.html) via src/lib/content-css.ts, so they are edited once.
 
 import { CODE_COMMENT_VAR, codeCss, diagramCss } from "../lib/content-css.js";
+import { CODE_STACK, TEXT_STACK } from "../lib/fonts.js";
 
 export const SITE_CSS = `
 :root {
@@ -20,8 +21,8 @@ export const SITE_CSS = `
   ${CODE_COMMENT_VAR}
   --callout-bg: #f8fafc;
   --callout-border: #cbd5e1;
-  --font-sans: "Literata", "Iowan Old Style", Georgia, "Times New Roman", serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: ${TEXT_STACK};
+  --font-mono: ${CODE_STACK};
 }
 
 * { box-sizing: border-box; }
