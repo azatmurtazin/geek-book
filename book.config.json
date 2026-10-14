@@ -2,6 +2,6 @@
   "title": "Lorem Ipsum",
   "tagline": "a sample book built by geek-book",
   "author": "geek-book",
-  "cover": "images/cover.jpg",
+  "cover": "book/images/cover.jpg",
   "docs": ["README.md"]
 }

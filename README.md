@@ -18,7 +18,7 @@ book.config.json     # title, tagline, sources, outputs (all optional but title)
 book/SUMMARY.md      # the table of contents, and the chapter order
 book/README.md       # becomes the website's front page
 book/chapters/       # the prose, one directory per chapter group
-book/cover.jpg       # optional; used as the PDF's cover page
+book/images/         # pictures the prose uses, and the cover
 ```
 
 `book.config.json` is the only thing the engine needs to learn that is specific
@@ -28,7 +28,7 @@ to your book:
 {
   "title": "Lorem Ipsum",
   "tagline": "a sample book built by geek-book",
-  "cover": "images/cover.jpg",
+  "cover": "book/images/cover.jpg",
   "docs": ["README.md"]
 }
 ```
@@ -36,6 +36,13 @@ to your book:
 Paths default to the layout above (`book/`, `build/html`, `build/book.pdf`,
 `book/cover.jpg`); the version is read from the book's own `package.json`.
 `npx geek-book config` prints what the engine resolved.
+
+Images are Markdown images, written either from the book root
+(`![alt](/images/photo.jpg)`) or relative to the file that carries them
+(`![alt](../../images/photo.jpg)`). Both editions resolve them: the website
+copies the file into the output tree and rewrites `src`, and the print build
+scales each picture to fit the text block. A source that climbs out of the book
+directory is a lint error — the web build has nowhere to put it.
 
 ## Commands
 
@@ -96,15 +103,14 @@ builds is the contract.
 | Path            | What lives there                                                    |
 | --------------- | ------------------------------------------------------------------- |
 | `bin/`          | The `geek-book` launcher (registers tsx, imports `src/cli.ts`).      |
-| `src/lib/`      | Shared pieces: config, paths, Markdown, HTML, code tokenizer.        |
+| `src/lib/`      | Shared pieces: config, paths, Markdown, HTML, code tokenizer, images.|
 | `src/build-*`   | The two edition builders (website, LaTeX/PDF).                       |
 | `src/lint/`     | Structural checks for the sources.                                   |
 | `src/md-to-html/` | The Markdown→HTML renderer, and a one-file CLI.                    |
 | `_layouts/`     | The standalone HTML shell (previews and `geek-book md`).             |
 | `docker/`       | The build image: Node + LuaLaTeX + the fonts.                        |
 | `templates/`    | Book-side scaffolding (config, Justfile, CI) for a new book repo.    |
-| `book/`         | The lorem ipsum sample.                                              |
-| `images/`       | Artwork for the sample (its cover, plus any images it uses).          |
+| `book/`         | The lorem ipsum sample, its `images/` and its cover.                 |
 
 ## Licence
 

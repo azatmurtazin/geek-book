@@ -18,3 +18,8 @@
 # Code
 
 - [Code](chapters/03_code/00_index.md)
+
+# Images
+
+- [Images](chapters/04_images/00_index.md)
+  - [A photograph](chapters/04_images/01_photograph.md)

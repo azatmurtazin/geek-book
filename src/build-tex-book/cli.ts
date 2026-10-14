@@ -118,7 +118,7 @@ export async function main(args: string[]): Promise<number> {
       tocDepth: item.indent && item.indent > 0 ? 1 : 0,
       runningTitle: item.label ? texEscape(item.label) : undefined,
     };
-    const { tex, figures } = await chapterToTex(fs.readFileSync(path.join(BOOK, item.relBook), "utf8"), ctx);
+    const { tex, figures, images } = await chapterToTex(fs.readFileSync(path.join(BOOK, item.relBook), "utf8"), ctx);
     for (const figure of figures) {
       const svgFile = path.join(figuresDir, figure.name.replace(/\.pdf$/, ".svg"));
       fs.writeFileSync(svgFile, figure.svg);
@@ -127,6 +127,14 @@ export async function main(args: string[]): Promise<number> {
         process.stderr.write(`geek-book: rsvg-convert failed for ${figure.name}:\n${failure}\n`);
         return 1;
       }
+    }
+    for (const image of images) {
+      const source = path.join(BOOK, image.relBook);
+      if (!fs.existsSync(source)) {
+        process.stderr.write(`geek-book: missing image ${path.relative(CONFIG.root, source)}\n`);
+        return 1;
+      }
+      fs.copyFileSync(source, path.join(figuresDir, image.name));
     }
     body.push(tex);
   }

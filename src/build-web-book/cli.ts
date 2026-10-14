@@ -17,7 +17,7 @@ import { CONFIG } from "../lib/book-config.js";
 import { escapeHtml } from "../lib/html.js";
 import { parseSummary } from "../lib/summary.js";
 import { renderSourceToHtml } from "../md-to-html/render.js";
-import { assemblePage, rewriteLinks, stylesheet, type NavSlot } from "./site.js";
+import { assemblePage, rewriteImages, rewriteLinks, stylesheet, type NavSlot } from "./site.js";
 
 function usage(): void {
   process.stderr.write("usage: geek-book web [output-dir]\n");
@@ -113,9 +113,37 @@ export async function main(args: string[]): Promise<number> {
   };
 
   // Front page (book/README.md) or a redirect to the first chapter.
+  /** Copy a book-relative asset next to the page that uses it. */
+  const copyAsset = (bookRel: string): boolean => {
+    const source = path.join(BOOK, bookRel);
+    if (!fs.existsSync(source)) {
+      process.stderr.write(`geek-book: missing image ${path.relative(CONFIG.root, source)}\n`);
+      return false;
+    }
+    const target = path.join(outputDir, bookRel);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(source, target);
+    return true;
+  };
+
+  /** A page body: marked + mermaid, links rewritten, images copied. */
+  const renderPage = async (mdPath: string, relBook: string, outputRel: string): Promise<string | null> => {
+    const linked = rewriteLinks(await renderSourceToHtml(fs.readFileSync(mdPath, "utf8")), relBook, pages);
+    const { body, assets } = rewriteImages(linked, relBook, outputRel);
+    for (const asset of assets) {
+      if (!copyAsset(asset)) {
+        return null;
+      }
+    }
+    return body;
+  };
+
   const readme = path.join(BOOK, "README.md");
   if (fs.existsSync(readme)) {
-    const body = rewriteLinks(await renderSourceToHtml(fs.readFileSync(readme, "utf8")), "README.md", pages);
+    const body = await renderPage(readme, "README.md", homeOutputRel);
+    if (body === null) {
+      return 1;
+    }
     writePage(homeOutputRel, CONFIG.title, body, readers[0] ?? null);
   } else {
     const first = written[0];
@@ -126,7 +154,10 @@ export async function main(args: string[]): Promise<number> {
   for (const reader of readers) {
     const { chapter } = reader;
     const mdPath = path.join(BOOK, chapter.relBook);
-    const body = rewriteLinks(await renderSourceToHtml(fs.readFileSync(mdPath, "utf8")), chapter.relBook, pages);
+    const body = await renderPage(mdPath, chapter.relBook, chapter.outputRel);
+    if (body === null) {
+      return 1;
+    }
     writePage(chapter.outputRel, chapter.label, body, reader);
   }
 

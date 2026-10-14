@@ -5,6 +5,7 @@
 import path from "node:path";
 import { escapeHtml, brandHtml } from "../lib/html.js";
 import { CONFIG } from "../lib/book-config.js";
+import { resolveImagePath } from "../lib/images.js";
 import { SITE_CSS } from "./site.css.js";
 
 export interface MappedChapter {
@@ -41,6 +42,34 @@ export function rewriteLinks(body: string, fromRelBook: string, pages: Map<strin
     const rel = path.posix.relative(fromDir, outputRel) || path.posix.basename(outputRel);
     return `href="${rel}${anchor ?? ""}"`;
   });
+}
+
+const IMG_RE = /(<img\b[^>]*?\bsrc=")([^"]*)(")/g;
+
+/**
+ * Rewrite every `<img src>` to a path relative to the built page and collect
+ * the book-relative source paths, so the build can copy the files into the
+ * output tree. Sources outside the book, and remote ones, are left alone.
+ */
+export function rewriteImages(
+  body: string,
+  fromRelBook: string,
+  fromOutputRel: string,
+): { body: string; assets: string[] } {
+  const assets: string[] = [];
+  const fromDir = path.posix.dirname(fromOutputRel.replace(/\\/g, "/"));
+  const out = body.replace(IMG_RE, (whole, prefix: string, src: string, suffix: string) => {
+    const bookRel = resolveImagePath(src, fromRelBook);
+    if (bookRel === null) {
+      return whole;
+    }
+    if (!assets.includes(bookRel)) {
+      assets.push(bookRel);
+    }
+    const rel = path.posix.relative(fromDir, bookRel) || path.posix.basename(bookRel);
+    return `${prefix}${rel}${suffix}`;
+  });
+  return { body: out, assets };
 }
 
 /** `<title> <version> — <tagline>`, the tagline dropped when there is none. */

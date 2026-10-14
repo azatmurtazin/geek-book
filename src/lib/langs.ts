@@ -9,7 +9,7 @@
  * book that wants a shorter one sets `languages` in its config.
  */
 export const DEFAULT_LANGS: string[] = [
-  "text", "plaintext", "ascii", "mermaid",
+  "text", "plaintext", "ascii", "mermaid", "markdown", "md",
   "bash", "sh", "shell", "console",
   "java", "cpp", "c++", "c", "go", "rust", "typescript", "ts", "javascript",
   "js", "jsx", "tsx", "php", "python", "elixir", "sql", "json", "yaml", "toml", "xml",
@@ -47,6 +47,8 @@ export const CODE_LABELS: Record<string, string> = {
   jsx: "JSX",
   json: "JSON",
   kotlin: "Kotlin",
+  markdown: "Markdown",
+  md: "Markdown",
   php: "PHP",
   py: "Python",
   python: "Python",

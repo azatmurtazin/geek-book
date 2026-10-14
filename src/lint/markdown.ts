@@ -85,6 +85,13 @@ export function linkTargets(line: string): LinkMatch[] {
 // LINK_RE is global and consumed through matchAll only.
 const LINK_RE = /(?<!!)\[(?<text>[^\]]*)\]\((?<target>[^)]+)\)/g;
 
+/** Extract every `![alt](target)` image source from a single line. */
+export function imageTargets(line: string): string[] {
+  return Array.from(line.matchAll(IMAGE_RE), (m) => m.groups?.target ?? "");
+}
+
+const IMAGE_RE = /!\[[^\]]*\]\((?<target>[^)\s]+)(?:\s+"[^"]*")?\)/g;
+
 /** Return the language of a fence info string, ignoring pandoc attributes.
  *
  * "go"                  -> "go"

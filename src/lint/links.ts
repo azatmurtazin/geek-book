@@ -3,11 +3,14 @@ import path from "node:path";
 import type { Reporter } from "./errors.js";
 import { slugify, splitLines } from "../lib/markdown.js";
 import {
+  imageTargets,
   linkTargets,
   matchFence,
   matchHeading,
   stripCodeSpans,
 } from "./markdown.js";
+import { resolveImagePath } from "../lib/images.js";
+import { BOOK } from "./paths.js";
 
 /** Resolve every internal link in `file`, checking targets and anchors. */
 export function checkLinks(
@@ -16,6 +19,10 @@ export function checkLinks(
   allFiles: string[],
   planned: Set<string>,
 ): void {
+  const fromRelBook = path.relative(BOOK, file).split(path.sep).join("/");
+  // The root docs (README.md, CHANGELOG.md) carry images no edition builds, so
+  // only files inside the book directory are checked for them.
+  const insideBook = fromRelBook !== "" && !fromRelBook.startsWith("..") && !path.isAbsolute(fromRelBook);
   const anchors = new Map<string, Set<string>>();
 
   for (const targetPath of allFiles) {
@@ -78,6 +85,23 @@ export function checkLinks(
       if (anchor && path.extname(resolved) === ".md"
         && !(anchors.get(resolved) ?? new Set<string>()).has(anchor)) {
         reporter.error(file, i, `anchor #${anchor} not found in ${pathPart}`);
+      }
+    }
+    if (insideBook) {
+      for (const target of imageTargets(stripCodeSpans(line))) {
+        const src = target.trim();
+        // Remote images and absolute URLs are the browser's business.
+        if (!src || /^[a-z][a-z0-9+.-]*:/i.test(src) || src.startsWith("//")) {
+          continue;
+        }
+        const relBook = resolveImagePath(src, fromRelBook);
+        if (relBook === null) {
+          reporter.error(file, i, `image is outside the book: ${src}`);
+          continue;
+        }
+        if (!fs.existsSync(path.join(BOOK, relBook))) {
+          reporter.error(file, i, `image does not exist: ${src}`);
+        }
       }
     }
   }

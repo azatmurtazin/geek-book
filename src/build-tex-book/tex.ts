@@ -13,6 +13,7 @@ import path from "node:path";
 import { marked } from "marked";
 import type { Token, Tokens } from "marked";
 import { slugify } from "../lib/markdown.js";
+import { resolveImagePath } from "../lib/images.js";
 import { CODE_LABELS } from "../lib/langs.js";
 import { CONFIG } from "../lib/book-config.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
@@ -36,6 +37,21 @@ export interface TexContext {
   tocDepth?: number;
   /** Plain-text title for the running head (the SUMMARY label). */
   runningTitle?: string;
+  /** Images the chapter uses, filled in as the prose is walked. */
+  images?: ImageCollector;
+}
+
+/** An image a chapter references, collected for the build to copy in. */
+export interface ImageAsset {
+  /** Source, relative to the book directory, e.g. `images/cover.jpg`. */
+  relBook: string;
+  /** Name of the copy placed under `figures/`, e.g. `c4-i0.jpg`. */
+  name: string;
+}
+
+export interface ImageCollector {
+  byRelBook: Map<string, string>;
+  list: ImageAsset[];
 }
 
 export interface Figure {
@@ -49,6 +65,7 @@ export interface Figure {
 export interface ChapterTex {
   tex: string;
   figures: Figure[];
+  images: ImageAsset[];
 }
 
 /**
@@ -150,8 +167,7 @@ function renderInline(tokens: Token[], ctx: TexContext, mode: InlineMode): strin
         out += texEscape(decodeEntities((token as Tokens.HTML | Tokens.Tag).text));
         break;
       case "image": {
-        const t = token as Tokens.Image;
-        out += `\\textit{${texEscape(t.text)}}`;
+        out += imageTex(token as Tokens.Image, ctx, false);
         break;
       }
       case "link":
@@ -267,6 +283,63 @@ function figureTex(figure: Figure): string {
   return `\\begin{center}\n\\includegraphics${opts}{figures/${figure.name}}\n\\end{center}`;
 }
 
+/**
+ * Place an image on the page.
+ *
+ * A photograph is copied into the build's `figures/` directory under a
+ * generated name, so the LaTeX never has to spell out a path into the repo (or
+ * a file name with characters TeX dislikes). One image per source per chapter
+ * is copied; repeats reuse the copy. The width and height together with
+ * `keepaspectratio` scale any picture — portrait or landscape — to fit inside
+ * the text block. An image the web build would not resolve falls back to its
+ * alt text, which is also what the book's Markdown says.
+ */
+function imageTex(token: Tokens.Image, ctx: TexContext, centered: boolean): string {
+  const target = registerImage(token.href ?? "", ctx);
+  if (target === null) {
+    return `\\textit{${texEscape(token.text)}}`;
+  }
+  const body = `\\includegraphics[width=\\linewidth,height=\\textheight,keepaspectratio]{${target}}`;
+  return centered ? `\\begin{center}\n${body}\n\\end{center}` : body;
+}
+
+/** The `figures/…` target for an image source, registering the copy to make. */
+function registerImage(src: string, ctx: TexContext): string | null {
+  if (!ctx.images) {
+    return null;
+  }
+  const relBook = resolveImagePath(src, ctx.relBook);
+  if (relBook === null) {
+    return null;
+  }
+  const known = ctx.images.byRelBook.get(relBook);
+  if (known !== undefined) {
+    return `figures/${known}`;
+  }
+  const ext = path.extname(relBook).toLowerCase() || ".png";
+  const name = `c${ctx.chapterId}-i${ctx.images.list.length}${ext}`;
+  ctx.images.byRelBook.set(relBook, name);
+  ctx.images.list.push({ relBook, name });
+  return `figures/${name}`;
+}
+
+/** A paragraph holding nothing but an image — the common case for a figure. */
+function standaloneImage(tokens: Token[]): Tokens.Image | null {
+  let found: Tokens.Image | null = null;
+  for (const token of tokens) {
+    if (token.type === "image" && found === null) {
+      found = token as Tokens.Image;
+      continue;
+    }
+    const text = token as { type?: string; text?: string };
+    if (text.type === "space" || (text.text ?? "").trim() === "") {
+      continue;
+    }
+    return null;
+  }
+  return found;
+}
+
 function renderBlocks(
   tokens: Token[],
   ctx: TexContext,
@@ -337,6 +410,11 @@ function renderBlocks(
             break;
           }
         }
+        const standalone = standaloneImage(t.tokens ?? []);
+        if (standalone !== null) {
+          parts.push(imageTex(standalone, ctx, true));
+          break;
+        }
         parts.push(renderInline(t.tokens ?? [], ctx, "body"));
         break;
       }
@@ -361,6 +439,8 @@ function renderBlocks(
  */
 export async function chapterToTex(source: string, ctx: TexContext): Promise<ChapterTex> {
   const { markdown, diagrams } = await preprocessMermaidMd(substituteContentPlaceholders(source));
+  const images: ImageCollector = { byRelBook: new Map(), list: [] };
+  ctx.images = images;
   const figures: Figure[] = [];
   const byIndex = new Map<number, Figure>();
   for (const [index, source] of diagrams) {
@@ -373,7 +453,7 @@ export async function chapterToTex(source: string, ctx: TexContext): Promise<Cha
     byIndex.set(index, figure);
   }
   const tokens = marked.lexer(markdown, { gfm: true });
-  return { tex: renderBlocks(tokens, ctx, byIndex, 0), figures };
+  return { tex: renderBlocks(tokens, ctx, byIndex, 0), figures, images: images.list };
 }
 
 /**
