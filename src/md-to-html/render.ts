@@ -15,8 +15,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { marked } from "marked";
-import type { Token, Tokens, RendererThis } from "marked";
-import { slugify } from "../lib/markdown.js";
+import type { Tokens, RendererThis } from "marked";
+import { slugify, plainText } from "../lib/markdown.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
 import { CODE_LABELS } from "../lib/langs.js";
 import { escapeHtml, brandHtml } from "../lib/html.js";
@@ -46,17 +46,6 @@ marked.use({
     },
   },
 });
-
-/** Concatenated text of inline tokens — heading labels and slugs. */
-export function plainText(tokens: Token[]): string {
-  let out = "";
-  for (const token of tokens) {
-    const anyToken = token as { text?: string; tokens?: Token[] };
-    if (anyToken.tokens && anyToken.tokens.length) out += plainText(anyToken.tokens);
-    else if (anyToken.text) out += anyToken.text;
-  }
-  return out;
-}
 
 /**
  * Wrap comment runs of a code block in `<span class="code-comment">`, leaving

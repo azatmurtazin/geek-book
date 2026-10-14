@@ -18,7 +18,10 @@ import { CONFIG } from "../lib/book-config.js";
 import { parseSummary } from "../lib/summary.js";
 import { pdfPages } from "../pdf-info/pdf.js";
 import { RemoteImages } from "../lib/remote-images.js";
-import { PREAMBLE, chapterToTex, texEscape, type ChapterTex, type TexContext } from "./tex.js";
+import { parseChapter } from "./parse.js";
+import { chapterTex, texEscape } from "./tex.js";
+import { PREAMBLE } from "./preamble.js";
+import type { Chapter, ChapterContext } from "./ir.js";
 
 /** Absolute locations for tools that macOS may not put on a non-login PATH. */
 const TOOL_FALLBACKS: Record<string, string[]> = {
@@ -116,23 +119,25 @@ export async function main(args: string[]): Promise<number> {
     if (!item.relBook) continue;
     const chapterId = idOf.get(item.relBook);
     if (chapterId === undefined) continue;
-    const ctx: TexContext = {
+    const ctx: ChapterContext = {
       chapterId,
       relBook: item.relBook,
       idOf,
-      tocDepth: item.indent && item.indent > 0 ? 1 : 0,
-      runningTitle: item.label ? texEscape(item.label) : undefined,
       remote,
     };
-    let chapter: ChapterTex;
+    let chapter: Chapter;
     try {
-      chapter = await chapterToTex(fs.readFileSync(path.join(BOOK, item.relBook), "utf8"), ctx);
+      chapter = await parseChapter(fs.readFileSync(path.join(BOOK, item.relBook), "utf8"), ctx);
     } catch (error) {
       // A remote image the build could not fetch: the message says which URL.
       process.stderr.write(`geek-book: ${(error as Error).message}\n`);
       return 1;
     }
-    const { tex, figures, images } = chapter;
+    const tex = chapterTex(chapter, {
+      tocDepth: item.indent && item.indent > 0 ? 1 : 0,
+      runningTitle: item.label,
+    });
+    const { figures, images } = chapter;
     for (const figure of figures) {
       const svgFile = path.join(figuresDir, figure.name.replace(/\.pdf$/, ".svg"));
       fs.writeFileSync(svgFile, figure.svg);
