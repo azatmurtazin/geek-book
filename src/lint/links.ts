@@ -9,7 +9,7 @@ import {
   matchHeading,
   stripCodeSpans,
 } from "./markdown.js";
-import { resolveImagePath } from "../lib/images.js";
+import { isRemoteImage, resolveImagePath } from "../lib/images.js";
 import { BOOK } from "./paths.js";
 
 /** Resolve every internal link in `file`, checking targets and anchors. */
@@ -90,8 +90,17 @@ export function checkLinks(
     if (insideBook) {
       for (const target of imageTargets(stripCodeSpans(line))) {
         const src = target.trim();
-        // Remote images and absolute URLs are the browser's business.
-        if (!src || /^[a-z][a-z0-9+.-]*:/i.test(src) || src.startsWith("//")) {
+        if (!src) {
+          continue;
+        }
+        // Remote images are fetched at build time (src/lib/remote-images.ts):
+        // not an offline check's business, but the build then needs the network.
+        if (isRemoteImage(src)) {
+          reporter.notes.push(`remote image, fetched at build time: ${src}`);
+          continue;
+        }
+        // Other schemes (data:, file:, protocol-relative) have no local file.
+        if (/^[a-z][a-z0-9+.-]*:/i.test(src) || src.startsWith("//")) {
           continue;
         }
         const relBook = resolveImagePath(src, fromRelBook);

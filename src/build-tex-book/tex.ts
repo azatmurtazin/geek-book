@@ -14,6 +14,7 @@ import { marked } from "marked";
 import type { Token, Tokens } from "marked";
 import { slugify } from "../lib/markdown.js";
 import { resolveImagePath } from "../lib/images.js";
+import type { RemoteImages } from "../lib/remote-images.js";
 import { CODE_LABELS } from "../lib/langs.js";
 import { CONFIG } from "../lib/book-config.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
@@ -39,6 +40,8 @@ export interface TexContext {
   runningTitle?: string;
   /** Images the chapter uses, filled in as the prose is walked. */
   images?: ImageCollector;
+  /** Remote images already fetched for this build (see lib/remote-images.ts). */
+  remote?: RemoteImages;
 }
 
 /** An image a chapter references, collected for the build to copy in. */
@@ -296,7 +299,8 @@ function figureTex(figure: Figure): string {
  * A photograph is copied into the build's `figures/` directory under a
  * generated name, so the LaTeX never has to spell out a path into the repo (or
  * a file name with characters TeX dislikes). One image per source per chapter
- * is copied; repeats reuse the copy. The width and height together with
+ * is copied; repeats reuse the copy. A remote source was fetched into the same
+ * directory before the chapter was rendered. The width and height together with
  * `keepaspectratio` scale any picture — portrait or landscape — to fit inside
  * the text block. An image the web build would not resolve falls back to its
  * alt text, which is also what the book's Markdown says.
@@ -312,11 +316,15 @@ function imageTex(token: Tokens.Image, ctx: TexContext, centered: boolean): stri
 
 /** The `figures/…` target for an image source, registering the copy to make. */
 function registerImage(src: string, ctx: TexContext): string | null {
-  if (!ctx.images) {
-    return null;
-  }
   const relBook = resolveImagePath(src, ctx.relBook);
   if (relBook === null) {
+    // A remote source is already in `figures/` — `collect` fetched it before
+    // the chapter was rendered. A scheme nothing fetches (data:, mailto:) has
+    // no file, so it falls back to its alt text.
+    const fetched = ctx.remote?.nameFor(src) ?? null;
+    return fetched === null ? null : `figures/${fetched}`;
+  }
+  if (!ctx.images) {
     return null;
   }
   const known = ctx.images.byRelBook.get(relBook);
@@ -445,7 +453,10 @@ function renderBlocks(
  * placements), the rest walks marked's block tokens into LaTeX.
  */
 export async function chapterToTex(source: string, ctx: TexContext): Promise<ChapterTex> {
-  const { markdown, diagrams } = await preprocessMermaidMd(substituteContentPlaceholders(source));
+  const substituted = substituteContentPlaceholders(source);
+  // Remote images have to be on disk before the renderer reaches them.
+  await ctx.remote?.collect(substituted);
+  const { markdown, diagrams } = await preprocessMermaidMd(substituted);
   const images: ImageCollector = { byRelBook: new Map(), list: [] };
   ctx.images = images;
   const figures: Figure[] = [];

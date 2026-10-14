@@ -1,0 +1,143 @@
+// Remote image sources: `![A bird](https://example.org/bird.png)`.
+//
+// A printed book cannot hotlink, and a book that pulls a picture off someone
+// else's server at reading time breaks the day that server does. So the build
+// fetches every remote image once per run, into the build directory (which is
+// disposable and git-ignored), and both editions then read the local copy —
+// the website ships it, the print build embeds it. A book that uses remote
+// images therefore needs the network to build; `geek-book lint` says which
+// sources those are, and a fetch that fails stops the build with the URL.
+//
+// Files are named after the source URL: `<sha1 of the url><extension>`, the
+// extension taken from the server's content type. Names are stable across
+// builds, and one URL used in several chapters is fetched once.
+
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { marked } from "marked";
+import type { Tokens } from "marked";
+import { isRemoteImage } from "./images.js";
+
+/** Where remote images land inside a web build, relative to its root. */
+export const REMOTE_IMAGE_DIR = "images/remote";
+
+/** Extension for each content type a server may label an image with. */
+const CONTENT_TYPES: Record<string, string> = {
+  "image/png": ".png",
+  "image/jpeg": ".jpg",
+  "image/gif": ".gif",
+  "image/webp": ".webp",
+  "image/avif": ".avif",
+  "image/bmp": ".bmp",
+  "image/tiff": ".tif",
+  "image/svg+xml": ".svg",
+};
+
+/** Extensions that mark a URL as pointing at an image, for unlabeled hosts. */
+const IMAGE_EXTENSIONS = new Set([...Object.values(CONTENT_TYPES), ".jpeg", ".tiff"]);
+
+/** Content types servers send when they do not label the file: trust the URL. */
+const UNLABELED = new Set(["", "application/octet-stream", "binary/octet-stream"]);
+
+/** What LuaTeX reads off disk without a converter. */
+const PRINT_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".pdf"]);
+
+const FETCH_TIMEOUT_MS = 30_000;
+
+export interface RemoteImageOptions {
+  /** Reject formats the printed edition cannot embed. */
+  print?: boolean;
+}
+
+/**
+ * The remote images one build has fetched, keyed by source URL.
+ *
+ * `collect` is called with a chapter's Markdown before it is rendered, so that
+ * by the time a renderer asks `nameFor` the file is already on disk.
+ */
+export class RemoteImages {
+  private readonly dir: string;
+  private readonly print: boolean;
+  private readonly files = new Map<string, string>();
+  private downloads = 0;
+
+  constructor(dir: string, options: RemoteImageOptions = {}) {
+    this.dir = dir;
+    this.print = options.print === true;
+  }
+
+  /** How many files this build fetched; repeats of a URL do not count again. */
+  get fetched(): number {
+    return this.downloads;
+  }
+
+  /** The file a URL was fetched into, as `<name>` inside the download directory. */
+  nameFor(url: string): string | null {
+    return this.files.get(url.trim()) ?? null;
+  }
+
+  /** Fetch every remote image `markdown` references, ignoring code samples. */
+  async collect(markdown: string): Promise<void> {
+    const urls: string[] = [];
+    marked.walkTokens(marked.lexer(markdown), (token) => {
+      if (token.type !== "image") {
+        return;
+      }
+      const src = ((token as Tokens.Image).href ?? "").trim();
+      if (isRemoteImage(src) && !urls.includes(src)) {
+        urls.push(src);
+      }
+    });
+    for (const url of urls) {
+      if (!this.files.has(url)) {
+        await this.fetch(url);
+      }
+    }
+  }
+
+  private async fetch(url: string): Promise<void> {
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        redirect: "follow",
+        headers: { "user-agent": "geek-book" },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+    } catch (error) {
+      throw new Error(`cannot fetch image ${url}: ${(error as Error).message}`);
+    }
+    if (!response.ok) {
+      throw new Error(`cannot fetch image ${url}: HTTP ${response.status}`);
+    }
+    const type = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+    const ext = imageExtension(type, url);
+    if (ext === null) {
+      throw new Error(`not an image: ${url} (served ${type || "no content type"})`);
+    }
+    if (this.print && !PRINT_EXTENSIONS.has(ext)) {
+      throw new Error(`the printed edition cannot embed ${url} (${type}); it reads png and jpeg`);
+    }
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const name = `${createHash("sha1").update(url).digest("hex").slice(0, 12)}${ext}`;
+    fs.mkdirSync(this.dir, { recursive: true });
+    fs.writeFileSync(path.join(this.dir, name), bytes);
+    this.files.set(url, name);
+    this.downloads += 1;
+  }
+}
+
+/** The extension to save a fetched image under, or `null` when it is not one. */
+function imageExtension(contentType: string, url: string): string | null {
+  const byType = CONTENT_TYPES[contentType];
+  if (byType !== undefined) {
+    return byType;
+  }
+  if (UNLABELED.has(contentType)) {
+    const ext = path.posix.extname(new URL(url).pathname).toLowerCase();
+    if (IMAGE_EXTENSIONS.has(ext)) {
+      return ext;
+    }
+  }
+  return null;
+}

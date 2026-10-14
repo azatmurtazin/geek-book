@@ -19,5 +19,6 @@ photograph and a landscape one land on the page by the same rule.
 
 The linter checks that the file is there, and refuses a source that climbs out
 of the book directory: the web build mirrors the book tree, so an image living
-outside it has nowhere to go. [A photograph](01_photograph.md) shows the other
-spelling.
+outside it has nowhere to go. A source may also be a URL, which the build
+fetches before either edition reads it. [A photograph](01_photograph.md) shows
+the other local spelling, and [a remote picture](02_remote.md) the fetched one.

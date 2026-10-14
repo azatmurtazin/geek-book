@@ -18,6 +18,7 @@ import { escapeHtml } from "../lib/html.js";
 import { parseSummary } from "../lib/summary.js";
 import { renderSourceToHtml } from "../md-to-html/render.js";
 import { assemblePage, rewriteImages, rewriteLinks, stylesheet, type NavSlot } from "./site.js";
+import { REMOTE_IMAGE_DIR, RemoteImages } from "../lib/remote-images.js";
 
 function usage(): void {
   process.stderr.write("usage: geek-book web [output-dir]\n");
@@ -87,6 +88,9 @@ export async function main(args: string[]): Promise<number> {
   fs.mkdirSync(path.join(outputDir, "assets"), { recursive: true });
   fs.writeFileSync(path.join(outputDir, "assets", "style.css"), stylesheet());
 
+  // Remote images are fetched into the site, so a reader needs no other server.
+  const remote = new RemoteImages(path.join(outputDir, REMOTE_IMAGE_DIR));
+
   const homeOutputRel = "index.html";
 
   const writePage = (
@@ -128,8 +132,17 @@ export async function main(args: string[]): Promise<number> {
 
   /** A page body: marked + mermaid, links rewritten, images copied. */
   const renderPage = async (mdPath: string, relBook: string, outputRel: string): Promise<string | null> => {
-    const linked = rewriteLinks(await renderSourceToHtml(fs.readFileSync(mdPath, "utf8")), relBook, pages);
-    const { body, assets } = rewriteImages(linked, relBook, outputRel);
+    const markdown = fs.readFileSync(mdPath, "utf8");
+    try {
+      // Remote images have to be in the output before the page points at them.
+      await remote.collect(markdown);
+    } catch (error) {
+      // A remote image the build could not fetch: the message says which URL.
+      process.stderr.write(`geek-book: ${(error as Error).message}\n`);
+      return null;
+    }
+    const linked = rewriteLinks(await renderSourceToHtml(markdown), relBook, pages);
+    const { body, assets } = rewriteImages(linked, relBook, outputRel, remote);
     for (const asset of assets) {
       if (!copyAsset(asset)) {
         return null;
@@ -161,6 +174,9 @@ export async function main(args: string[]): Promise<number> {
     writePage(chapter.outputRel, chapter.label, body, reader);
   }
 
+  if (remote.fetched > 0) {
+    console.log(`geek-book: fetched ${remote.fetched} remote ${remote.fetched === 1 ? "image" : "images"}`);
+  }
   console.log(`geek-book: ${outputDir}/ (${written.length} chapters + index)`);
   return 0;
 }

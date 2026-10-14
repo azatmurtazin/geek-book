@@ -23,3 +23,4 @@
 
 - [Images](chapters/04_images/00_index.md)
   - [A photograph](chapters/04_images/01_photograph.md)
+  - [A remote picture](chapters/04_images/02_remote.md)

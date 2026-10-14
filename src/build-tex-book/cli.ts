@@ -17,7 +17,8 @@ import { BOOK, COVER, SUMMARY } from "../lint/paths.js";
 import { CONFIG } from "../lib/book-config.js";
 import { parseSummary } from "../lib/summary.js";
 import { pdfPages } from "../pdf-info/pdf.js";
-import { PREAMBLE, chapterToTex, texEscape, type TexContext } from "./tex.js";
+import { RemoteImages } from "../lib/remote-images.js";
+import { PREAMBLE, chapterToTex, texEscape, type ChapterTex, type TexContext } from "./tex.js";
 
 /** Absolute locations for tools that macOS may not put on a non-login PATH. */
 const TOOL_FALLBACKS: Record<string, string[]> = {
@@ -79,6 +80,8 @@ export async function main(args: string[]): Promise<number> {
   const jobname = path.basename(outputPdf, path.extname(outputPdf)) || "book";
   const texFile = path.join(buildDir, "book.tex");
   const figuresDir = path.join(buildDir, "figures");
+  // Remote images land among the figures they will be embedded as.
+  const remote = new RemoteImages(figuresDir, { print: true });
 
   if (!fs.existsSync(SUMMARY)) {
     process.stderr.write(`geek-book: no SUMMARY.md at ${SUMMARY}\n`);
@@ -119,8 +122,17 @@ export async function main(args: string[]): Promise<number> {
       idOf,
       tocDepth: item.indent && item.indent > 0 ? 1 : 0,
       runningTitle: item.label ? texEscape(item.label) : undefined,
+      remote,
     };
-    const { tex, figures, images } = await chapterToTex(fs.readFileSync(path.join(BOOK, item.relBook), "utf8"), ctx);
+    let chapter: ChapterTex;
+    try {
+      chapter = await chapterToTex(fs.readFileSync(path.join(BOOK, item.relBook), "utf8"), ctx);
+    } catch (error) {
+      // A remote image the build could not fetch: the message says which URL.
+      process.stderr.write(`geek-book: ${(error as Error).message}\n`);
+      return 1;
+    }
+    const { tex, figures, images } = chapter;
     for (const figure of figures) {
       const svgFile = path.join(figuresDir, figure.name.replace(/\.pdf$/, ".svg"));
       fs.writeFileSync(svgFile, figure.svg);
@@ -182,6 +194,9 @@ export async function main(args: string[]): Promise<number> {
   }
 
   const pages = await pdfPages(outputPdf);
+  if (remote.fetched > 0) {
+    console.log(`geek-book: fetched ${remote.fetched} remote ${remote.fetched === 1 ? "image" : "images"}`);
+  }
   console.log(`geek-book: ${path.relative(CONFIG.root, outputPdf)} (${chapterCount} chapters, ${pages} pages)`);
   return 0;
 }

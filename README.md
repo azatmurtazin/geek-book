@@ -44,6 +44,15 @@ copies the file into the output tree and rewrites `src`, and the print build
 scales each picture to fit the text block. A source that climbs out of the book
 directory is a lint error — the web build has nowhere to put it.
 
+A source may also be an `http(s)` URL
+(`![alt](https://example.org/photo.jpg)`). The build fetches it once per run into
+the build directory and both editions read that copy, so the website ships the
+picture with itself and the printed book embeds it. A book that uses remote
+images therefore needs the network to build (and so does CI and the pre-commit
+hook), which `geek-book lint` reports; a fetch that fails stops the build with
+the URL. The print edition reads png and jpeg only — anything else is refused
+with a message, since LaTeX cannot embed it.
+
 ## Commands
 
 | Command                   | What it does                                              |
