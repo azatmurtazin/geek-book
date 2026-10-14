@@ -77,6 +77,12 @@ export class RemoteImages {
     return this.files.get(url.trim()) ?? null;
   }
 
+  /** The absolute path a URL was fetched to, or `null` when this build has not. */
+  fileFor(url: string): string | null {
+    const name = this.files.get(url.trim());
+    return name === undefined ? null : path.join(this.dir, name);
+  }
+
   /** Fetch every remote image `markdown` references, ignoring code samples. */
   async collect(markdown: string): Promise<void> {
     const urls: string[] = [];

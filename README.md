@@ -41,8 +41,10 @@ Images are Markdown images, written either from the book root
 (`![alt](/images/photo.jpg)`) or relative to the file that carries them
 (`![alt](../../images/photo.jpg)`). Both editions resolve them: the website
 copies the file into the output tree and rewrites `src`, and the print build
-scales each picture to fit the text block. A source that climbs out of the book
-directory is a lint error — the web build has nowhere to put it.
+embeds it at the size the website gives it — 96 pixels to the inch — shrinking
+it to the text block only when it would not fit, so a small picture is never
+stretched across the page. A source that climbs out of the book directory is a
+lint error — the web build has nowhere to put it.
 
 A source may also be an `http(s)` URL
 (`![alt](https://example.org/photo.jpg)`). The build fetches it once per run into

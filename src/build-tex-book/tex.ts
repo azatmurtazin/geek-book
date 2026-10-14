@@ -14,6 +14,7 @@ import { marked } from "marked";
 import type { Token, Tokens } from "marked";
 import { slugify } from "../lib/markdown.js";
 import { resolveImagePath } from "../lib/images.js";
+import { imagePixels } from "../lib/image-size.js";
 import type { RemoteImages } from "../lib/remote-images.js";
 import { CODE_LABELS } from "../lib/langs.js";
 import { CONFIG } from "../lib/book-config.js";
@@ -300,42 +301,78 @@ function figureTex(figure: Figure): string {
  * generated name, so the LaTeX never has to spell out a path into the repo (or
  * a file name with characters TeX dislikes). One image per source per chapter
  * is copied; repeats reuse the copy. A remote source was fetched into the same
- * directory before the chapter was rendered. The width and height together with
- * `keepaspectratio` scale any picture — portrait or landscape — to fit inside
- * the text block. An image the web build would not resolve falls back to its
+ * directory before the chapter was rendered. The size comes from the file's own
+ * pixel dimensions (see imageOptions), so a small picture keeps the size the web
+ * edition gives it. An image the web build would not resolve falls back to its
  * alt text, which is also what the book's Markdown says.
  */
 function imageTex(token: Tokens.Image, ctx: TexContext, centered: boolean): string {
-  const target = registerImage(token.href ?? "", ctx);
-  if (target === null) {
+  const placed = registerImage(token.href ?? "", ctx);
+  if (placed === null) {
     return `\\textit{${texEscape(token.text)}}`;
   }
-  const body = `\\includegraphics[width=\\linewidth,height=\\textheight,keepaspectratio]{${target}}`;
+  const body = `\\includegraphics${imageOptions(placed.source)}{${placed.target}}`;
   return centered ? `\\begin{center}\n${body}\n\\end{center}` : body;
 }
 
+/**
+ * The size options for one picture, given the file it is copied from.
+ *
+ * A picture prints at the size the web edition gives it — 96 pixels to the inch,
+ * so the sample's 409-pixel bird is 108mm wide — and is scaled down to the text
+ * block only when it would not fit, by width or by height, whichever binds
+ * first. A picture smaller than the block is therefore never blown up to it:
+ * stretching is what pixelates a small drawing, and the two editions then agree
+ * on how large a picture is. A file whose every dimension this cannot read (a
+ * format it does not parse, or an unreadable file) falls back to filling the
+ * block, which is how the builder placed every picture before.
+ */
+function imageOptions(source: string): string {
+  const pixels = imagePixels(source);
+  if (pixels === null) {
+    return "[width=\\linewidth,height=\\textheight,keepaspectratio]";
+  }
+  const widthMm = pxToMm(pixels.width);
+  const heightMm = pxToMm(pixels.height);
+  if (widthMm <= TEXT_WIDTH_MM && heightMm <= TEXT_HEIGHT_MM) {
+    return `[width=${widthMm.toFixed(2)}mm]`;
+  }
+  const byWidth = widthMm / TEXT_WIDTH_MM;
+  const byHeight = heightMm / TEXT_HEIGHT_MM;
+  return byWidth >= byHeight ? "[width=\\linewidth]" : "[height=\\textheight]";
+}
+
+/** Where an image is copied to, and the file to copy it from. */
+interface PlacedImage {
+  /** `figures/…` target, as written into the LaTeX. */
+  target: string;
+  /** Absolute path of the source file, for reading its dimensions. */
+  source: string;
+}
+
 /** The `figures/…` target for an image source, registering the copy to make. */
-function registerImage(src: string, ctx: TexContext): string | null {
+function registerImage(src: string, ctx: TexContext): PlacedImage | null {
   const relBook = resolveImagePath(src, ctx.relBook);
   if (relBook === null) {
     // A remote source is already in `figures/` — `collect` fetched it before
     // the chapter was rendered. A scheme nothing fetches (data:, mailto:) has
     // no file, so it falls back to its alt text.
-    const fetched = ctx.remote?.nameFor(src) ?? null;
-    return fetched === null ? null : `figures/${fetched}`;
+    const file = ctx.remote?.fileFor(src) ?? null;
+    return file === null ? null : { target: `figures/${path.basename(file)}`, source: file };
   }
   if (!ctx.images) {
     return null;
   }
+  const source = path.join(CONFIG.bookDir, relBook);
   const known = ctx.images.byRelBook.get(relBook);
   if (known !== undefined) {
-    return `figures/${known}`;
+    return { target: `figures/${known}`, source };
   }
   const ext = path.extname(relBook).toLowerCase() || ".png";
   const name = `c${ctx.chapterId}-i${ctx.images.list.length}${ext}`;
   ctx.images.byRelBook.set(relBook, name);
   ctx.images.list.push({ relBook, name });
-  return `figures/${name}`;
+  return { target: `figures/${name}`, source };
 }
 
 /** A paragraph holding nothing but an image — the common case for a figure. */
