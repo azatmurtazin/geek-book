@@ -1,0 +1,75 @@
+name: CI
+
+# Lint the engine and the sample book, then build both editions — website
+# (build/html/) and print PDF (build/book.pdf) — in the engine's own Docker
+# image, the same service the `just docker-book` recipe runs, with the image
+# layers cached between runs. The sample exists so that the engine is proven to
+# build a book end to end on every change.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: extractions/setup-just@v4
+        with:
+          just-version: "1.58.0"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "26"
+          cache: npm
+      - run: npm ci
+      - run: just lint
+
+  book:
+    name: Build the sample (website + PDF)
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      # Cache the LaTeX-heavy image layers so it is not rebuilt from scratch.
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/Docker.book
+          tags: geek-book/book:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The `book` service starts as root, chowns its node_modules volume and
+      # drops to the image's `node` user (uid 1000). The GitHub workspace is
+      # owned by uid 1001, so hand it to 1000 first; the compose service then
+      # builds build/html/ and build/book.pdf on the bind-mounted repo.
+      - name: Build the sample
+        run: |
+          sudo chown -R 1000:1000 .
+          docker compose run --rm book
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sample-web
+          path: build/html
+          retention-days: 7
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sample-pdf
+          path: build/book.pdf
+          retention-days: 7

@@ -1,0 +1,42 @@
+{
+  "name": "geek-book",
+  "version": "0.1.0",
+  "description": "A build engine for books: Markdown in, static website and print-ready PDF out.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "geek-book": "./bin/geek-book.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "_layouts",
+    "docker",
+    "docker-compose.yml",
+    "tsconfig.json"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "geek-book": "node bin/geek-book.mjs",
+    "web": "node bin/geek-book.mjs web",
+    "pdf": "node bin/geek-book.mjs pdf",
+    "serve": "node bin/geek-book.mjs serve",
+    "lint": "npm run typecheck && node bin/geek-book.mjs lint",
+    "lint-summary": "node bin/geek-book.mjs lint summary",
+    "lint-chapters": "node bin/geek-book.mjs lint chapters",
+    "lint-links": "node bin/geek-book.mjs lint links",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "jsdom": "^26.1.0",
+    "marked": "^18.1.0",
+    "mermaid": "^11.17.2",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2"
+  }
+}

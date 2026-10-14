@@ -1,0 +1,10 @@
+.git
+node_modules
+build
+*.pdf
+book.html
+toc.html
+erl_crash.dump
+.DS_Store
+.idea
+.vscode

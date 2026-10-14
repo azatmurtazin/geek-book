@@ -1,0 +1,135 @@
+// Build the book as a static website with HonKit-style navigation.
+//
+// Every written chapter from the book's SUMMARY.md becomes a page in the output
+// directory, wrapped in a layout with a fixed sidebar (the SUMMARY tree, the
+// current chapter highlighted), a header with previous/next links, and
+// previous/next navigation under the content. Intra-book `.md` links and
+// `#anchors` are rewritten to the built `.html` files, using the same slug
+// rules the linter checks. `<book>/README.md` becomes index.html.
+//
+// Usage: geek-book web [output-dir]
+
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { BOOK, SUMMARY } from "../lint/paths.js";
+import { CONFIG } from "../lib/book-config.js";
+import { escapeHtml } from "../lib/html.js";
+import { parseSummary } from "../lib/summary.js";
+import { renderSourceToHtml } from "../md-to-html/render.js";
+import { assemblePage, rewriteLinks, stylesheet, type NavSlot } from "./site.js";
+
+function usage(): void {
+  process.stderr.write("usage: geek-book web [output-dir]\n");
+}
+
+export async function main(args: string[]): Promise<number> {
+  if (args.length > 1) {
+    usage();
+    return 2;
+  }
+  const outputDir = args[0] ? path.resolve(args[0]) : CONFIG.outputWeb;
+
+  if (!fs.existsSync(SUMMARY)) {
+    process.stderr.write(`geek-book: no SUMMARY.md at ${SUMMARY}\n`);
+    return 1;
+  }
+  const items = parseSummary(fs.readFileSync(SUMMARY, "utf8"));
+
+  const pages = new Map<string, string>();
+  const written: { relBook: string; label: string; indent: number; outputRel: string }[] = [];
+
+  for (const item of items) {
+    if (item.kind !== "entry" || !item.relBook) {
+      continue;
+    }
+    const mdPath = path.join(BOOK, item.relBook);
+    if (!fs.existsSync(mdPath)) {
+      continue;
+    }
+    const outputRel = item.relBook.replace(/\.md$/i, ".html");
+    pages.set(item.relBook, outputRel);
+    written.push({ relBook: item.relBook, label: item.label ?? item.relBook, indent: item.indent ?? 0, outputRel });
+  }
+
+  if (!written.length) {
+    process.stderr.write("geek-book: no written chapters in SUMMARY.md\n");
+    return 1;
+  }
+
+  // Keep only sidebar groups that contain a written chapter.
+  const navItems: { kind: "group" | "entry"; label: string; relBook?: string; indent?: number }[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.kind === "group") {
+      let hasChapter = false;
+      for (let j = i + 1; j < items.length && items[j].kind !== "group"; j++) {
+        if (pages.has(items[j].relBook ?? "")) {
+          hasChapter = true;
+          break;
+        }
+      }
+      if (hasChapter) navItems.push({ kind: "group", label: item.title ?? "" });
+      continue;
+    }
+    if (pages.has(item.relBook ?? "")) {
+      navItems.push({ kind: "entry", label: item.label ?? "", relBook: item.relBook, indent: item.indent ?? 0 });
+    }
+  }
+
+  const readers = written.map((chapter, index) => ({
+    chapter,
+    prev: index > 0 ? written[index - 1] : null,
+    next: index + 1 < written.length ? written[index + 1] : null,
+  }));
+
+  fs.rmSync(outputDir, { recursive: true, force: true });
+  fs.mkdirSync(path.join(outputDir, "assets"), { recursive: true });
+  fs.writeFileSync(path.join(outputDir, "assets", "style.css"), stylesheet());
+
+  const homeOutputRel = "index.html";
+
+  const writePage = (
+    outputRel: string,
+    title: string,
+    content: string,
+    slot: (typeof readers)[number] | null,
+  ): void => {
+    const prev: NavSlot | null = slot?.prev ? { label: slot.prev.label, outputRel: slot.prev.outputRel } : null;
+    const next: NavSlot | null = slot?.next ? { label: slot.next.label, outputRel: slot.next.outputRel } : null;
+    const html = assemblePage({
+      title,
+      content,
+      items: navItems,
+      pages,
+      activeOutputRel: outputRel,
+      homeOutputRel,
+      prev,
+      next,
+    });
+    const outFile = path.join(outputDir, outputRel);
+    fs.mkdirSync(path.dirname(outFile), { recursive: true });
+    fs.writeFileSync(outFile, html);
+  };
+
+  // Front page (book/README.md) or a redirect to the first chapter.
+  const readme = path.join(BOOK, "README.md");
+  if (fs.existsSync(readme)) {
+    const body = rewriteLinks(await renderSourceToHtml(fs.readFileSync(readme, "utf8")), "README.md", pages);
+    writePage(homeOutputRel, CONFIG.title, body, readers[0] ?? null);
+  } else {
+    const first = written[0];
+    const body = `<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${path.posix.relative(path.posix.dirname(homeOutputRel), first.outputRel) || first.outputRel}"><title>${escapeHtml(CONFIG.title)}</title></head><body></body></html>`;
+    fs.writeFileSync(path.join(outputDir, homeOutputRel), body);
+  }
+
+  for (const reader of readers) {
+    const { chapter } = reader;
+    const mdPath = path.join(BOOK, chapter.relBook);
+    const body = rewriteLinks(await renderSourceToHtml(fs.readFileSync(mdPath, "utf8")), chapter.relBook, pages);
+    writePage(chapter.outputRel, chapter.label, body, reader);
+  }
+
+  console.log(`geek-book: ${outputDir}/ (${written.length} chapters + index)`);
+  return 0;
+}

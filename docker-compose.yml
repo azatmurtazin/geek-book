@@ -1,0 +1,33 @@
+# geek-book — dockerized build of the engine's own sample book.
+#
+#   docker compose run --rm book     # build build/html/ + build/book.pdf
+#
+# The repo is bind-mounted into /workspace; build/ output lands on the host.
+# node_modules lives in a named volume so the container's npm install fetches
+# Linux binaries instead of reusing the host's. A consuming book adds its own
+# services next to `book` (see the engine README) and builds this one from the
+# engine checkout.
+
+name: geek-book
+
+services:
+  book:
+    build:
+      context: .
+      dockerfile: docker/Docker.book
+    image: geek-book/book:latest
+    # entrypoint runs the per-container setup as root (chown of the fresh
+    # node_modules volume) and then drops to node (uid/gid 1000 == the host
+    # user) before the build command runs.
+    user: "root"
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - book_node_modules:/workspace/node_modules
+    command: >-
+      /bin/sh -c
+      'test -d node_modules/tsx || npm install --no-audit --no-fund &&
+      just html && just pdf'
+
+volumes:
+  book_node_modules:

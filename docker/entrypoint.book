@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Root-side setup for the book container: make the named node_modules volume
+# and the npm cache writable by the `node` user (uid/gid 1000, which compose
+# mounts as the host user), then drop privileges and run the requested command.
+set -euo pipefail
+
+NODE_UID="$(id -u node)"
+NODE_GID="$(id -g node)"
+
+mkdir -p /workspace/node_modules /home/node/.npm /home/node/.config
+chown -R "${NODE_UID}:${NODE_GID}" /workspace/node_modules /home/node/.npm /home/node/.config
+
+exec su-exec "${NODE_UID}:${NODE_GID}" "$@"

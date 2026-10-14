@@ -1,0 +1,50 @@
+# Pre-commit hooks for the engine (https://pre-commit.com).
+#
+# The git hook itself lives in .git/hooks and is not tracked, so each clone
+# needs to enable it once:
+#
+#     pre-commit install
+#
+# After that every `git commit` runs the hooks below; run them by hand with
+# `pre-commit run --all-files`. The local hooks use the host's `just`, which
+# installs the Node tooling on demand; the build writes only to the git-ignored
+# build/, so it never dirties the working tree.
+#
+# `fail_fast` stops at the first failing hook, so a whitespace or lint failure
+# does not pay for the sample build that follows.
+#
+# Developed against pre-commit 4.6.2 (the current release).
+
+fail_fast: true
+
+repos:
+  # Standard file hygiene: strip trailing whitespace, terminate the last line,
+  # sanity-check YAML/JSON, catch conflict markers and oversized additions.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=2000]
+
+  - repo: local
+    hooks:
+      # `npm run lint` — tsc --noEmit plus the summary, chapter and link checks.
+      - id: lint
+        name: lint the engine and the sample
+        entry: just lint
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      # The two editions of the sample: build/html/ and build/book.pdf.
+      - id: build-book
+        name: build the sample (website + PDF)
+        entry: "bash -c 'just html && just pdf'"
+        language: system
+        pass_filenames: false
+        always_run: true

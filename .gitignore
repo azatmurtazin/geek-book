@@ -1,0 +1,25 @@
+# Build output
+build/
+*.pdf
+
+# LaTeX scratch (build/ is ignored wholesale; this is belt-and-braces)
+*.aux
+*.log
+*.out
+*.toc
+
+# Node
+node_modules/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Runtime crash dumps. An Erlang/Elixir crash writes erl_crash.dump into the
+# repo root, and 'git add -A' will otherwise commit megabytes of local state.
+erl_crash.dump
+hs_err_pid*.log
+reactor_summary.txt
+*.hprof
