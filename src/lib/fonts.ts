@@ -30,3 +30,13 @@ export const FONT_LINKS = CONFIG.fonts.web
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="${escapeHtml(CONFIG.fonts.web)}" rel="stylesheet">`
   : "";
+
+/**
+ * The families as custom properties: the `:root` block the web book's
+ * stylesheet opens with, since the values come from the book's config and so
+ * cannot live in the .css file itself.
+ */
+export const FONT_CSS_VARS = `:root {
+  --font-sans: ${TEXT_STACK};
+  --font-mono: ${CODE_STACK};
+}`;

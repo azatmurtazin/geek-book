@@ -1,7 +1,7 @@
 // Build-time placeholders available inside chapter Markdown, so one source
 // reads correctly in both the website and the printed book.
 //
-// The layout carries its own placeholders ({{ title }}, {{ code-css }}, …),
+// The layout carries its own placeholders ({{ title }}, {{ content-css }}, …),
 // filled in the HTML wrapper; these fill the content itself, before `marked`
 // parses it. Fenced code blocks are left byte-for-byte, so a `{{ … }}` inside a
 // sample (Go templates, JSX, C++ braces) is never rewritten, and only the known

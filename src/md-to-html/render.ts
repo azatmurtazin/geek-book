@@ -1,13 +1,13 @@
 // Render a Markdown source into a standalone HTML page.
 //
 // The body is wrapped in _layouts/default.html, which carries the fonts and
-// styles. The layout leaves placeholders for the CSS shared with the web book
-// ({{ code-css }}, {{ code-vars }}, {{ diagram-css }}) and for the book's own
+// styles. The layout leaves a placeholder for the content CSS shared with the
+// web book ({{ content-css }}, from src/lib/content.css) and for the book's own
 // typefaces ({{ font-links }}, {{ font-text }}, {{ font-code }}), filled here
-// from src/lib/content-css.ts and src/lib/fonts.ts so the two targets cannot
-// drift. Heading ids are generated with the same slugifier the linter uses, so
-// in-page `#anchor` links land on the ids the site renderers emit. The page
-// title is taken from the first `#` heading.
+// from src/lib/fonts.ts so the two targets cannot drift. Heading ids are
+// generated with the same slugifier the linter uses, so in-page `#anchor` links
+// land on the ids the site renderers emit. The page title is taken from the
+// first `#` heading.
 //
 // Shared by the web-book build and the md-to-html CLI.
 
@@ -22,7 +22,7 @@ import { CODE_LABELS } from "../lib/langs.js";
 import { escapeHtml, brandHtml } from "../lib/html.js";
 import { CONFIG } from "../lib/book-config.js";
 import { tokenizeCode } from "../lib/code-tokens.js";
-import { CODE_COMMENT_VAR, codeCss, diagramCss } from "../lib/content-css.js";
+import { readCss } from "../lib/css.js";
 import { CODE_STACK, FONT_LINKS, TEXT_STACK } from "../lib/fonts.js";
 import { preprocessMermaidMd, renderMermaid, substituteDiagrams } from "../diagrams/render.js";
 
@@ -101,9 +101,7 @@ export function wrapInLayout(title: string, bodyHtml: string): string {
     .replace("{{ font-links }}", () => FONT_LINKS)
     .replace("{{ font-text }}", () => TEXT_STACK)
     .replace("{{ font-code }}", () => CODE_STACK)
-    .replace("{{ code-vars }}", () => CODE_COMMENT_VAR)
-    .replace("{{ code-css }}", () => codeCss())
-    .replace("{{ diagram-css }}", () => diagramCss())
+    .replace("{{ content-css }}", () => readCss(import.meta.url, "../lib/content.css"))
     .replace("{{ content }}", () => bodyHtml);
 }
 

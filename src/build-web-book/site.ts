@@ -7,8 +7,8 @@ import { escapeHtml, brandHtml } from "../lib/html.js";
 import { CONFIG } from "../lib/book-config.js";
 import { resolveImagePath } from "../lib/images.js";
 import { REMOTE_IMAGE_DIR, type RemoteImages } from "../lib/remote-images.js";
-import { FONT_LINKS } from "../lib/fonts.js";
-import { SITE_CSS } from "./site.css.js";
+import { FONT_CSS_VARS, FONT_LINKS } from "../lib/fonts.js";
+import { readCss } from "../lib/css.js";
 
 export interface MappedChapter {
   /** Path relative to book/, e.g. "chapters/01_data_types/numbers.md". */
@@ -289,6 +289,11 @@ export function assemblePage(opts: {
   });
 }
 
+/** The site's stylesheet: the configured families, the content rules shared
+ *  with the standalone layout, and the layout itself — three sources that are
+ *  pasted together here rather than at a CSS build step. */
 export function stylesheet(): string {
-  return SITE_CSS;
+  const content = readCss(import.meta.url, "../lib/content.css");
+  const layout = readCss(import.meta.url, "site.css");
+  return [FONT_CSS_VARS, content, layout].join("\n\n");
 }

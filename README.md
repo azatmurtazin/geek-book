@@ -79,9 +79,6 @@ Literata's bold as a fontspec declaration (`Family:options`). A book that names
 its own families therefore starts with no webfont and its families' own bold —
 it names a stylesheet under `web` (or `""` for none) when the site should load
 them, and spells out `bold` when bold is a weight instance of a variable font
-its own families therefore starts with no webfont and its families' own bold —
-it names a stylesheet under `web` (or `""` for none) when the site should load
-them, and spells out `bold` when bold is a weight instance of a variable font
 rather than a face of its own.
 
 The website carries the one script the engine ships: it puts the reader's
@@ -156,17 +153,22 @@ PDF build reads the warnings back and fails on any that survive the last pass.
 
 ## Layout of this repository
 
-| Path            | What lives there                                                    |
-| --------------- | ------------------------------------------------------------------- |
-| `bin/`          | The `geek-book` launcher (registers tsx, imports `src/cli.ts`).      |
-| `src/lib/`      | Shared pieces: config, paths, Markdown, HTML, code tokenizer, images.|
-| `src/build-*`   | The two edition builders (website, LaTeX/PDF).                       |
-| `src/lint/`     | Structural checks for the sources.                                   |
-| `src/md-to-html/` | The Markdown→HTML renderer, and a one-file CLI.                    |
-| `_layouts/`     | The standalone HTML shell (previews and `geek-book md`).             |
-| `docker/`       | The build image: Node + LuaLaTeX + the fonts.                        |
-| `templates/`    | Book-side scaffolding (config, Justfile, CI) for a new book repo.    |
-| `book/`         | The lorem ipsum sample, its `images/` and its cover.                 |
+| Path              | What lives there                                                                   |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `bin/`            | The `geek-book` launcher (registers tsx, imports `src/cli.ts`).                    |
+| `src/lib/`        | Shared pieces: config, paths, Markdown, HTML, code tokenizer, images, stylesheets. |
+| `src/build-*`     | The two edition builders (website, LaTeX/PDF).                                     |
+| `src/lint/`       | Structural checks for the sources.                                                 |
+| `src/md-to-html/` | The Markdown→HTML renderer, and a one-file CLI.                                    |
+| `_layouts/`       | The standalone HTML shell (previews and `geek-book md`).                           |
+| `docker/`         | The build image: Node + LuaLaTeX + the fonts.                                      |
+| `templates/`      | Book-side scaffolding (config, Justfile, CI) for a new book repo.                  |
+| `book/`           | The lorem ipsum sample, its `images/` and its cover.                               |
+
+CSS is plain `.css` rather than a preprocessor: the stylesheets sit beside the
+code that reads them (`src/build-web-book/site.css`, `src/lib/content.css`) and
+are pasted into the page at build time, so there is no CSS build step and an
+editor can highlight the styles in full.
 
 ## Licence
 

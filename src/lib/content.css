@@ -1,0 +1,22 @@
+/* Book-content rules shared by the two targets that emit the same markup: the
+   web book's reading column and the standalone page layout (_layouts/default.html).
+   Both mark their content area with the .book-body class, so these rules are
+   written once instead of being copy-pasted into two stylesheets to drift apart.
+
+   This file is pasted into the web book's stylesheet (src/build-web-book/site.css,
+   assembled by src/build-web-book/site.ts) and inlined into the standalone page
+   by src/md-to-html/render.ts. The palettes own the colours it reads:
+   --code-comment, --code-fg and --font-mono come from the enclosing page's :root. */
+
+.book-body pre code { background: none; padding: 0; border: 0; font-size: inherit; color: inherit; }
+.book-body pre code .code-comment { color: var(--code-comment); }
+.book-body .code-block { position: relative; }
+.book-body .code-label {
+  position: absolute; top: 0.5rem; right: 0.7rem;
+  font-family: var(--font-mono); font-size: 0.62rem;
+  letter-spacing: 0.05em; color: var(--code-comment);
+}
+.book-body :not(pre) > code { font-family: var(--font-mono); font-size: 0.84em; color: var(--code-fg); }
+
+.book-body .diagram { margin: 1.3rem auto; text-align: center; }
+.book-body .diagram svg { max-width: 100%; height: auto; }

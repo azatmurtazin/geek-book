@@ -15,7 +15,7 @@
     --rule: #e4e7ec;
     --code-bg: #f6f7f9;
     --code-fg: #20304c;
-    {{ code-vars }}
+    --code-comment: #6b7280;
     --callout-bg: #f8fafc;
     --callout-border: #cbd5e1;
     --radius: 8px;
@@ -139,7 +139,7 @@
     line-height: 1.55;
     color: var(--code-fg);
   }
-  {{ code-css }}
+  {{ content-css }}
 
   table {
     width: 100%;
@@ -163,8 +163,6 @@
   tbody tr:nth-child(even) { background: #fafbfc; }
 
   img { max-width: 100%; height: auto; border-radius: var(--radius); }
-
-  {{ diagram-css }}
 
   footer.site-footer {
     border-top: 1px solid var(--rule);
@@ -201,7 +199,9 @@
     <span class="tagline">{{ tagline }}</span>
   </div>
 </header>
-<main class="page">
+<!-- The reading column. src/lib/content.css hooks its rules onto .book-body,
+     the same class the web book's column carries. -->
+<main class="page book-body">
 {{ content }}
 </main>
 <footer class="site-footer">
