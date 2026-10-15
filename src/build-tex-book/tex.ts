@@ -7,7 +7,7 @@
 
 import { imagePixels } from "../lib/image-size.js";
 import { tokenizeCode } from "../lib/code-tokens.js";
-import { CODE_LABELS } from "../lib/langs.js";
+import { codeLabel } from "../lib/code-meta.js";
 import { CONFIG } from "../lib/book-config.js";
 import type {
   Block,
@@ -219,7 +219,7 @@ function bodyRowTex(row: TableRow): string {
  * muted color the web edition gives them.
  */
 function codePanel(lang: string, code: string): string {
-  const label = CODE_LABELS[lang];
+  const label = codeLabel(lang);
   const labelLine = label
     ? `{\\hfill\\fontsize{6}{7}\\selectfont\\ttfamily\\color{codecomment}${texEscape(label)}}\\vspace{0pt}\n`
     : "";

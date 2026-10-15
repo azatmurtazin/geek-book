@@ -138,6 +138,25 @@
         }
       }
     },
+    "code": {
+      "description": "A book's own code-fence languages: the label a block shows and how its comments are marked, for a language outside the built-in set. Each key is added to `languages`.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "description": "The label a code block shows (default: none).",
+            "type": "string"
+          },
+          "comment": {
+            "description": "The comment syntax (default: the built-in choice, usually none).",
+            "type": "string",
+            "enum": ["slash", "hash"]
+          }
+        }
+      }
+    },
     "fonts": {
       "description": "The typefaces both editions are set in (default: Literata and JetBrains Mono).",
       "type": "object",

@@ -44,6 +44,26 @@ for diagrams.
 `language` key in [Configuration](../03_config/00_index.md); `languages` never
 changes how the prose itself is set.
 
+## Teaching the renderers a language
+
+`languages` only quiets the linter. A book that writes in a language the engine
+has never heard of also wants its blocks labelled and its comments muted like
+everyone else's. The `code` key maps a fence tag to a label and a comment style:
+
+```json
+{
+  "code": {
+    "zig": { "label": "Zig", "comment": "slash" },
+    "beancount": { "label": "Beancount", "comment": "hash" }
+  }
+}
+```
+
+`label` is the chip in the corner; `comment` is `slash` or `hash`, for `//` and
+`#`. A tag declared here is accepted by the linter too, so it need not also
+appear in `languages`. An entry may set either field alone — give a built-in
+language a new label, or fix its comment style, without touching the rest.
+
 ## Pasted output
 
 A `text` fence is for output rather than source: a command transcript, a log

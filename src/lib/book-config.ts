@@ -202,6 +202,18 @@ export interface LintConfig {
   diagramWidth: number;
 }
 
+/** How comments are introduced in a code fence. */
+export type CommentStyle = "slash" | "hash";
+
+/** A book's own code-fence language: the chip a block shows and how its
+ *  comments are marked, for a language the built-in table does not know. */
+export interface CodeLangConfig {
+  /** The label the block shows; a language with none shows no chip. */
+  label: string;
+  /** Its comment syntax, or "" to keep the built-in choice (usually none). */
+  comment: CommentStyle | "";
+}
+
 export interface BookConfig {
   /** The book root: the directory the CLI runs from, or the directory of the
    * config file named by `--config`. */
@@ -239,6 +251,10 @@ export interface BookConfig {
   docs: string[];
   /** Fence languages the linter accepts. */
   languages: Set<string>;
+  /** The book's own fence languages, keyed by lower-case tag: a label and a
+   * comment style for what the built-in table does not know. Each key is also
+   * accepted by the linter. */
+  code: Record<string, CodeLangConfig>;
   /** Line budgets the chapter check enforces. */
   lint: LintConfig;
   /** The typefaces both editions are set in. */
@@ -421,6 +437,23 @@ function readLint(raw: Record<string, unknown>): LintConfig {
   };
 }
 
+/** The book's `code` map: lower-case tags, each with a label and comment style. */
+function readCode(raw: Record<string, unknown>): Record<string, CodeLangConfig> {
+  const out: Record<string, CodeLangConfig> = {};
+  for (const [tag, value] of Object.entries(raw)) {
+    const lang = tag.trim().toLowerCase();
+    if (!lang || typeof value !== "object" || value === null) continue;
+    const entry = value as Record<string, unknown>;
+    out[lang] = { label: asString(entry.label, ""), comment: asCommentStyle(entry.comment) };
+  }
+  return out;
+}
+
+/** `slash` or `hash`, else "" (keep the built-in choice). */
+function asCommentStyle(value: unknown): CommentStyle | "" {
+  return value === "slash" || value === "hash" ? value : "";
+}
+
 function load(): BookConfig {
   const cwd = process.cwd();
   // `--config <file>` names the book: its directory is the root, so the paths
@@ -435,6 +468,7 @@ function load(): BookConfig {
   const output = (raw.output ?? {}) as Record<string, unknown>;
   const web = (raw.web ?? {}) as Record<string, unknown>;
   const lint = (raw.lint ?? {}) as Record<string, unknown>;
+  const codeLangs = readCode((raw.code ?? {}) as Record<string, unknown>);
   const tex = (raw.tex ?? {}) as Record<string, unknown>;
   const geometryRaw = (tex.geometry ?? {}) as Record<string, unknown>;
   const packageJson = readJson(path.join(root, "package.json")) ?? {};
@@ -463,6 +497,13 @@ function load(): BookConfig {
   const paperSize = PAPERS[paper];
   const extraPreamble = asString(tex.preamble, "");
 
+  // A language the book describes under `code` is one it teaches the renderers,
+  // so the linter accepts its fence tag too.
+  const languages = new Set(asStringList(raw.languages) ?? DEFAULT_LANGS);
+  for (const lang of Object.keys(codeLangs)) {
+    languages.add(lang);
+  }
+
   return {
     root,
     configFile,
@@ -481,7 +522,8 @@ function load(): BookConfig {
     outputWeb: path.resolve(root, asString(output.web, DEFAULTS.webOutput)),
     outputPdf: path.resolve(root, asString(output.pdf, DEFAULTS.pdfOutput)),
     docs: (asStringList(raw.docs) ?? [...DEFAULTS.docs]).map((doc) => path.resolve(root, doc)),
-    languages: new Set(asStringList(raw.languages) ?? DEFAULT_LANGS),
+    languages,
+    code: codeLangs,
     lint: readLint(lint),
     fonts: {
       text,

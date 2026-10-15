@@ -95,11 +95,14 @@ Larger or narrower; pick by demand.
 
 ### Content authoring
 
-- [ ] extend `src/lib/langs.ts`: a per-language label (`CODE_LABELS`) and comment
-      style, so a book teaching a language outside the built-in set gets a label
-      chip and comment highlighting
-- [ ] `{{ }}` tokens for arbitrary config values (superseded by item 1 if the
-      free-form map lands)
+Done. The `code` key maps a fence tag to a label and a comment style
+(`src/lib/code-meta.ts`, resolved over the built-in table in `src/lib/langs.ts`);
+a tag named there is also accepted by the linter.
+
+- [x] a per-language label and comment style, so a book teaching a language
+      outside the built-in set gets a label chip and comment highlighting
+- [x] `{{ }}` tokens for arbitrary config values — superseded by the free-form
+      `placeholders` map from item 1
 
 ### Markdown and rendering
 

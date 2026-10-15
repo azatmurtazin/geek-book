@@ -19,11 +19,11 @@ import { marked } from "marked";
 import type { Tokens, RendererThis } from "marked";
 import { slugify, plainText } from "../lib/markdown.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
-import { CODE_LABELS } from "../lib/langs.js";
 import { escapeHtml, brandHtml } from "../lib/html.js";
 import { CONFIG } from "../lib/book-config.js";
 import { ui } from "../lib/ui-strings.js";
 import { tokenizeCode } from "../lib/code-tokens.js";
+import { codeLabel } from "../lib/code-meta.js";
 import { readCss } from "../lib/css.js";
 import { CODE_STACK, FONT_LINKS, TEXT_STACK } from "../lib/fonts.js";
 import { WEB_PALETTE_VARS } from "../lib/web-palette.js";
@@ -45,8 +45,8 @@ marked.use({
       const highlighted = token.escaped ? token.text : highlightComments(token.text, lang.toLowerCase());
       const langAttr = lang ? ` class="language-${escapeHtml(lang)}"` : "";
       const inner = `<pre><code${langAttr}>${highlighted}</code></pre>`;
-      const label = CODE_LABELS[lang.toLowerCase()];
-      return label ? `<div class="code-block"><span class="code-label">${label}</span>${inner}</div>` : inner;
+      const label = codeLabel(lang);
+      return label ? `<div class="code-block"><span class="code-label">${escapeHtml(label)}</span>${inner}</div>` : inner;
     },
   },
 });

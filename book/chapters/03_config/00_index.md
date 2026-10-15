@@ -52,6 +52,7 @@ checks the file against it — the same schema, so the two can never disagree.
 | `output.pdf` | `build/book.pdf` | Where the PDF is written. |
 | `docs` | `README.md`, `CONTRIBUTING.md` | Root Markdown whose links are linted. |
 | `languages` | the built-in set | Fence languages the linter accepts. |
+| `code` | none | Labels and comment styles for a book's own languages. See [Code](../01_writing/05_code.md). |
 | `lint` | 100 / 240 / 80 | Line budgets the chapter check enforces. |
 | `fonts` | Literata, JetBrains Mono | See [Fonts](01_fonts.md). |
 | `tex` | the engine's page | See [The printed page](02_print.md). |

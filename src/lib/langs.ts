@@ -1,6 +1,7 @@
-// Everything the tooling needs to know about the languages in the book, so the
-// linter's allowed set, the comment highlighter and the code-block labels all
-// agree from one place.
+// The built-in knowledge about the languages in the book: the linter's default
+// allow-list, and the comment syntax and label each language starts with. A
+// book's own languages extend these — code-meta.ts resolves the table below
+// against `book.config.json`, and that is what the renderers read.
 
 /**
  * The fence languages the linter accepts when `book.config.json` does not name

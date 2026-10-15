@@ -4,7 +4,7 @@
 // same runs. Strings are kept inside the code runs so `//` and `#` inside them
 // are not mistaken for comments.
 
-import { HASH_COMMENT_LANGS, SLASH_COMMENT_LANGS } from "./langs.js";
+import { commentStyle } from "./code-meta.js";
 
 export interface CodeSegment {
   readonly kind: "code" | "comment";
@@ -43,9 +43,11 @@ function stringEnd(code: string, start: number): number {
  * exact boundaries the HTML renderer has always highlighted.
  */
 export function tokenizeCode(code: string, lang: string): CodeSegment[] {
-  const slash = SLASH_COMMENT_LANGS.has(lang);
-  const hash = HASH_COMMENT_LANGS.has(lang);
-  if (!slash && !hash) return [{ kind: "code", text: code }];
+  const style = commentStyle(lang);
+  if (style === null) return [{ kind: "code", text: code }];
+  const key = lang.toLowerCase();
+  const slash = style === "slash";
+  const hash = style === "hash";
 
   const segments: CodeSegment[] = [];
   let runStart = 0;
@@ -60,7 +62,7 @@ export function tokenizeCode(code: string, lang: string): CodeSegment[] {
     if (slash && code.startsWith("/*", i)) {
       const close = code.indexOf("*/", i + 2);
       end = close === -1 ? code.length : close + 2;
-    } else if ((slash && code.startsWith("//", i)) || (hash && ch === "#" && !(lang === "php" && code[i + 1] === "["))) {
+    } else if ((slash && code.startsWith("//", i)) || (hash && ch === "#" && !(key === "php" && code[i + 1] === "["))) {
       const nl = code.indexOf("\n", i);
       end = nl === -1 ? code.length : nl;
     } else if (ch === '"' || ch === "'" || ch === "`") {
