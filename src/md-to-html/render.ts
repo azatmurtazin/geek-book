@@ -34,7 +34,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".
 const LAYOUT = path.join(ROOT, "_layouts", "default.html");
 
 marked.use({
-  breaks: true,
   gfm: true,
   renderer: {
     heading(this: RendererThis, { tokens, depth }: Tokens.Heading): string {
@@ -81,7 +80,7 @@ function pageTitle(source: string): string {
 
 /** The chapter body as HTML: headings carry slug ids, GFM is on. */
 export function renderBody(source: string): string {
-  return marked.parse(substituteContentPlaceholders(source)) as string;
+  return marked.parse(substituteContentPlaceholders(source), { gfm: true }) as string;
 }
 
 export function wrapInLayout(title: string, bodyHtml: string): string {
