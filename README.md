@@ -15,11 +15,26 @@ The engine documents itself: [`book/`](./book/) is the user's guide, built by th
 same engine it describes. Its table of contents is
 [`book/SUMMARY.md`](./book/SUMMARY.md); the chapters are:
 
-- **Introduction** — [Installing geek-book](./book/chapters/00_intro/01_installing.md) · [Your first book](./book/chapters/00_intro/02_first_book.md)
-- **Writing** — [The book tree](./book/chapters/01_writing/01_tree.md) · [SUMMARY.md](./book/chapters/01_writing/02_summary.md) · [Chapters](./book/chapters/01_writing/03_chapters.md) · [Formatting](./book/chapters/01_writing/04_formatting.md) · [Code](./book/chapters/01_writing/05_code.md)
-- **Media** — [Images](./book/chapters/02_media/01_images.md) · [Remote images](./book/chapters/02_media/02_remote.md) · [Diagrams](./book/chapters/02_media/03_diagrams.md)
-- **Configuration** — [Fonts](./book/chapters/03_config/01_fonts.md) · [The printed page](./book/chapters/03_config/02_print.md)
-- **Publishing** — [Commands](./book/chapters/04_publishing/01_commands.md) · [Linting](./book/chapters/04_publishing/02_lint.md) · [Continuous integration](./book/chapters/04_publishing/03_ci.md)
+- [Introduction](./book/chapters/00_intro/00_index.md)
+  - [Installing geek-book](./book/chapters/00_intro/01_installing.md)
+  - [Your first book](./book/chapters/00_intro/02_first_book.md)
+- [Writing](./book/chapters/01_writing/00_index.md)
+  - [The book tree](./book/chapters/01_writing/01_tree.md)
+  - [SUMMARY.md](./book/chapters/01_writing/02_summary.md)
+  - [Chapters](./book/chapters/01_writing/03_chapters.md)
+  - [Formatting](./book/chapters/01_writing/04_formatting.md)
+  - [Code](./book/chapters/01_writing/05_code.md)
+- [Media](./book/chapters/02_media/00_index.md)
+  - [Images](./book/chapters/02_media/01_images.md)
+  - [Remote images](./book/chapters/02_media/02_remote.md)
+  - [Diagrams](./book/chapters/02_media/03_diagrams.md)
+- [Configuration](./book/chapters/03_config/00_index.md)
+  - [Fonts](./book/chapters/03_config/01_fonts.md)
+  - [The printed page](./book/chapters/03_config/02_print.md)
+- [Publishing](./book/chapters/04_publishing/00_index.md)
+  - [Commands](./book/chapters/04_publishing/01_commands.md)
+  - [Linting](./book/chapters/04_publishing/02_lint.md)
+  - [Continuous integration](./book/chapters/04_publishing/03_ci.md)
 
 The rest of this file is a map of the engine repository.
 
@@ -27,7 +42,7 @@ The rest of this file is a map of the engine repository.
 
 The directory `geek-book` runs from is the book; everything else is Markdown:
 
-```
+```text
 book.config.json     # title, tagline, sources, outputs (all optional but title)
 book/SUMMARY.md      # the table of contents, and the chapter order
 book/README.md       # becomes the website's front page
@@ -106,6 +121,6 @@ CSS and the printed preamble are plain files beside the code that reads them
 `src/build-tex-book/preamble.tex`) and are pasted in at build time, so neither
 has a build step.
 
-## Licence
+## License
 
 MIT (see [LICENSE](./LICENSE)).
