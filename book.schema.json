@@ -329,6 +329,20 @@
             }
           }
         },
+        "class": {
+          "description": "LaTeX document class (default: book).",
+          "type": "string"
+        },
+        "side": {
+          "description": "One- or two-sided (default: oneside).",
+          "type": "string",
+          "enum": ["oneside", "twoside"]
+        },
+        "tocDepth": {
+          "description": "Table of contents depth (0 for chapters only, default: 0).",
+          "type": "number",
+          "minimum": 0
+        },
         "preamble": {
           "description": "A file of extra LaTeX, relative to the book root, appended after the built-in preamble.",
           "type": "string"
