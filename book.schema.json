@@ -294,7 +294,7 @@
       }
     },
     "web": {
-      "description": "What the website adds to the built-in look. The standalone page the md command renders keeps its own layout.",
+      "description": "What the website says about itself and adds to the built-in look. The standalone page the md command renders keeps its own layout.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -305,6 +305,37 @@
         "head": {
           "description": "A file of HTML, relative to the book root, injected into every page's <head> (analytics, meta).",
           "type": "string"
+        },
+        "baseUrl": {
+          "description": "The site's base URL: an absolute URL (https://example.com/book/) that also feeds the canonical and social tags, or a root-relative path (/book/) that only moves the site's root links. Empty means /.",
+          "type": "string"
+        },
+        "description": {
+          "description": "The one-line description search engines and social cards show (default: the tagline).",
+          "type": "string"
+        },
+        "favicon": {
+          "description": "The site's favicon, relative to the book root, copied into the output.",
+          "type": "string"
+        },
+        "links": {
+          "description": "Labelled links the site's footer carries, in order. In an href, {path} becomes the page's source path from the book root and {url} its absolute URL.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "href"],
+            "properties": {
+              "label": {
+                "description": "The link's text.",
+                "type": "string"
+              },
+              "href": {
+                "description": "The link's target.",
+                "type": "string"
+              }
+            }
+          }
         }
       }
     }

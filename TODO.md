@@ -86,12 +86,12 @@ Larger or narrower; pick by demand.
 
 ### Site and metadata (web)
 
-- [ ] `baseUrl` / base path — the layout links the brand and Home to `/`, so a
-      GitHub Pages *project* site under `/repo/` breaks; also feeds canonical and
-      OG tags
-- [ ] `description`, Open Graph / Twitter card, and a `favicon`
-- [ ] header/footer links — repo, "edit this page", license (the footer today is
-      just `title version — tagline` in `src/build-web-book/site.ts`)
+- [x] `baseUrl` / base path — the site's root links, plus canonical and social
+      tags when it is absolute (`web.baseUrl`)
+- [x] `description`, Open Graph / Twitter card, and a `favicon` (`web.description`
+      and `web.favicon`; the card tags live in `src/lib/site-meta.ts`)
+- [x] header/footer links — repo, "edit this page", license (`web.links`, with
+      `{path}` and `{url}` placeholders)
 
 ### Content authoring
 

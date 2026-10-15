@@ -34,7 +34,7 @@ export async function main(args: string[]): Promise<number> {
 
   // The book's own website files, when it names them; say which is missing
   // rather than failing later inside a read.
-  for (const [label, file] of [["web.css", CONFIG.web.css], ["web.head", CONFIG.web.head]] as const) {
+  for (const [label, file] of [["web.css", CONFIG.web.css], ["web.head", CONFIG.web.head], ["web.favicon", CONFIG.web.favicon]] as const) {
     if (file && !fs.existsSync(file)) {
       process.stderr.write(`geek-book: ${label}: no such file ${path.relative(CONFIG.root, file)}\n`);
       return 1;
@@ -98,6 +98,17 @@ export async function main(args: string[]): Promise<number> {
   fs.mkdirSync(path.join(outputDir, "assets"), { recursive: true });
   fs.writeFileSync(path.join(outputDir, "assets", "style.css"), stylesheet());
 
+  // The favicon is copied next to the stylesheet, so a page links it relatively
+  // and the site works under any base path.
+  const faviconOutput = CONFIG.web.favicon ? `assets/${path.basename(CONFIG.web.favicon)}` : null;
+  if (faviconOutput) {
+    fs.copyFileSync(CONFIG.web.favicon, path.join(outputDir, faviconOutput));
+  }
+
+  /** A page's source path from the book root, for `{path}` in footer links. */
+  const sourcePath = (relBook: string): string =>
+    path.relative(CONFIG.root, path.join(BOOK, relBook)).split(path.sep).join("/");
+
   // Remote images are fetched into the site, so a reader needs no other server.
   const remote = new RemoteImages(path.join(outputDir, REMOTE_IMAGE_DIR));
 
@@ -109,6 +120,7 @@ export async function main(args: string[]): Promise<number> {
     title: string,
     content: string,
     slot: (typeof readers)[number] | null,
+    source: string,
   ): void => {
     const prev: NavSlot | null = slot?.prev ? { label: slot.prev.label, outputRel: slot.prev.outputRel } : null;
     const next: NavSlot | null = slot?.next ? { label: slot.next.label, outputRel: slot.next.outputRel } : null;
@@ -121,6 +133,8 @@ export async function main(args: string[]): Promise<number> {
       homeOutputRel,
       prev,
       next,
+      sourcePath: source,
+      faviconOutput,
       head,
     });
     const outFile = path.join(outputDir, outputRel);
@@ -170,7 +184,7 @@ export async function main(args: string[]): Promise<number> {
     if (body === null) {
       return 1;
     }
-    writePage(homeOutputRel, CONFIG.title, body, readers[0] ?? null);
+    writePage(homeOutputRel, CONFIG.title, body, readers[0] ?? null, sourcePath(relBook));
   } else {
     const first = written[0];
     const body = `<!DOCTYPE html>\n<html lang="${escapeHtml(CONFIG.language)}"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${path.posix.relative(path.posix.dirname(homeOutputRel), first.outputRel) || first.outputRel}"><title>${escapeHtml(CONFIG.title)}</title></head><body></body></html>`;
@@ -184,7 +198,7 @@ export async function main(args: string[]): Promise<number> {
     if (body === null) {
       return 1;
     }
-    writePage(chapter.outputRel, chapter.label, body, reader);
+    writePage(chapter.outputRel, chapter.label, body, reader, sourcePath(chapter.relBook));
   }
 
   if (remote.fetched > 0) {

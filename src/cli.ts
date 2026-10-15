@@ -91,6 +91,10 @@ function printConfig(): void {
       web: {
         css: CONFIG.web.css ? rel(CONFIG.web.css) : "",
         head: CONFIG.web.head ? rel(CONFIG.web.head) : "",
+        baseUrl: CONFIG.web.baseUrl,
+        description: CONFIG.web.description,
+        favicon: CONFIG.web.favicon ? rel(CONFIG.web.favicon) : "",
+        links: CONFIG.web.links,
       },
       tex: {
         geometry: CONFIG.tex.geometry,

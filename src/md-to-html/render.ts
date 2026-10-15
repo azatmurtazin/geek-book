@@ -27,6 +27,7 @@ import { tokenizeCode } from "../lib/code-tokens.js";
 import { readCss } from "../lib/css.js";
 import { CODE_STACK, FONT_LINKS, TEXT_STACK } from "../lib/fonts.js";
 import { WEB_PALETTE_VARS } from "../lib/web-palette.js";
+import { basePath, metaTags } from "../lib/site-meta.js";
 import { preprocessMermaidMd, renderMermaid, substituteDiagrams } from "../diagrams/render.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -87,10 +88,12 @@ export function wrapInLayout(title: string, bodyHtml: string): string {
   // otherwise read as substitution patterns.
   return requireLayout()
     .replace("{{ title }}", () => title)
+    .replace("{{ meta }}", () => metaTags({ title, url: "" }))
     .replace("{{ lang }}", () => escapeHtml(CONFIG.language))
     .replace("{{ brand }}", () => brandHtml(CONFIG.title))
     .replace("{{ book-title }}", () => escapeHtml(CONFIG.title))
     .replace("{{ tagline }}", () => escapeHtml(CONFIG.tagline))
+    .replaceAll("{{ base-path }}", () => escapeHtml(basePath()))
     .replace("{{ home }}", () => escapeHtml(ui("home")))
     .replace("{{ font-links }}", () => FONT_LINKS)
     .replace("{{ font-text }}", () => TEXT_STACK)

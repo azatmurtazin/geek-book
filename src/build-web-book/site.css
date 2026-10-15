@@ -156,7 +156,9 @@ details[open] > .sidebar-part::before { content: "\25BE"; }
 .chapter-nav .nav-label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.15rem; }
 .chapter-nav a { font-weight: 600; }
 
-.book-footer { padding: 1.25rem 1.75rem 2rem; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--rule); }
+.book-footer { display: flex; flex-wrap: wrap; gap: 0.35rem 1.25rem; justify-content: space-between; align-items: baseline; padding: 1.25rem 1.75rem 2rem; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--rule); }
+.book-footer-links { display: inline-flex; flex-wrap: wrap; gap: 1rem; }
+.book-footer-links a { color: var(--muted); }
 
 /* --- a docked panel, folded ------------------------------------------------ */
 

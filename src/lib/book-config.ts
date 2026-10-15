@@ -155,17 +155,37 @@ export interface TexConfig {
   preamble: string;
 }
 
+/** A labelled link the site's footer carries. */
+export interface WebLinkConfig {
+  label: string;
+  /** The link target; `{path}` becomes the page's source path from the book
+   * root and `{url}` its absolute URL (when `baseUrl` is absolute). */
+  href: string;
+}
+
 /**
- * What a book may add to the website: a stylesheet appended after the built-in
- * one, and extra HTML for every page's `<head>`. Both name plain files relative
- * to the book root — the web's counterpart to `tex.preamble`. They do not touch
- * the standalone page the `md` command renders, which has its own layout.
+ * What a book may say about its website: where it is published, how it describes
+ * itself, and the two escape hatches — a stylesheet appended after the built-in
+ * one and extra HTML for every page's `<head>` — the web's counterpart to
+ * `tex.preamble`. The two files and the favicon name plain files relative to the
+ * book root.
  */
 export interface WebConfig {
   /** Absolute path of extra CSS appended after the built-in stylesheet, or "". */
   css: string;
   /** Absolute path of extra `<head>` HTML injected into every page, or "". */
   head: string;
+  /** The site's base URL: an absolute URL (`https://example.com/book/`) that
+   * also feeds the canonical and social tags, or a root-relative path
+   * (`/book/`) that only moves the site's root links. Empty means `/`. */
+  baseUrl: string;
+  /** The one-line description search engines and social cards show
+   * (default: the tagline). */
+  description: string;
+  /** Absolute path of the site's favicon, copied into the output, or "". */
+  favicon: string;
+  /** Labelled links the footer carries, in order. */
+  links: WebLinkConfig[];
 }
 
 /**
@@ -236,7 +256,7 @@ const DEFAULTS = {
   pdfOutput: "build/book.pdf",
   docs: ["README.md", "CONTRIBUTING.md"],
   lint: { proseWidth: 100, tableWidth: 240, diagramWidth: 80 },
-  web: { css: "", head: "" },
+  web: { css: "", head: "", baseUrl: "", favicon: "", links: [] },
   fonts: {
     text: "Literata",
     bold: "Literata:mode=harf;wght=700",
@@ -300,6 +320,36 @@ function asStringMap(value: unknown): Record<string, string> {
     if (typeof item === "string" && key.trim() !== "") out[key.trim()] = item;
   }
   return out;
+}
+
+/** A site base URL: an absolute `http(s)` URL or a root-relative path, with a
+ * trailing slash, else "". */
+function asBaseUrl(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const raw = value.trim();
+  if (!raw) return "";
+  if (raw.startsWith("/")) return raw.endsWith("/") ? raw : `${raw}/`;
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+    return `${parsed.origin}${parsed.pathname.replace(/\/$/, "")}/`;
+  } catch {
+    return "";
+  }
+}
+
+/** The footer links: `{ label, href }` pairs, entries missing either dropped. */
+function asWebLinks(value: unknown): WebLinkConfig[] {
+  if (!Array.isArray(value)) return [];
+  const links: WebLinkConfig[] = [];
+  for (const item of value) {
+    if (typeof item !== "object" || item === null) continue;
+    const { label, href } = item as Record<string, unknown>;
+    if (typeof label === "string" && label.trim() && typeof href === "string" && href.trim()) {
+      links.push({ label: label.trim(), href: href.trim() });
+    }
+  }
+  return links;
 }
 
 /** A length in millimetres: a non-negative finite number, else the default. */
@@ -402,6 +452,8 @@ function load(): BookConfig {
   const builtIn = text === DEFAULTS.fonts.text && code === DEFAULTS.fonts.code;
   const webCss = asString(web.css, DEFAULTS.web.css);
   const webHead = asString(web.head, DEFAULTS.web.head);
+  const webBaseUrl = asBaseUrl(web.baseUrl);
+  const webFavicon = asString(web.favicon, "");
 
   const paper = asPaper(geometryRaw.paper, DEFAULTS.tex.geometry.paper);
   const top = asMillimetres(geometryRaw.top, DEFAULTS.tex.geometry.top);
@@ -462,6 +514,10 @@ function load(): BookConfig {
     web: {
       css: webCss ? path.resolve(root, webCss) : "",
       head: webHead ? path.resolve(root, webHead) : "",
+      baseUrl: webBaseUrl,
+      description: asString(web.description, asString(raw.tagline, "")),
+      favicon: webFavicon ? path.resolve(root, webFavicon) : "",
+      links: asWebLinks(web.links),
     },
   };
 }

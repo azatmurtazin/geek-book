@@ -11,6 +11,7 @@ import { REMOTE_IMAGE_DIR, type RemoteImages } from "../lib/remote-images.js";
 import { FONT_CSS_VARS, FONT_LINKS } from "../lib/fonts.js";
 import { readCss } from "../lib/css.js";
 import { WEB_PALETTE_VARS } from "../lib/web-palette.js";
+import { metaTags, pageUrl } from "../lib/site-meta.js";
 import { ui } from "../lib/ui-strings.js";
 
 export interface MappedChapter {
@@ -85,10 +86,21 @@ export function rewriteImages(
   return { body: out, assets };
 }
 
-/** `<title> <version> — <tagline>`, the tagline dropped when there is none. */
-function footerHtml(): string {
+/** A footer link's target: `{path}` becomes the page's source path from the
+ *  book root, `{url}` its absolute URL (empty when none is known). */
+function linkHref(href: string, sourcePath: string | null, url: string): string {
+  return href.replaceAll("{path}", sourcePath ?? "").replaceAll("{url}", url);
+}
+
+/** The footer: the book's name and version, then the book's own links. */
+function footerHtml(sourcePath: string | null, url: string): string {
   const head = `${escapeHtml(CONFIG.title)} ${escapeHtml(CONFIG.version)}`;
-  return CONFIG.tagline ? `${head} — ${escapeHtml(CONFIG.tagline)}` : head;
+  const text = CONFIG.tagline ? `${head} — ${escapeHtml(CONFIG.tagline)}` : head;
+  const links = CONFIG.web.links
+    .map((link) => `<a href="${escapeHtml(linkHref(link.href, sourcePath, url))}">${escapeHtml(link.label)}</a>`)
+    .join("");
+  const nav = links ? `<span class="book-footer-links">${links}</span>` : "";
+  return `<span class="book-footer-text">${text}</span>${nav}`;
 }
 
 /**
@@ -220,6 +232,12 @@ function pageDocument(opts: {
   prev: { label: string; href: string } | null;
   next: { label: string; href: string } | null;
   styleHref: string;
+  /** The description, canonical and social `<head>` tags. */
+  meta: string;
+  /** The favicon link, relative to the page, or null. */
+  faviconHref: string | null;
+  /** The footer's HTML, with the book's own links. */
+  footer: string;
   head: string;
 }): string {
   const prevNav = opts.prev
@@ -228,6 +246,7 @@ function pageDocument(opts: {
   const nextNav = opts.next
     ? `<div class="next"><span class="nav-label">${escapeHtml(ui("next"))}</span><a href="${opts.next.href}">${escapeHtml(opts.next.label)}</a></div>`
     : "";
+  const favicon = opts.faviconHref ? `<link rel="icon" href="${opts.faviconHref}">\n` : "";
   return `<!DOCTYPE html>
 <html lang="${escapeHtml(CONFIG.language)}">
 <head>
@@ -236,7 +255,8 @@ function pageDocument(opts: {
 <script>${SITE_SCRIPT}</script>
 <title>${escapeHtml(opts.title)}</title>
 ${FONT_LINKS}
-<link rel="stylesheet" href="${opts.styleHref}">
+${opts.meta}
+${favicon}<link rel="stylesheet" href="${opts.styleHref}">
 ${opts.head}
 <noscript><style>.theme-toggle { display: none; }</style></noscript>
 </head>
@@ -258,7 +278,7 @@ ${opts.sidebar}
   </header>
   <main class="book-body">${opts.content}</main>
   <nav class="chapter-nav">${prevNav}${nextNav}</nav>
-  <footer class="book-footer">${footerHtml()}</footer>
+  <footer class="book-footer">${opts.footer}</footer>
 </div>
 </body>
 </html>`;
@@ -278,12 +298,17 @@ export function assemblePage(opts: {
   homeOutputRel: string;
   prev: NavSlot | null;
   next: NavSlot | null;
+  /** The page's source path from the book root, for `{path}` in footer links. */
+  sourcePath: string | null;
+  /** The favicon's output path, relative to the site root, or null. */
+  faviconOutput: string | null;
   /** Extra `<head>` HTML from the book's `web.head`, or "". */
   head: string;
 }): string {
   const from = opts.activeOutputRel ?? "index.html";
   const homeHref = hrefFrom(from, opts.homeOutputRel);
   const styleHref = hrefFrom(from, "assets/style.css");
+  const url = pageUrl(from);
   const sidebar = sidebarHtml(opts.items, opts.pages, opts.activeOutputRel, homeHref);
   return pageDocument({
     title: opts.title,
@@ -293,6 +318,9 @@ export function assemblePage(opts: {
     prev: opts.prev ? { label: opts.prev.label, href: hrefFrom(from, opts.prev.outputRel) } : null,
     next: opts.next ? { label: opts.next.label, href: hrefFrom(from, opts.next.outputRel) } : null,
     styleHref,
+    meta: metaTags({ title: opts.title, url }),
+    faviconHref: opts.faviconOutput ? hrefFrom(from, opts.faviconOutput) : null,
+    footer: footerHtml(opts.sourcePath, url),
     head: opts.head,
   });
 }

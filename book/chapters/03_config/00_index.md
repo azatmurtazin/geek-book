@@ -55,7 +55,11 @@ checks the file against it — the same schema, so the two can never disagree.
 | `lint` | 100 / 240 / 80 | Line budgets the chapter check enforces. |
 | `fonts` | Literata, JetBrains Mono | See [Fonts](01_fonts.md). |
 | `tex` | the engine's page | See [The printed page](02_print.md). |
-| `web` | none | Extra CSS and `<head>` HTML. See [The website](03_web.md). |
+| `web` | none | The site's metadata, stylesheet and `<head>` HTML. See [The website](03_web.md). |
+| `web.baseUrl` | none | The site's base URL, for root links and canonical tags. |
+| `web.description` | the tagline | What search engines and social cards show. |
+| `web.favicon` | none | The site's favicon. |
+| `web.links` | none | Labelled links the site's footer carries. |
 
 The version is read from the book's own `package.json` unless the config names
 one, so the number still lives in exactly one place. `docs` exists because a
