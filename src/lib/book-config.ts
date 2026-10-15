@@ -151,6 +151,12 @@ export interface TexConfig {
   geometry: GeometryConfig;
   colors: ColorsConfig;
   type: TypeConfig;
+  /** Document class (default "book"). */
+  class: string;
+  /** Page side: "oneside" or "twoside" (default "oneside"). */
+  side: "oneside" | "twoside";
+  /** `tocdepth` for the table of contents (default 0: chapters only). */
+  tocDepth: number;
   /** Absolute path of extra LaTeX appended after the built-in preamble, or "". */
   preamble: string;
 }
@@ -328,6 +334,10 @@ const DEFAULTS = {
       subsubsection: 11.5,
       paragraph: 9.5,
     } satisfies TypeConfig,
+    class: "book",
+    side: "oneside" as const,
+    tocDepth: 0,
+    preamble: "",
   },
 };
 
@@ -614,6 +624,9 @@ function load(): BookConfig {
       },
       colors: readColors((tex.colors ?? {}) as Record<string, unknown>),
       type: readType((tex.type ?? {}) as Record<string, unknown>),
+      class: asString(tex.class, DEFAULTS.tex.class),
+      side: tex.side === "twoside" ? "twoside" : DEFAULTS.tex.side,
+      tocDepth: asWidth(tex.tocDepth, DEFAULTS.tex.tocDepth),
       preamble: extraPreamble ? path.resolve(root, extraPreamble) : "",
     },
     web: {

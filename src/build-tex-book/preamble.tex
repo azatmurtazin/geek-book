@@ -1,4 +1,4 @@
-\documentclass[<<base-size>>,<<paper>>,oneside]{book}
+\documentclass[<<base-size>>,<<paper>>,<<side>>]{<<doc-class>>}
 <<babel>>
 \usepackage[<<geometry>>]{geometry}
 \usepackage{fontspec}
@@ -19,7 +19,7 @@
 \setlength{\headsep}{5mm}
 \setlength{\footskip}{9mm}
 \setcounter{secnumdepth}{-1}
-\setcounter{tocdepth}{0}
+\setcounter{tocdepth}{<<toc-depth>>}
 <<contents>>
 
 % Body copy: flush paragraphs with a little air between them, matching the
