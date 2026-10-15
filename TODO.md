@@ -38,14 +38,16 @@ and the free-form `placeholders` map adds more (`src/lib/content-placeholders.ts
 
 ### 2. `language`
 
-Hard-coded `lang="en"` in `_layouts/default.html` and `src/build-web-book/site.ts`.
+Done. `language` (BCP 47, default `en`) sets the `<html lang>` attribute and the
+printed edition's babel/hyphenation; a `strings` map overrides the fixed UI
+labels, English by default.
 
-- [ ] `language` key (default `"en"`), used for the `<html lang>` attribute
-- [ ] feed the printed edition too: `babel`/`polyglossia` and hyphenation in
+- [x] `language` key (default `"en"`), used for the `<html lang>` attribute
+- [x] feed the printed edition too: `babel`/`polyglossia` and hyphenation in
       `src/build-tex-book/preamble.tex`
-- [ ] translate the fixed UI strings for a non-English book: "Previous", "Next",
+- [x] translate the fixed UI strings for a non-English book: "Previous", "Next",
       "Table of Contents" (`\contentsname`), the sidebar/nav ARIA labels
-- [ ] document that it is not the same thing as the linter's `languages`
+- [x] document that it is not the same thing as the linter's `languages`
 
 ### 3. `web.css` escape hatch
 

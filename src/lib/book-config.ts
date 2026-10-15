@@ -168,6 +168,12 @@ export interface BookConfig {
   /** A book's own `{{ … }}` tokens, keyed by token name. The built-in tokens
    * (version, title, author, tagline) are filled regardless and win on a clash. */
   placeholders: Record<string, string>;
+  /** The book's language, a BCP 47 tag (default `en`). Sets the web `lang`
+   * attribute and, for a language the engine knows, the PDF's babel. */
+  language: string;
+  /** Overrides for the fixed interface labels (English by default); see
+   * `lib/ui-strings.ts` for the keys. */
+  strings: Record<string, string>;
   /** Absolute path of the Markdown sources (default `<root>/book`). */
   bookDir: string;
   /** Absolute path of the table of contents (default `<bookDir>/SUMMARY.md`). */
@@ -190,6 +196,7 @@ export interface BookConfig {
 }
 
 const DEFAULTS = {
+  language: "en",
   bookDir: "book",
   web: "build/html",
   pdf: "build/book.pdf",
@@ -356,6 +363,8 @@ function load(): BookConfig {
     author: asString(raw.author, ""),
     version: asString(raw.version, asString(packageJson.version, "0.0.0")),
     placeholders: asStringMap(raw.placeholders),
+    language: asString(raw.language, DEFAULTS.language),
+    strings: asStringMap(raw.strings),
     bookDir,
     summary: summary ? path.resolve(root, summary) : path.join(bookDir, "SUMMARY.md"),
     chapters: path.join(bookDir, "chapters"),

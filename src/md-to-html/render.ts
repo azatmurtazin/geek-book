@@ -21,6 +21,7 @@ import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
 import { CODE_LABELS } from "../lib/langs.js";
 import { escapeHtml, brandHtml } from "../lib/html.js";
 import { CONFIG } from "../lib/book-config.js";
+import { ui } from "../lib/ui-strings.js";
 import { tokenizeCode } from "../lib/code-tokens.js";
 import { readCss } from "../lib/css.js";
 import { CODE_STACK, FONT_LINKS, TEXT_STACK } from "../lib/fonts.js";
@@ -84,9 +85,11 @@ export function wrapInLayout(title: string, bodyHtml: string): string {
   // otherwise read as substitution patterns.
   return requireLayout()
     .replace("{{ title }}", () => title)
+    .replace("{{ lang }}", () => escapeHtml(CONFIG.language))
     .replace("{{ brand }}", () => brandHtml(CONFIG.title))
     .replace("{{ book-title }}", () => escapeHtml(CONFIG.title))
     .replace("{{ tagline }}", () => escapeHtml(CONFIG.tagline))
+    .replace("{{ home }}", () => escapeHtml(ui("home")))
     .replace("{{ font-links }}", () => FONT_LINKS)
     .replace("{{ font-text }}", () => TEXT_STACK)
     .replace("{{ font-code }}", () => CODE_STACK)

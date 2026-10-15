@@ -16,6 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { CONFIG, PAPERS, type ColorKey } from "../lib/book-config.js";
+import { UI_DEFAULTS } from "../lib/ui-strings.js";
 import { texEscape } from "./tex.js";
 
 /** The Tex name of each configured colour, and the order they are defined in. */
@@ -57,10 +58,75 @@ function leading(size: number): number {
   return Math.ceil((Math.round(size * 10) * 3) / 25);
 }
 
+/** babel's name for each primary language subtag the engine recognizes. */
+const BABEL_LANGUAGES: Record<string, string> = {
+  de: "ngerman",
+  fr: "french",
+  es: "spanish",
+  pt: "portuguese",
+  it: "italian",
+  nl: "dutch",
+  pl: "polish",
+  cs: "czech",
+  sk: "slovak",
+  hu: "magyar",
+  ro: "romanian",
+  da: "danish",
+  sv: "swedish",
+  nb: "norsk",
+  nn: "norsk",
+  no: "norsk",
+  fi: "finnish",
+  tr: "turkish",
+  el: "greek",
+  ru: "russian",
+  uk: "ukrainian",
+  bg: "bulgarian",
+  sr: "serbian",
+  ca: "catalan",
+  gl: "galician",
+  eu: "basque",
+  is: "icelandic",
+  sl: "slovene",
+  hr: "croatian",
+  et: "estonian",
+};
+
+/**
+ * The `\usepackage[…]{babel}` line for the book's language, or `""` for English
+ * and for anything the engine does not recognize. English is LaTeX's own
+ * default, so a book that names no language loads no babel and hyphenates as it
+ * always did; a book that names another language has to have that language's
+ * babel files installed (the Docker image carries the common ones).
+ */
+function babelPreamble(language: string): string {
+  const option = BABEL_LANGUAGES[language.trim().toLowerCase().split("-")[0]];
+  return option ? `\\usepackage[${option}]{babel}` : "";
+}
+
+/**
+ * The line that names the table of contents, or `""` to leave it to babel.
+ *
+ * Babel sets a language's caption at `\begin{document}`, so a plain
+ * `\renewcommand` in the preamble is overwritten; the override is applied there
+ * too, after babel's, to win. A book that names no `strings.contents` keeps the
+ * language pack's caption — except in English, which loads no babel and whose
+ * LaTeX default is "Contents", where the engine supplies its own name.
+ */
+function contentsLine(babel: string): string {
+  const override = CONFIG.strings.contents;
+  if (override === undefined && babel !== "") return "";
+  const name = override ?? UI_DEFAULTS.contents;
+  return `\\AtBeginDocument{\\renewcommand{\\contentsname}{${texEscape(name)}}}`;
+}
+
 /** Every value preamble.tex names, from the book's config. */
 function placeholders(): Record<string, string> {
   const { geometry, type } = CONFIG.tex;
+  const babel = babelPreamble(CONFIG.language);
   return {
+    babel,
+    contents: contentsLine(babel),
     "text-font": texEscape(CONFIG.fonts.text),
     // Fontspec takes the bold face as an option, and only when the book names
     // one: empty leaves `\setmainfont{…}` bare.

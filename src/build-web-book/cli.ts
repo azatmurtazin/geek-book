@@ -160,7 +160,7 @@ export async function main(args: string[]): Promise<number> {
     writePage(homeOutputRel, CONFIG.title, body, readers[0] ?? null);
   } else {
     const first = written[0];
-    const body = `<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${path.posix.relative(path.posix.dirname(homeOutputRel), first.outputRel) || first.outputRel}"><title>${escapeHtml(CONFIG.title)}</title></head><body></body></html>`;
+    const body = `<!DOCTYPE html>\n<html lang="${escapeHtml(CONFIG.language)}"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${path.posix.relative(path.posix.dirname(homeOutputRel), first.outputRel) || first.outputRel}"><title>${escapeHtml(CONFIG.title)}</title></head><body></body></html>`;
     fs.writeFileSync(path.join(outputDir, homeOutputRel), body);
   }
 

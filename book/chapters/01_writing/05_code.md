@@ -40,6 +40,10 @@ Setting `languages` replaces the default set, so a book that names its own list
 should include the tags it still uses — `text` for pasted output, and `mermaid`
 for diagrams.
 
+`languages` is only the fence set. The book's own language is the separate
+`language` key in [Configuration](../03_config/00_index.md); `languages` never
+changes how the prose itself is set.
+
 ## Pasted output
 
 A `text` fence is for output rather than source: a command transcript, a log

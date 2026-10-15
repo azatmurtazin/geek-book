@@ -32,6 +32,41 @@
         "type": "string"
       }
     },
+    "language": {
+      "description": "The book's language, a BCP 47 tag (default: en). Sets the page's lang and, when the engine knows the language, the PDF's babel.",
+      "type": "string"
+    },
+    "strings": {
+      "description": "Overrides for the fixed interface labels, English by default.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "previous": {
+          "description": "The label of the previous-page link.",
+          "type": "string"
+        },
+        "next": {
+          "description": "The label of the next-page link.",
+          "type": "string"
+        },
+        "contents": {
+          "description": "The table of contents heading in the printed edition. Unset, a loaded language keeps babel's caption (English keeps the engine's name).",
+          "type": "string"
+        },
+        "home": {
+          "description": "The Home link on a standalone rendered page.",
+          "type": "string"
+        },
+        "toggle-navigation": {
+          "description": "The accessible name of the navigation toggle.",
+          "type": "string"
+        },
+        "toggle-theme": {
+          "description": "The accessible name of the day/night theme toggle.",
+          "type": "string"
+        }
+      }
+    },
     "bookDir": {
       "description": "Where the sources live, relative to the book root (default: book).",
       "type": "string"

@@ -42,6 +42,8 @@ checks the file against it — the same schema, so the two can never disagree.
 | `author` | none | The author's name, for the colophon. |
 | `version` | the package version | What the version token resolves to in the prose. |
 | `placeholders` | none | A book's own prose tokens, beyond `version`, `title`, `author` and `tagline`. |
+| `language` | `en` | The book's language, a BCP 47 tag such as `de` or `pt-BR`. |
+| `strings` | English | Overrides for the fixed interface labels. |
 | `bookDir` | `book` | Where the sources live. |
 | `summary` | `<bookDir>/SUMMARY.md` | The table of contents the build follows. |
 | `output.web` | `build/html` | Where the website is written. |
@@ -55,3 +57,34 @@ The version is read from the book's own `package.json` unless the config names
 one, so the number still lives in exactly one place. `docs` exists because a
 book repo holds Markdown outside `book/` — a README, a changelog — whose links
 the linter should resolve just the same.
+
+## Language
+
+`language` is the book's own language, a BCP 47 tag such as `en`, `en-GB`, `de`
+or `pt-BR`. It sets the website's `lang` attribute, so a browser and a screen
+reader treat the prose as that language, and it tells the printed edition which
+hyphenation patterns to use. English is LaTeX's own default and needs nothing; a
+book that names another language has to have that language's babel files
+installed where the PDF is built. A tag the engine does not recognize keeps the
+English patterns.
+
+The interface around the prose stays English until the book says otherwise. The
+`strings` map overrides the labels the two editions print — `previous`, `next`,
+`contents` (the table of contents heading), `home`, and the two controls'
+names:
+
+```json
+{
+  "language": "de",
+  "strings": { "previous": "Zurück", "next": "Weiter", "contents": "Inhalt" }
+}
+```
+
+`contents` is the printed table of contents' heading; leave it out and a language
+the engine loads keeps the caption babel gives it, in that language's words —
+English, which loads no babel, keeps the engine's name. The other labels are the
+website's, with `home` on the standalone rendered page.
+
+This key is not the linter's [`languages`](../01_writing/05_code.md), which is
+the set of code-fence tags it accepts. `language` is what the book itself is
+written in.

@@ -9,6 +9,7 @@ import { resolveImagePath } from "../lib/images.js";
 import { REMOTE_IMAGE_DIR, type RemoteImages } from "../lib/remote-images.js";
 import { FONT_CSS_VARS, FONT_LINKS } from "../lib/fonts.js";
 import { readCss } from "../lib/css.js";
+import { ui } from "../lib/ui-strings.js";
 
 export interface MappedChapter {
   /** Path relative to book/, e.g. "chapters/01_data_types/numbers.md". */
@@ -219,13 +220,13 @@ function pageDocument(opts: {
   styleHref: string;
 }): string {
   const prevNav = opts.prev
-    ? `<div class="prev"><span class="nav-label">Previous</span><a href="${opts.prev.href}">${escapeHtml(opts.prev.label)}</a></div>`
+    ? `<div class="prev"><span class="nav-label">${escapeHtml(ui("previous"))}</span><a href="${opts.prev.href}">${escapeHtml(opts.prev.label)}</a></div>`
     : "";
   const nextNav = opts.next
-    ? `<div class="next"><span class="nav-label">Next</span><a href="${opts.next.href}">${escapeHtml(opts.next.label)}</a></div>`
+    ? `<div class="next"><span class="nav-label">${escapeHtml(ui("next"))}</span><a href="${opts.next.href}">${escapeHtml(opts.next.label)}</a></div>`
     : "";
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${escapeHtml(CONFIG.language)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -236,17 +237,17 @@ ${FONT_LINKS}
 <noscript><style>.theme-toggle { display: none; }</style></noscript>
 </head>
 <body>
-<input type="checkbox" id="sidebar-toggle" aria-label="Toggle navigation">
+<input type="checkbox" id="sidebar-toggle" aria-label="${escapeHtml(ui("toggle-navigation"))}">
 ${opts.sidebar}
 <div class="page-wrapper">
   <header class="book-header">
-    <label for="sidebar-toggle" class="menu-toggle" title="Toggle the navigation panel">&#9776;</label>
+    <label for="sidebar-toggle" class="menu-toggle" title="${escapeHtml(ui("toggle-navigation"))}">&#9776;</label>
     <span class="header-title">${escapeHtml(opts.headerTitle)}</span>
     <span class="header-nav">
-      ${opts.prev ? `<a href="${opts.prev.href}">&#8592; Previous</a>` : ""}
-      ${opts.next ? `<a href="${opts.next.href}">Next &#8594;</a>` : ""}
+      ${opts.prev ? `<a href="${opts.prev.href}">&#8592; ${escapeHtml(ui("previous"))}</a>` : ""}
+      ${opts.next ? `<a href="${opts.next.href}">${escapeHtml(ui("next"))} &#8594;</a>` : ""}
     </span>
-    <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Toggle day/night theme" title="Toggle day/night theme">
+    <button class="theme-toggle" type="button" aria-pressed="false" aria-label="${escapeHtml(ui("toggle-theme"))}" title="${escapeHtml(ui("toggle-theme"))}">
       <span class="theme-icon-sun" aria-hidden="true">&#9728;</span>
       <span class="theme-icon-moon" aria-hidden="true">&#9790;</span>
     </button>
