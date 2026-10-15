@@ -33,6 +33,18 @@ at the size the site gives it — 96 pixels to the inch — shrinking it to the 
 block only when it would not fit, so a small picture is never stretched across
 the page.
 
+## Formats
+
+The website copies the file and lets the browser draw it, so any format a
+browser renders works there. The print build hands the file to LaTeX instead,
+which reads png and jpeg from disk — a pdf page embeds too, but a browser draws
+it as nothing.
+
+A book built for both editions therefore keeps its pictures png or jpeg, the two
+formats both editions read. Nothing checks the extension, so an svg or webp
+passes the linter and the website and fails only when the PDF is built. A
+drawing that must survive both is a [diagram](03_diagrams.md), not a file.
+
 ## Copies are shared
 
 Repeating a picture is cheap. The engine copies each distinct source once per

@@ -34,7 +34,9 @@ two output paths are the `output.web` and `output.pdf` keys.
 
 `book/images/` holds the pictures, including the cover. The cover is
 `book/images/cover.jpg` by default and may be absent — a book with no cover
-simply has no cover page in the PDF.
+simply has no cover page in the PDF. It belongs to the printed edition alone —
+the website never uses it — and it must be a png or jpeg, the formats LaTeX can
+place.
 
 Nothing else in the repository is read as a book. The engine's own `src/` and
 `docker/` directories, and the build output under `build/`, are the engine's
