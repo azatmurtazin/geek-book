@@ -2,25 +2,35 @@
 
 # Introduction
 
-- [How this sample is put together](chapters/00_intro/00_index.md)
-- [What lorem ipsum is for](chapters/00_intro/01_what_is_lorem.md)
+- [Introduction](chapters/00_intro/00_index.md)
+  - [Installing geek-book](chapters/00_intro/01_installing.md)
+  - [Your first book](chapters/00_intro/02_first_book.md)
 
-# Formatting
+# Writing
 
-- [Formatting](chapters/01_formatting/00_index.md)
-  - [A sample page](chapters/01_formatting/01_sample_page.md)
+- [Writing](chapters/01_writing/00_index.md)
+  - [The book tree](chapters/01_writing/01_tree.md)
+  - [SUMMARY.md](chapters/01_writing/02_summary.md)
+  - [Chapters](chapters/01_writing/03_chapters.md)
+  - [Formatting](chapters/01_writing/04_formatting.md)
+  - [Code](chapters/01_writing/05_code.md)
 
-# Diagrams
+# Media
 
-- [Diagrams](chapters/02_diagrams/00_index.md)
-  - [A mermaid fence](chapters/02_diagrams/01_mermaid.md)
+- [Media](chapters/02_media/00_index.md)
+  - [Images](chapters/02_media/01_images.md)
+  - [Remote images](chapters/02_media/02_remote.md)
+  - [Diagrams](chapters/02_media/03_diagrams.md)
 
-# Code
+# Configuration
 
-- [Code](chapters/03_code/00_index.md)
+- [Configuration](chapters/03_config/00_index.md)
+  - [Fonts](chapters/03_config/01_fonts.md)
+  - [The printed page](chapters/03_config/02_print.md)
 
-# Images
+# Publishing
 
-- [Images](chapters/04_images/00_index.md)
-  - [A photograph](chapters/04_images/01_photograph.md)
-  - [A remote picture](chapters/04_images/02_remote.md)
+- [Publishing](chapters/04_publishing/00_index.md)
+  - [Commands](chapters/04_publishing/01_commands.md)
+  - [Linting](chapters/04_publishing/02_lint.md)
+  - [Continuous integration](chapters/04_publishing/03_ci.md)

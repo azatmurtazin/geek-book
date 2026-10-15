@@ -1,9 +1,9 @@
 name: Link check
 
-# External-link (link-rot) check for the engine's own docs and the sample book.
-# Internal links and #anchors are covered offline by `geek-book lint`; this job
-# is the only one that needs the network, so it runs on demand, on pushes/PRs
-# and on a weekly schedule. The config lives in lychee.toml.
+# External-link (link-rot) check for the engine's own docs and the guide under
+# book/. Internal links and #anchors are covered offline by `geek-book lint`;
+# this job is the only one that needs the network, so it runs on demand, on
+# pushes/PRs and on a weekly schedule. The config lives in lychee.toml.
 
 on:
   push:

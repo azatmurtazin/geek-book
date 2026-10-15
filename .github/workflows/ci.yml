@@ -1,9 +1,9 @@
 name: CI
 
-# Lint the engine and the sample book, then build both editions — website
+# Lint the engine and the guide, then build both editions — website
 # (build/html/) and print PDF (build/book.pdf) — in the engine's own Docker
 # image, the same service the `just docker-book` recipe runs, with the image
-# layers cached between runs. The sample exists so that the engine is proven to
+# layers cached between runs. The book exists so that the engine is proven to
 # build a book end to end on every change.
 
 on:
@@ -36,7 +36,7 @@ jobs:
       - run: just lint
 
   book:
-    name: Build the sample (website + PDF)
+    name: Build the book (website + PDF)
     needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -58,18 +58,18 @@ jobs:
       # drops to the image's `node` user (uid 1000). The GitHub workspace is
       # owned by uid 1001, so hand it to 1000 first; the compose service then
       # builds build/html/ and build/book.pdf on the bind-mounted repo.
-      - name: Build the sample
+      - name: Build the book
         run: |
           sudo chown -R 1000:1000 .
           docker compose run --rm book
 
       - uses: actions/upload-artifact@v7
         with:
-          name: sample-web
+          name: book-web
           path: build/html
           retention-days: 7
       - uses: actions/upload-artifact@v7
         with:
-          name: sample-pdf
+          name: book-pdf
           path: build/book.pdf
           retention-days: 7

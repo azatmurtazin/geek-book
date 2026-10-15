@@ -11,7 +11,7 @@
 # build/, so it never dirties the working tree.
 #
 # `fail_fast` stops at the first failing hook, so a whitespace or lint failure
-# does not pay for the sample build that follows.
+# does not pay for the book build that follows.
 #
 # Developed against pre-commit 4.6.2 (the current release).
 
@@ -35,15 +35,15 @@ repos:
     hooks:
       # `npm run lint` — tsc --noEmit plus the summary, chapter and link checks.
       - id: lint
-        name: lint the engine and the sample
+        name: lint the engine and the guide
         entry: just lint
         language: system
         pass_filenames: false
         always_run: true
 
-      # The two editions of the sample: build/html/ and build/book.pdf.
+      # The two editions of the book: build/html/ and build/book.pdf.
       - id: build-book
-        name: build the sample (website + PDF)
+        name: build the book (website + PDF)
         entry: "bash -c 'just html && just pdf'"
         language: system
         pass_filenames: false

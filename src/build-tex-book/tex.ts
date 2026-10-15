@@ -250,7 +250,7 @@ function figureTex(figure: Figure): string {
  * Place a picture on the page.
  *
  * A picture prints at the size the web edition gives it — 96 pixels to the inch,
- * so the sample's 409-pixel bird is 108mm wide — and is scaled down to the text
+ * so the guide's 409-pixel bird is 108mm wide — and is scaled down to the text
  * block only when it would not fit, by width or by height, whichever binds
  * first. A picture smaller than the block is therefore never blown up to it:
  * stretching is what pixelates a small drawing, and the two editions then agree

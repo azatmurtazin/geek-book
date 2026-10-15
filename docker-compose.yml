@@ -1,4 +1,4 @@
-# geek-book — dockerized build of the engine's own sample book.
+# geek-book — dockerized build of the engine's own user's guide.
 #
 #   docker compose run --rm book     # build build/html/ + build/book.pdf
 #

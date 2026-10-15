@@ -26,8 +26,8 @@ to your book:
 
 ```json
 {
-  "title": "Lorem Ipsum",
-  "tagline": "a sample book built by geek-book",
+  "title": "geek-book",
+  "tagline": "the user's guide",
   "cover": "book/images/cover.jpg",
   "docs": ["README.md"]
 }
@@ -84,7 +84,7 @@ them, and spells out `bold` when bold is a weight instance of a variable font
 rather than a face of its own.
 
 The printed edition has a `tex` block of its own. Nothing in it is required —
-the defaults are the sample's:
+the defaults are the engine's:
 
 ```json
 {
@@ -145,14 +145,15 @@ hand, and the theme button stays out of the way.
 `lint` runs three families — `summary`, `chapters` and `links` — and any of them
 can be run alone.
 
-## The sample book
+## This book
 
-This repository builds its own sample: the placeholder book under `book/`, whose
-prose is lorem ipsum. It is a fixture, not an example of writing — it exists so
-the engine can be built, linted and printed without any other book present.
+This repository builds its own book: the user's guide under `book/`, which
+documents the engine and doubles as the fixture it is tested against. It is
+written the way any book is, so nothing about the build is exercised only by
+content that lives somewhere else.
 
 ```
-just lint     # type-check the engine, then lint the sample
+just lint     # type-check the engine, then lint the book
 just html     # build build/html/
 just pdf      # build build/book.pdf
 just serve    # preview build/html/ on http://localhost:4000
@@ -180,7 +181,7 @@ pre-commit config and three workflows (lint+build, release, link check) — with
 
 ## How the engine is tested
 
-The sample under `book/` is the fixture: `just lint`, `just html` and `just pdf`
+The book under `book/` is the fixture: `just lint`, `just html` and `just pdf`
 in this repository exercise the linter and both editions on every change, and CI
 runs the same three in the `book` image. There are no unit tests; a book that
 builds is the contract.
@@ -202,7 +203,7 @@ PDF build reads the warnings back and fails on any that survive the last pass.
 | `_layouts/`       | The standalone HTML shell (previews and `geek-book md`).                           |
 | `docker/`         | The build image: Node + LuaLaTeX + the fonts.                                      |
 | `templates/`      | Book-side scaffolding (config, Justfile, CI) for a new book repo.                  |
-| `book/`           | The lorem ipsum sample, its `images/` and its cover.                               |
+| `book/`           | The user's guide, its `images/` and its cover.                                     |
 
 CSS is plain `.css` rather than a preprocessor: the stylesheets sit beside the
 code that reads them (`src/build-web-book/site.css`, `src/lib/content.css`) and
@@ -213,4 +214,4 @@ the loader that fills it from the config.
 
 ## Licence
 
-MIT (see [LICENSE](LICENSE)). The sample book's prose is placeholder text.
+MIT (see [LICENSE](LICENSE)).

@@ -1,10 +1,10 @@
-# geek-book — build the engine's own sample book.
+# geek-book — build the engine's own user's guide.
 #
-#   just              build/html/ (the sample as a static website)
+#   just              build/html/ (the guide as a static website)
 #   just pdf          build/book.pdf
 #   just docker-book  build/html/ + build/book.pdf inside Docker
 #   just serve        preview build/html/ on http://localhost:4000
-#   just lint         type-check the engine, then lint the sample
+#   just lint         type-check the engine, then lint the guide
 #   just clean        remove build/
 #   just install-tools  report the toolchain
 #
@@ -31,7 +31,7 @@ list:
 
 # --- website -----------------------------------------------------------------
 
-# build/html/ — the sample as a static website. Rebuilds only when a source is
+# build/html/ — the guide as a static website. Rebuilds only when a source is
 # newer than the last build.
 html:
     #!/usr/bin/env bash
@@ -51,7 +51,7 @@ serve:
 
 # --- pdf ---------------------------------------------------------------------
 
-# build/book.pdf — the whole sample in one print-ready file, typeset with
+# build/book.pdf — the whole book in one print-ready file, typeset with
 # LuaLaTeX. Rebuilds only when a source changes.
 pdf:
     #!/usr/bin/env bash
@@ -76,7 +76,7 @@ docker-book:
 
 # --- checks -----------------------------------------------------------------
 
-# type-check the engine, then lint the sample book.
+# type-check the engine, then lint the guide.
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
