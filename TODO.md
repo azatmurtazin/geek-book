@@ -143,3 +143,117 @@ a tag named there is also accepted by the linter.
 Heading slugs, callout and code-block markup, sidebar shape — these are the
 book's visual identity, and `tex.preamble` plus a future `web.css` already let a
 determined book override them. Turning them into keys only multiplies the schema.
+
+---
+
+## Tests and architecture
+
+Unit tests for the two rendering pipelines (Markdown → HTML and Markdown →
+LaTeX), the refactor that makes them testable, and the file splits that fall
+out of it. No new dependencies: Node's built-in `node:test` runs TypeScript
+through `tsx`, which the engine already ships.
+
+## Harness
+
+- [ ] `test/` beside `src/`, mirroring its layout (`test/md-to-html/`,
+      `test/build-tex-book/`, `test/lib/`)
+- [ ] a `test` script — `node --import tsx --test "test/**/*.test.ts"` — plus a
+      `just test` recipe and a `pre-commit` hook after `lint`
+- [ ] widen `tsconfig.json`'s `include` to cover `test/`, so `npm run
+      typecheck` checks the tests too
+- [ ] tests assert on strings and structures, never on `build/`; no LuaLaTeX or
+      jsdom in the unit tier
+
+Then blockers:
+
+## What has to change before the pipelines are testable
+
+Three things make the pipelines unimportable from a test today:
+
+- [ ] `CONFIG` is read at module scope (`export const CONFIG = load()` in
+      `src/lib/book-config.ts`, from `process.cwd()`), and its consumers freeze
+      derived constants at import — `TEXT_WIDTH_MM` in `tex.ts`, `colors` in
+      `diagrams/render.ts`, `TEXT_STACK`/`FONT_LINKS` in `fonts.ts`, `ROOT`/`BOOK`
+      in `lint/paths.ts`. A test cannot choose a book. Thread a config argument
+      (or a narrow context object) into the pipeline entry points instead of
+      reading the singleton; keep `CONFIG` for the CLIs, which are process-wide by nature.
+- [ ] `marked.use({…})` at module scope in `md-to-html/render.ts` mutates a
+      process-global renderer. Give each pipeline its own `Marked` instance (the
+      `Marked` class) built by a renderer factory, so HTML and TeX never share
+      token state and a test can construct either in isolation.
+- [ ] `parseChapter` interleaves four jobs: placeholder substitution, remote image fetching,
+      mermaid drawing, and the token walk. Split it so the walk
+      is a pure `tokensToIr(markdown, ctx)` that a test can call with a stub
+      context; leave fetching and mermaid in the async wrapper.
+
+Then file splits:
+
+## Splitting the large files
+
+Each file splits along the seams its own comments already describe; the entry
+points and their exports stay put so the CLIs do not change.
+
+- [ ] `src/lib/book-config.ts` (647) → `types.ts` (the interfaces),
+      `defaults.ts`, `validators.ts` (the `as*` family), `load.ts`
+- [ ] `src/build-tex-book/tex.ts` (365) → `escape.ts` (`texEscape`,
+      `texEscapeCode`), `blocks.ts`, `inline.ts`, `figures.ts` (picture      measuring), `tables.ts`
+- [ ] `src/diagrams/render.ts` (355) → `theme.ts` (the `tex.colors` mapping),
+      `shims.ts` (the jsdom measurement shims), `fixup.ts` (viewBox/text
+      rewriting), `render.ts` (loader + entry points)
+- [ ] `src/build-web-book/site.ts` (347) → `links.ts` (`rewriteLinks`,
+      `rewriteImages`), `nav.ts` (sidebar + footer), `page.ts` (`assemblePage`,
+      `headHtml`, `stylesheet`)
+- [ ] `src/build-tex-book/parse.ts` (329) → `blocks.ts`, `inlines.ts`,
+      `links.ts` (`linkTarget`), `images.ts` (`placeImage`), `entities.ts`
+
+Then the suites:
+
+## md → html (`src/md-to-html/`)
+
+- [ ] heading ids: slug rule, depth, and that the id matches what the linter
+      expects (`slugify` in `src/lib/markdown.ts` is shared on purpose)
+- [ ] code fences: `language-` class, the label chip from `code`, comment
+      `<span>`s from `tokenizeCode`, escaping byte-for-byte
+- [ ] `breaks` and GFM tables/lists/strikethrough round-trip
+- [ ] placeholders substituted in prose, left alone inside fences
+- [ ] `pageTitle` from the first `#`, and the layout's `{{ … }}` slots all filled
+- [ ] `escapeHtml` on every interpolated value (title, tagline, code, links)
+
+## md → tex (`src/build-tex-book/`)
+
+- [ ] IR shape for each block kind: heading anchors (`c<id>` + slug),
+      paragraphs, callouts, ordered lists and their `start`, aligned tables,
+      rules, standalone images
+- [ ] `linkTarget`: external URL → `null`, `.md` → `c<id>`, bare `#anchor`,
+      unknown file → `null`
+- [ ] `texEscape` / `texEscapeCode` over every special character
+- [ ] serialization: heading commands by depth, `\\label` per anchor, list
+      counters at depth > 0, table rules, `codebox` + `\\cc{}` comments,
+      `\\hyperref` vs `\\href`
+- [ ] picture fitting: `shrinkAxis` and the mm conversion, with and without a
+      measurable header
+- [ ] `preambleTex` expands `<<doc-class>>`, `<<side>>`, `<<toc-depth>>`,
+      geometry and the nine colours
+
+## Cross-pipeline parity
+
+The one promise the engine makes is that both editions come from the same
+source. Test it directly:
+
+- [ ] the same heading produces the same anchor as an HTML `id` and a TeX
+      `\\label`
+- [ ] the same `{{ token }}` resolves to the same string in both
+- [ ] the same fence produces a label chip in HTML and a label line in TeX
+- [ ] a golden file: one fixture chapter through both pipelines, committed
+      beside the tests, so a rendering change shows up as a diff
+
+Then ordering note:
+
+## Order
+
+- [ ] harness first, then the parity and pure-function tests, which pass
+      against today's code and pin the current output
+- [ ] then the config-injection and `Marked`-instance refactor, with those
+      tests green throughout
+- [ ] then the file splits, one commit each, no behaviour change
+- [ ] `npm test` in the pre-commit hook, after `lint`
