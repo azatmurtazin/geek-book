@@ -29,6 +29,10 @@
       "description": "Where the sources live, relative to the book root (default: book).",
       "type": "string"
     },
+    "summary": {
+      "description": "The table of contents, relative to the book root (default: <bookDir>/SUMMARY.md). Its chapter links stay relative to the book directory.",
+      "type": "string"
+    },
     "cover": {
       "description": "The cover image for the PDF (default: <bookDir>/cover.jpg; may be absent).",
       "type": "string"

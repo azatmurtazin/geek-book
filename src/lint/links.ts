@@ -12,12 +12,18 @@ import {
 import { isRemoteImage, resolveImagePath } from "../lib/images.js";
 import { BOOK } from "./paths.js";
 
-/** Resolve every internal link in `file`, checking targets and anchors. */
+/** Resolve every internal link in `file`, checking targets and anchors.
+ *
+ * `linkBase` is what relative links resolve against — by default the file's own
+ * directory, as Markdown means it. The summary passes the book directory, since
+ * its chapter paths are always written from there, wherever the file itself
+ * lives. */
 export function checkLinks(
   reporter: Reporter,
   file: string,
   allFiles: string[],
   planned: Set<string>,
+  linkBase: string = path.dirname(file),
 ): void {
   const fromRelBook = path.relative(BOOK, file).split(path.sep).join("/");
   // The root docs (README.md, CHANGELOG.md) carry images no edition builds, so
@@ -69,7 +75,7 @@ export function checkLinks(
       if (!pathPart) {
         resolved = file;
       } else {
-        const candidate = path.resolve(path.dirname(file), pathPart);
+        const candidate = path.resolve(linkBase, pathPart);
         if (!fs.existsSync(candidate)) {
           // A link into a chapter that is planned but not written yet is
           // fine — the tree is meant to run ahead of the prose.

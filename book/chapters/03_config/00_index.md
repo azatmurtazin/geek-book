@@ -42,6 +42,7 @@ checks the file against it — the same schema, so the two can never disagree.
 | `author` | none | The author's name, for the colophon. |
 | `version` | the package version | What the version token resolves to in the prose. |
 | `bookDir` | `book` | Where the sources live. |
+| `summary` | `<bookDir>/SUMMARY.md` | The table of contents the build follows. |
 | `output.web` | `build/html` | Where the website is written. |
 | `output.pdf` | `build/book.pdf` | Where the PDF is written. |
 | `docs` | `README.md`, `CONTRIBUTING.md` | Root Markdown whose links are linted. |

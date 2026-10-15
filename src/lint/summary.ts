@@ -2,12 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Reporter } from "./errors.js";
 import { parseSummary } from "../lib/summary.js";
-import { BOOK, CHAPTERS, hasMarkdown, markdownFilesUnder, SUMMARY } from "./paths.js";
+import { BOOK, CHAPTERS, hasMarkdown, markdownFilesUnder, ROOT, SUMMARY } from "./paths.js";
 
 /** Every chapter path listed in SUMMARY.md, relative to BOOK. */
 export function summaryLinks(reporter: Reporter): string[] {
   if (!fs.existsSync(SUMMARY)) {
-    reporter.errors.push("SUMMARY.md: missing");
+    reporter.errors.push(`${path.relative(ROOT, SUMMARY)}: missing`);
     return [];
   }
   return parseSummary(fs.readFileSync(SUMMARY, "utf8"))
@@ -59,7 +59,7 @@ export function checkTree(reporter: Reporter, planned: string[]): void {
 
   for (const p of onDisk) {
     if (!listed.has(p)) {
-      reporter.error(path.join(BOOK, p), null, "not listed in SUMMARY.md");
+      reporter.error(path.join(BOOK, p), null, `not listed in ${path.relative(ROOT, SUMMARY)}`);
     }
   }
 

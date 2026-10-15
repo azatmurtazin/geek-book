@@ -86,7 +86,13 @@ export function main(args: string[]): number {
       checkLinks(reporter, chapter, written, planned);
     }
 
-    for (const extra of [SUMMARY, README, ...CONFIG.docs]) {
+    // The summary's chapter paths are written from the book directory, not from
+    // the file, which a config may put elsewhere.
+    if (fs.existsSync(SUMMARY)) {
+      checkLinks(reporter, SUMMARY, written, planned, BOOK);
+    }
+
+    for (const extra of [README, ...CONFIG.docs]) {
       if (fs.existsSync(extra)) {
         checkLinks(reporter, extra, written, planned);
       }

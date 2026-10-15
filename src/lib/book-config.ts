@@ -167,6 +167,7 @@ export interface BookConfig {
   version: string;
   /** Absolute path of the Markdown sources (default `<root>/book`). */
   bookDir: string;
+  /** Absolute path of the table of contents (default `<bookDir>/SUMMARY.md`). */
   summary: string;
   chapters: string;
   readme: string;
@@ -318,6 +319,9 @@ function load(): BookConfig {
 
   const bookDir = path.resolve(root, asString(raw.bookDir, DEFAULTS.bookDir));
   const cover = asString(raw.cover, "");
+  // The table of contents may sit anywhere; its entries still resolve against
+  // `bookDir`, as the builders and the linter expect.
+  const summary = asString(raw.summary, "");
   const text = asString(fonts.text, DEFAULTS.fonts.text);
   const code = asString(fonts.code, DEFAULTS.fonts.code);
   const builtIn = text === DEFAULTS.fonts.text && code === DEFAULTS.fonts.code;
@@ -338,7 +342,7 @@ function load(): BookConfig {
     author: asString(raw.author, ""),
     version: asString(raw.version, asString(packageJson.version, "0.0.0")),
     bookDir,
-    summary: path.join(bookDir, "SUMMARY.md"),
+    summary: summary ? path.resolve(root, summary) : path.join(bookDir, "SUMMARY.md"),
     chapters: path.join(bookDir, "chapters"),
     readme: path.join(bookDir, "README.md"),
     cover: cover ? path.resolve(root, cover) : path.join(bookDir, "cover.jpg"),

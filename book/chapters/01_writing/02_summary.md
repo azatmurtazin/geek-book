@@ -29,7 +29,9 @@ file:
 
 The indent is what makes the second and third entries sections of the group
 rather than chapters of their own; they still become pages, nested under the
-first. The path is relative to `book/` and ends in `.md`.
+first. The path is relative to `book/` and ends in `.md`. The file itself lives at
+`book/SUMMARY.md`; the config's [`summary`](../03_config/00_index.md) key can
+move it elsewhere, but the paths inside stay relative to `book/`.
 
 ## The rules
 
