@@ -3,14 +3,22 @@
 //
 // The layout carries its own placeholders ({{ title }}, {{ content-css }}, …),
 // filled in the HTML wrapper; these fill the content itself, before `marked`
-// parses it. Fenced code blocks are left byte-for-byte, so a `{{ … }}` inside a
-// sample (Go templates, JSX, C++ braces) is never rewritten, and only the known
-// keys are replaced — anything else, such as Go's `{{.}}`, passes through.
+// parses it. The built-in tokens are the book's metadata — version, title,
+// author and tagline — and a book adds its own through the config's
+// `placeholders` map. Fenced code blocks are left byte-for-byte, so a
+// `{{ … }}` inside a sample (Go templates, JSX, C++ braces) is never rewritten,
+// and only the known keys are replaced — anything else, such as Go's `{{.}}`,
+// passes through.
 
 import { CONFIG } from "./book-config.js";
 
 const PLACEHOLDERS: Record<string, string> = {
+  // A book's own tokens first, so the built-in keys below win on a clash.
+  ...CONFIG.placeholders,
   version: CONFIG.version,
+  title: CONFIG.title,
+  author: CONFIG.author,
+  tagline: CONFIG.tagline,
 };
 
 const PLACEHOLDER = /\{\{\s*([a-z][a-z0-9-]*)\s*\}\}/g;

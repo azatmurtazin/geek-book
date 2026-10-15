@@ -21,7 +21,7 @@ interface Schema {
   minimum?: number;
   exclusiveMinimum?: number;
   properties?: Record<string, Schema>;
-  additionalProperties?: boolean;
+  additionalProperties?: boolean | Schema;
   items?: Schema;
 }
 
@@ -84,14 +84,17 @@ function validate(reporter: Reporter, file: string, schema: Schema, value: unkno
   }
 
   const properties = schema.properties;
-  if (properties !== undefined && isObject(value)) {
+  if (isObject(value)) {
     for (const [key, child] of Object.entries(value)) {
       const childAt = at ? `${at}.${key}` : key;
-      const childSchema = properties[key];
+      const childSchema = properties?.[key];
       if (childSchema !== undefined) {
         validate(reporter, file, childSchema, child, childAt);
       } else if (schema.additionalProperties === false) {
         reporter.warn(file, null, `${childAt}: unknown key`);
+      } else if (isObject(schema.additionalProperties)) {
+        // A map with no fixed keys (`placeholders`): every value is checked.
+        validate(reporter, file, schema.additionalProperties, child, childAt);
       }
     }
   }

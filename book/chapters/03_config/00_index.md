@@ -41,6 +41,7 @@ checks the file against it — the same schema, so the two can never disagree.
 | `tagline` | none | A one-line subtitle. |
 | `author` | none | The author's name, for the colophon. |
 | `version` | the package version | What the version token resolves to in the prose. |
+| `placeholders` | none | A book's own prose tokens, beyond `version`, `title`, `author` and `tagline`. |
 | `bookDir` | `book` | Where the sources live. |
 | `summary` | `<bookDir>/SUMMARY.md` | The table of contents the build follows. |
 | `output.web` | `build/html` | Where the website is written. |

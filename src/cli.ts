@@ -76,6 +76,7 @@ function printConfig(): void {
       tagline: CONFIG.tagline,
       author: CONFIG.author,
       version: CONFIG.version,
+      placeholders: CONFIG.placeholders,
       bookDir: rel(CONFIG.bookDir),
       summary: rel(CONFIG.summary),
       chapters: rel(CONFIG.chapters),

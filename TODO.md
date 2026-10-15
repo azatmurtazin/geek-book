@@ -27,13 +27,14 @@ Small, independent, and covers the most ground.
 
 ### 1. Expand the content placeholder tokens
 
-Currently exactly one token exists: `version` (`src/lib/content-placeholders.ts`).
+Done. The built-in tokens are now `version`, `title`, `author` and `tagline`,
+and the free-form `placeholders` map adds more (`src/lib/content-placeholders.ts`).
 
-- [ ] add `{{ title }}`, `{{ author }}`, `{{ tagline }}` from `CONFIG`
-- [ ] optionally a free-form `"placeholders": { "edition": "2nd" }` map merged in
-- [ ] document it in `book/chapters/01_writing/03_chapters.md` (the
+- [x] add `{{ title }}`, `{{ author }}`, `{{ tagline }}` from `CONFIG`
+- [x] optionally a free-form `"placeholders": { "edition": "2nd" }` map merged in
+- [x] document it in `book/chapters/01_writing/03_chapters.md` (the
       "Placeholders" section)
-- [ ] keep fenced blocks byte-for-byte, as the substitution already does
+- [x] keep fenced blocks byte-for-byte, as the substitution already does
 
 ### 2. `language`
 

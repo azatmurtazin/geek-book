@@ -25,6 +25,13 @@
       "description": "What the version token resolves to in the prose (default: the package version).",
       "type": "string"
     },
+    "placeholders": {
+      "description": "A book's own prose tokens, keyed by token name (lower-case letters, digits and hyphens).",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "bookDir": {
       "description": "Where the sources live, relative to the book root (default: book).",
       "type": "string"

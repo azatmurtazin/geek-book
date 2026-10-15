@@ -165,6 +165,9 @@ export interface BookConfig {
   tagline: string;
   author: string;
   version: string;
+  /** A book's own `{{ … }}` tokens, keyed by token name. The built-in tokens
+   * (version, title, author, tagline) are filled regardless and win on a clash. */
+  placeholders: Record<string, string>;
   /** Absolute path of the Markdown sources (default `<root>/book`). */
   bookDir: string;
   /** Absolute path of the table of contents (default `<bookDir>/SUMMARY.md`). */
@@ -243,6 +246,17 @@ function asStringList(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null;
   const list = value.filter((item): item is string => typeof item === "string" && item.trim() !== "");
   return list.length ? list : null;
+}
+
+/** A `{ token: value }` map of strings, else empty. Values are kept verbatim,
+ * so a token may stand for an empty string; non-string values are dropped. */
+function asStringMap(value: unknown): Record<string, string> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return {};
+  const out: Record<string, string> = {};
+  for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof item === "string" && key.trim() !== "") out[key.trim()] = item;
+  }
+  return out;
 }
 
 /** A length in millimetres: a non-negative finite number, else the default. */
@@ -341,6 +355,7 @@ function load(): BookConfig {
     tagline: asString(raw.tagline, ""),
     author: asString(raw.author, ""),
     version: asString(raw.version, asString(packageJson.version, "0.0.0")),
+    placeholders: asStringMap(raw.placeholders),
     bookDir,
     summary: summary ? path.resolve(root, summary) : path.join(bookDir, "SUMMARY.md"),
     chapters: path.join(bookDir, "chapters"),

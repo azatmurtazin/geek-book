@@ -39,14 +39,21 @@ the same heading in both editions.
 
 ## Placeholders
 
-One build-time placeholder may appear in the prose: the book's version, written
-as a `version` token between double braces. It is filled the same way in both
-editions, so a page that cites its own edition reads correctly everywhere:
+Prose may cite the book's own metadata with a token between double braces. The
+built-in tokens are `version`, `title`, `author` and `tagline`, all filled from
+the configuration, so the same source reads correctly in both editions:
 
 ```md
-This is the {{ version }} edition of the guide.
+This is the {{ version }} edition of {{ title }}, by {{ author }}.
+```
+
+A book adds tokens of its own with the `placeholders` map in its config, each
+key a token name written in the prose:
+
+```json
+{ "placeholders": { "edition": "second" } }
 ```
 
 Placeholders are never touched inside a fenced block, so a code sample that
 carries `{{ … }}` of its own — a Go template, a JSX expression — is left exactly
-as it was written.
+as it was written, and an unknown token such as Go's `{{.}}` passes through.
