@@ -12,7 +12,7 @@ that config file instead.
 | `geek-book web [dir]` | Build the website (default: `build/html`). |
 | `geek-book pdf [file]` | Build the PDF (default: `build/book.pdf`). |
 | `geek-book serve [dir] [port]` | Preview the built site (default: web output, 4000). |
-| `geek-book lint [family…]` | Check the sources: `summary`, `chapters`, `links`. |
+| `geek-book lint [family…]` | Check the sources: `summary`, `chapters`, `links`, `config`. |
 | `geek-book md <in> [out]` | Render one Markdown file to a standalone page. |
 | `geek-book pdf-info <pdf>` | Page count, size and friends, via poppler. |
 | `geek-book config` | Print the resolved book configuration. |
@@ -49,10 +49,10 @@ the sidebar.
 
 ## Checking
 
-`lint` runs three families and can run them one at a time:
+`lint` runs four families and can run them one at a time:
 
 ```text
-geek-book lint            # all three
+geek-book lint            # all four
 geek-book lint links      # just the link check
 ```
 

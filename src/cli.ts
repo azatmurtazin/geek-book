@@ -8,7 +8,7 @@
 //   geek-book web [dir]        build the website (default: build/html)
 //   geek-book pdf [file]       build the PDF     (default: build/book.pdf)
 //   geek-book serve [dir] [p]  preview the built website
-//   geek-book lint [family…]   check the sources (summary, chapters, links)
+//   geek-book lint [family…]   check the sources (summary, chapters, links, config)
 //   geek-book md <in> [out]    render one Markdown file on its own
 //   geek-book pdf-info <pdf>   page count, page size and friends
 //   geek-book config           print the resolved book configuration
@@ -42,7 +42,7 @@ const COMMANDS: Record<string, Command> = {
     run: async (args) => (await import("./serve/cli.js")).main(args),
   },
   lint: {
-    summary: "check the sources (summary, chapters, links)",
+    summary: "check the sources (summary, chapters, links, config)",
     run: async (args) => (await import("./lint/cli.js")).main(args),
   },
   md: {

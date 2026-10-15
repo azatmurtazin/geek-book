@@ -33,7 +33,8 @@ repos:
 
   - repo: local
     hooks:
-      # `npm run lint` — tsc --noEmit plus the summary, chapter and link checks.
+      # `npm run lint` — tsc --noEmit plus the summary, chapter, link and config
+      # checks.
       - id: lint
         name: lint the engine and the guide
         entry: just lint

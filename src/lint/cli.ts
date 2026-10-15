@@ -1,10 +1,10 @@
 // Structural checks for the book sources.
 //
 // Run with `npm run lint` (or `just lint`) for every family at once, or one
-// family at a time with `npm run lint-summary`, `lint-chapters` or
-// `lint-links`. Exits non-zero when something is wrong with the content or the
-// chapter tree; style nits that are advisory are reported as warnings and do
-// not fail the build.
+// family at a time with `npm run lint-summary`, `lint-chapters`, `lint-links`
+// or `lint-config`. Exits non-zero when something is wrong with the content or
+// the chapter tree; style nits that are advisory are reported as warnings and
+// do not fail the build.
 //
 // A TypeScript port of the original scripts/lint.py — behaviour and messages
 // are unchanged.
@@ -30,18 +30,21 @@
 //                than the budget, which no wrapping could bring inside it (a
 //                long URL destination, most of the time)
 //   links     7. internal links and anchors resolve
+//   config    8. book.config.json matches book.schema.json (advisory: unknown
+//                keys and values the engine would ignore are warnings)
 
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { Reporter } from "./errors.js";
 import { checkChapter } from "./chapter.js";
+import { checkConfig } from "./config.js";
 import { checkLinks } from "./links.js";
 import { checkTree, summaryLinks } from "./summary.js";
 import { BOOK, CHAPTERS, README, ROOT, SUMMARY, markdownFilesUnder } from "./paths.js";
 import { CONFIG } from "../lib/book-config.js";
 
-const CHECKS = ["summary", "chapters", "links"] as const;
+const CHECKS = ["summary", "chapters", "links", "config"] as const;
 type CheckName = (typeof CHECKS)[number];
 
 function isCheckName(value: string): value is CheckName {
@@ -88,6 +91,10 @@ export function main(args: string[]): number {
         checkLinks(reporter, extra, written, planned);
       }
     }
+  }
+
+  if (wanted.has("config")) {
+    checkConfig(reporter);
   }
 
   for (const message of reporter.warnings) {

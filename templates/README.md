@@ -45,4 +45,6 @@ declares it by path:
 ```
 
 The `book.config.json` example in this directory is the smallest useful one; the
-engine's README documents every key and every default.
+engine's README documents every key and every default. Its `$schema` key points
+at the engine's `book.schema.json`, so an editor validates the file once
+`npm install` has linked the engine; `just lint` checks it either way.

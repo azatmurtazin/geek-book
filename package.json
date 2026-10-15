@@ -10,6 +10,7 @@
   "files": [
     "bin",
     "src",
+    "book.schema.json",
     "_layouts",
     "docker",
     "docker-compose.yml",
@@ -28,6 +29,7 @@
     "lint-summary": "node bin/geek-book.mjs lint summary",
     "lint-chapters": "node bin/geek-book.mjs lint chapters",
     "lint-links": "node bin/geek-book.mjs lint links",
+    "lint-config": "node bin/geek-book.mjs lint config",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

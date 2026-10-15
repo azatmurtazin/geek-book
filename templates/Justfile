@@ -99,7 +99,8 @@ docker-book:
 
 # --- checks -----------------------------------------------------------------
 
-# the engine's structural checks: the SUMMARY tree, the chapters and the links.
+# the engine's structural checks: the SUMMARY tree, the chapters, the links and
+# the configuration.
 lint: _engine
     "{{engine}}" lint
 

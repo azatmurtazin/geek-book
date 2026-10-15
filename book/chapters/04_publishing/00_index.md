@@ -10,5 +10,5 @@ into pre-commit hooks and CI.
 ## In this section
 
 - [Commands](01_commands.md) — the full command line.
-- [Linting](02_lint.md) — the three families of check, and what each catches.
+- [Linting](02_lint.md) — the four families of check, and what each catches.
 - [Continuous integration](03_ci.md) — templates, Docker and releases.

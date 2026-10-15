@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "geek-book configuration",
+  "description": "The schema for book.config.json. Every key is optional: the engine has a default for each, so a book says only what it wants to change. An editor reads this through the config's `$schema` key, and `geek-book lint config` checks the file against it.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "description": "This schema, so an editor can validate the file.",
+      "type": "string"
+    },
+    "title": {
+      "description": "The book's title, on the site and the cover (default: the package name).",
+      "type": "string"
+    },
+    "tagline": {
+      "description": "A one-line subtitle.",
+      "type": "string"
+    },
+    "author": {
+      "description": "The author's name, for the colophon.",
+      "type": "string"
+    },
+    "version": {
+      "description": "What the version token resolves to in the prose (default: the package version).",
+      "type": "string"
+    },
+    "bookDir": {
+      "description": "Where the sources live, relative to the book root (default: book).",
+      "type": "string"
+    },
+    "cover": {
+      "description": "The cover image for the PDF (default: <bookDir>/cover.jpg; may be absent).",
+      "type": "string"
+    },
+    "output": {
+      "description": "Where the two editions are written.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "web": {
+          "description": "The website output directory (default: build/html).",
+          "type": "string"
+        },
+        "pdf": {
+          "description": "The PDF output file (default: build/book.pdf).",
+          "type": "string"
+        }
+      }
+    },
+    "docs": {
+      "description": "Root Markdown whose links the linter also checks (default: README.md, CONTRIBUTING.md).",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "languages": {
+      "description": "The fence languages the linter accepts (default: the built-in set).",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fonts": {
+      "description": "The typefaces both editions are set in (default: Literata and JetBrains Mono).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "description": "The body text, the headings and the diagrams.",
+          "type": "string"
+        },
+        "bold": {
+          "description": "The text font's bold face, as a fontspec declaration (Family:options).",
+          "type": "string"
+        },
+        "code": {
+          "description": "The family code blocks are set in.",
+          "type": "string"
+        },
+        "web": {
+          "description": "The webfont stylesheet the website loads; empty loads none.",
+          "type": "string"
+        }
+      }
+    },
+    "tex": {
+      "description": "The printed edition's page, palette and type scale.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "geometry": {
+          "description": "The paper and its margins, in millimetres.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "paper": {
+              "description": "The paper size (default: a4).",
+              "type": "string",
+              "enum": ["a4", "a5", "letter", "legal"]
+            },
+            "top": {
+              "description": "The top margin, in millimetres.",
+              "type": "number",
+              "minimum": 0
+            },
+            "bottom": {
+              "description": "The bottom margin, in millimetres.",
+              "type": "number",
+              "minimum": 0
+            },
+            "left": {
+              "description": "The left margin, in millimetres.",
+              "type": "number",
+              "minimum": 0
+            },
+            "right": {
+              "description": "The right margin, in millimetres.",
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "colors": {
+          "description": "The printed edition's palette, each value #rrggbb.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fg": {
+              "description": "Body text.",
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "muted": {
+              "description": "Secondary text.",
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "rule": {
+              "description": "Rules and borders.",
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "codeBackground": {
+              "description": "Code block background.",
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "codeForeground": {
+              "description": "Code block text.",
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "codeComment": {
+              "description": "Code comments.",
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "calloutBackground": {
+              "description": "Callout background.",
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "calloutBorder": {
+              "description": "Callout border.",
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "calloutForeground": {
+              "description": "Callout text.",
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            }
+          }
+        },
+        "type": {
+          "description": "The heading scale, in points.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "base": {
+              "description": "The document class size (default: 11).",
+              "type": "number",
+              "enum": [10, 11, 12]
+            },
+            "chapter": {
+              "description": "The chapter heading size.",
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "section": {
+              "description": "The section heading size.",
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "subsection": {
+              "description": "The subsection heading size.",
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "subsubsection": {
+              "description": "The subsubsection heading size.",
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "paragraph": {
+              "description": "The paragraph heading size.",
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "preamble": {
+          "description": "A file of extra LaTeX, relative to the book root, appended after the built-in preamble.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -34,7 +34,7 @@ repos:
 
   - repo: local
     hooks:
-      # `just lint` — the engine's summary, chapter and link checks.
+      # `just lint` — the engine's summary, chapter, link and config checks.
       - id: lint
         name: lint the book
         entry: just lint

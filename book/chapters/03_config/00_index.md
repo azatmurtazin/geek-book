@@ -8,10 +8,15 @@ default that fits the conventional layout. `geek-book config` prints the whole
 resolved configuration — every default and every override — which is the fastest
 way to see what a setting actually did.
 
+The file's shape is described by `book.schema.json`, which ships with the engine.
+An editor reads it through the config's `$schema` key, and `geek-book lint config`
+checks the file against it — the same schema, so the two can never disagree.
+
 ## A complete example
 
 ```json
 {
+  "$schema": "./book.schema.json",
   "title": "My Book",
   "tagline": "a book built with geek-book",
   "author": "Me",

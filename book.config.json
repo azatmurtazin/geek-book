@@ -1,4 +1,5 @@
 {
+  "$schema": "./book.schema.json",
   "title": "geek-book",
   "tagline": "the user's guide",
   "author": "geek-book",

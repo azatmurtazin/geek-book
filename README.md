@@ -52,10 +52,11 @@ to your book, and `npx geek-book config` prints what the engine resolved. See
 | `geek-book md <in> <out>` | Render one Markdown file to a standalone page.             |
 | `geek-book config`        | Show the book the engine resolved.                         |
 
-`lint` runs three families — `summary`, `chapters` and `links` — and any of them
-can be run alone; see [Commands](./book/chapters/04_publishing/01_commands.md)
-and [Linting](./book/chapters/04_publishing/02_lint.md). The same two editions
-are built and shipped by the
+`lint` runs four families — `summary`, `chapters`, `links` and `config` — and any
+of them can be run alone; see
+[Commands](./book/chapters/04_publishing/01_commands.md) and
+[Linting](./book/chapters/04_publishing/02_lint.md). The same two editions are
+built and shipped by the
 [CI templates](./book/chapters/04_publishing/03_ci.md). A command builds the book
 in the working directory; `--config <file>` points it at another config instead.
 

@@ -3,10 +3,10 @@
 *What the engine checks before it builds, and why.*
 
 `geek-book lint` reads the sources the way the builders will and reports what
-would go wrong. It runs three families of check — `summary`, `chapters` and
-`links` — and any of them can be run alone. The split matters because a book can
-be wrong in three independent ways: the tree, the prose, and the references
-between them.
+would go wrong. It runs four families of check — `summary`, `chapters`, `links`
+and `config` — and any of them can be run alone. The split matters because a book
+can be wrong in independent ways: the tree, the prose, the references between
+them, and the configuration itself.
 
 ## summary
 
@@ -42,3 +42,20 @@ Internal references:
 External `http(s)` links are left to the build's link check — `lychee` in the
 book templates — which actually visits them, and reports the ones that have gone
 dead.
+
+## config
+
+The configuration file, against the schema the engine ships:
+
+- an unknown key is a warning — the engine ignores it, so it is usually a typo
+  for a key that exists;
+- a value the engine would reject and replace with its default — a paper that is
+  not `a4`, `a5`, `letter` or `legal`, a colour that is not `#rrggbb`, a base size
+  that is not 10, 11 or 12 — is a warning too;
+- a file that does not parse as JSON is a warning, because the engine would
+  otherwise build the defaults without a word.
+
+Every finding here is advisory: the engine treats each key as optional and falls
+back to a default, so a warning never fails the build. The check reads
+`book.schema.json`, the same schema an editor reads through the config's
+`$schema` key, so the two can never disagree.
