@@ -10,6 +10,7 @@ import { resolveImagePath } from "../lib/images.js";
 import { REMOTE_IMAGE_DIR, type RemoteImages } from "../lib/remote-images.js";
 import { FONT_CSS_VARS, FONT_LINKS } from "../lib/fonts.js";
 import { readCss } from "../lib/css.js";
+import { WEB_PALETTE_VARS } from "../lib/web-palette.js";
 import { ui } from "../lib/ui-strings.js";
 
 export interface MappedChapter {
@@ -306,13 +307,13 @@ export function headHtml(): string {
   return bookFile(CONFIG.web.head);
 }
 
-/** The site's stylesheet: the configured families, the content rules shared
- *  with the standalone layout, the layout itself, and the book's own `web.css`
- *  last — three built-in sources pasted together here rather than at a CSS build
- *  step, with the book's file able to override any of them. */
+/** The site's stylesheet: the configured families and palette, the content
+ *  rules shared with the standalone layout, the layout itself, and the book's
+ *  own `web.css` last — four built-in sources pasted together here rather than
+ *  at a CSS build step, with the book's file able to override any of them. */
 export function stylesheet(): string {
   const content = readCss(import.meta.url, "../lib/content.css");
   const layout = readCss(import.meta.url, "site.css");
   const book = bookFile(CONFIG.web.css);
-  return [FONT_CSS_VARS, content, layout, book].filter(Boolean).join("\n\n");
+  return [FONT_CSS_VARS, WEB_PALETTE_VARS, content, layout, book].filter(Boolean).join("\n\n");
 }

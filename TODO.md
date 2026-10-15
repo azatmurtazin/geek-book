@@ -62,13 +62,13 @@ standalone `md` layout is not the website and does not share them.
 
 ### 3b. Derive the web palette from `tex.colors`
 
-The site carries a second, hard-coded palette (`--accent` and the `:root` block
-in `_layouts/default.html`, plus `src/lib/content.css`) that can drift from
-`tex.colors`.
+Done. `src/lib/web-palette.ts` turns the nine `tex.colors` into the web custom
+properties both targets share; the site-only colours (accent, backgrounds,
+zebra) stay in their stylesheets, and the night palette remains the engine's.
 
-- [ ] emit the web CSS variables from `CONFIG.tex.colors` in `src/lib/fonts.ts`
+- [x] emit the web CSS variables from `CONFIG.tex.colors` in `src/lib/fonts.ts`
       or `src/build-web-book/site.ts`
-- [ ] leave the site-only accent as its own key if it should differ
+- [x] leave the site-only accent as its own key if it should differ
 
 ### 4. Linter budgets
 

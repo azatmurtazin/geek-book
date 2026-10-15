@@ -3,9 +3,9 @@
 *Geometry, palette, type scale — and a file of LaTeX for anything else.*
 
 Everything about the printed edition that a book is likely to change lives under
-`tex` in `book.config.json`. None of it touches the website, whose look lives in
-CSS; these settings are the PDF's alone. `geek-book config` prints every
-resolved value.
+`tex` in `book.config.json`. The page and the type scale are the PDF's alone;
+the palette is not — its nine colours are the website's light palette too, so
+the two editions match. `geek-book config` prints every resolved value.
 
 ## The page
 
@@ -37,6 +37,11 @@ Nine colours, each `#rrggbb`:
 | `calloutBackground` | the callout panel's fill |
 | `calloutBorder` | the callout's accent bar |
 | `calloutForeground` | the text inside a callout |
+
+The website reads the same nine: they become its `--fg`, `--muted`, `--rule`,
+code-panel and callout custom properties, so a book's palette reaches both
+editions. The colours with no printed counterpart — the site's accent, its page
+and sidebar backgrounds — are not here; see [The website](03_web.md).
 
 ## The type scale
 

@@ -3,8 +3,9 @@
 // The body is wrapped in _layouts/default.html, which carries the fonts and
 // styles. The layout leaves a placeholder for the content CSS shared with the
 // web book ({{ content-css }}, from src/lib/content.css) and for the book's own
-// typefaces ({{ font-links }}, {{ font-text }}, {{ font-code }}), filled here
-// from src/lib/fonts.ts so the two targets cannot drift. Heading ids are
+// typefaces and palette ({{ font-links }}, {{ font-text }}, {{ font-code }},
+// {{ palette }}), filled here from src/lib/fonts.ts and src/lib/web-palette.ts
+// so the two targets cannot drift. Heading ids are
 // generated with the same slugifier the linter uses, so in-page `#anchor` links
 // land on the ids the site renderers emit. The page title is taken from the
 // first `#` heading.
@@ -25,6 +26,7 @@ import { ui } from "../lib/ui-strings.js";
 import { tokenizeCode } from "../lib/code-tokens.js";
 import { readCss } from "../lib/css.js";
 import { CODE_STACK, FONT_LINKS, TEXT_STACK } from "../lib/fonts.js";
+import { WEB_PALETTE_VARS } from "../lib/web-palette.js";
 import { preprocessMermaidMd, renderMermaid, substituteDiagrams } from "../diagrams/render.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -93,6 +95,7 @@ export function wrapInLayout(title: string, bodyHtml: string): string {
     .replace("{{ font-links }}", () => FONT_LINKS)
     .replace("{{ font-text }}", () => TEXT_STACK)
     .replace("{{ font-code }}", () => CODE_STACK)
+    .replace("{{ palette }}", () => WEB_PALETTE_VARS)
     .replace("{{ content-css }}", () => readCss(import.meta.url, "../lib/content.css"))
     .replace("{{ content }}", () => bodyHtml);
 }

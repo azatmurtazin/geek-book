@@ -3,27 +3,19 @@
    previous/next navigation under the page body.
 
    The code-block and diagram rules are shared with the standalone page layout
-   (_layouts/default.html) and live in src/lib/content.css; the family names come
-   from the book's config (book.config.json → fonts) and are prepended to this
-   file as a :root block by src/build-web-book/site.ts. */
+   (_layouts/default.html) and live in src/lib/content.css. The families and the
+   palette come from the book's config and are prepended to this file as :root
+   blocks by src/build-web-book/site.ts, so what is left here is only what the
+   printed edition has no counterpart for. */
 
 :root {
   color-scheme: light;
   --page-bg: #fff;
-  --fg: #242a37;
-  --muted: #6b7280;
   --accent: #4183c4;
   --accent-soft: #eef4fb;
-  --rule: #e5e8ed;
   --sidebar-bg: #f9fafb;
   --sidebar-link: #3b4b52;
-  --quote-fg: #3b4252;
   --zebra-bg: #fafbfc;
-  --code-bg: #f6f7f9;
-  --code-fg: #20304c;
-  --code-comment: #6b7280;
-  --callout-bg: #f8fafc;
-  --callout-border: #cbd5e1;
 }
 
 /* The reader's day/night choice, put on <html> by the script in the page head

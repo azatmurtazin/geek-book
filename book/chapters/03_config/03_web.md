@@ -28,9 +28,12 @@ stylesheet opens with:
 .book-body { max-width: 40rem; }
 ```
 
-The two editions carry separate palettes: `tex.colors` is the printed edition's,
-and the `:root` variables are the website's. This file reaches the second, not
-the first.
+The palette is shared: the website's light colours come from `tex.colors`, the
+same nine the printed page uses, so a book's palette reaches both editions. The
+rest of the site's `:root` — its accent, its page and sidebar backgrounds — is
+the website's own. This file can override any of it, the shared palette
+included. The reader's night theme is the engine's and does not follow
+`tex.colors`.
 
 ## Extra head HTML
 
