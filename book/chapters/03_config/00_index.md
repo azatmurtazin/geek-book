@@ -46,6 +46,7 @@ checks the file against it — the same schema, so the two can never disagree.
 | `strings` | English | Overrides for the fixed interface labels. |
 | `bookDir` | `book` | Where the sources live. |
 | `summary` | `<bookDir>/SUMMARY.md` | The table of contents the build follows. |
+| `readme` | `<bookDir>/README.md` | The website's home page. |
 | `output.web` | `build/html` | Where the website is written. |
 | `output.pdf` | `build/book.pdf` | Where the PDF is written. |
 | `docs` | `README.md`, `CONTRIBUTING.md` | Root Markdown whose links are linted. |
@@ -59,6 +60,12 @@ The version is read from the book's own `package.json` unless the config names
 one, so the number still lives in exactly one place. `docs` exists because a
 book repo holds Markdown outside `book/` — a README, a changelog — whose links
 the linter should resolve just the same.
+
+## The front page
+
+The website's home page is `book/README.md`. `readme` names another file — like
+`summary`, relative to the book root — and the linter checks its links just the
+same; with no file there, the home page is a redirect to the first chapter.
 
 ## Language
 

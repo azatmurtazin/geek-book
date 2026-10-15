@@ -123,7 +123,7 @@ Larger or narrower; pick by demand.
 
 ### Layout
 
-- [ ] `readme` — the web home page (`<bookDir>/README.md`), easy
+- [x] `readme` — names the web home page (default `<bookDir>/README.md`), easy
 - [ ] `chapters` — more invasive: the `chapters/` prefix is baked into the summary
       convention (`src/lint/summary.ts`), the `.md` to `.html` mapping, and the
       group-index rules, so relocating it means following that prefix everywhere

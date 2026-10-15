@@ -5,7 +5,8 @@
 // current chapter highlighted), a header with previous/next links, and
 // previous/next navigation under the content. Intra-book `.md` links and
 // `#anchors` are rewritten to the built `.html` files, using the same slug
-// rules the linter checks. `<book>/README.md` becomes index.html.
+// rules the linter checks. The book's front page (`readme`, `book/README.md` by
+// default) becomes index.html.
 //
 // Usage: geek-book web [output-dir]
 
@@ -127,7 +128,6 @@ export async function main(args: string[]): Promise<number> {
     fs.writeFileSync(outFile, html);
   };
 
-  // Front page (book/README.md) or a redirect to the first chapter.
   /** Copy a book-relative asset next to the page that uses it. */
   const copyAsset = (bookRel: string): boolean => {
     const source = path.join(BOOK, bookRel);
@@ -162,9 +162,11 @@ export async function main(args: string[]): Promise<number> {
     return body;
   };
 
-  const readme = path.join(BOOK, "README.md");
+  // The front page (`CONFIG.readme`), or a redirect to the first chapter.
+  const readme = CONFIG.readme;
   if (fs.existsSync(readme)) {
-    const body = await renderPage(readme, "README.md", homeOutputRel);
+    const relBook = path.relative(BOOK, readme).split(path.sep).join("/");
+    const body = await renderPage(readme, relBook, homeOutputRel);
     if (body === null) {
       return 1;
     }
