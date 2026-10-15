@@ -4,6 +4,9 @@ import type { Reporter } from "./errors.js";
 import { parseSummary } from "../lib/summary.js";
 import { BOOK, CHAPTERS, hasMarkdown, markdownFilesUnder, ROOT, SUMMARY } from "./paths.js";
 
+/** The prose directory as SUMMARY.md writes it, relative to the book directory. */
+const CHAPTERS_REL = path.relative(BOOK, CHAPTERS).split(path.sep).join("/");
+
 /** Every chapter path listed in SUMMARY.md, relative to BOOK. */
 export function summaryLinks(reporter: Reporter): string[] {
   if (!fs.existsSync(SUMMARY)) {
@@ -13,7 +16,7 @@ export function summaryLinks(reporter: Reporter): string[] {
   return parseSummary(fs.readFileSync(SUMMARY, "utf8"))
     .filter((item) => {
       const rel = item.relBook ?? "";
-      return item.kind === "entry" && rel.startsWith("chapters/") && rel.endsWith(".md");
+      return item.kind === "entry" && rel.startsWith(`${CHAPTERS_REL}/`) && rel.endsWith(".md");
     })
     .map((item) => item.relBook as string);
 }
@@ -48,7 +51,7 @@ export function checkTree(reporter: Reporter, planned: string[]): void {
   checkSummaryStructure(reporter);
 
   if (!fs.existsSync(CHAPTERS)) {
-    reporter.errors.push("chapters/: missing directory");
+    reporter.errors.push(`${CHAPTERS_REL}/: missing directory`);
     return;
   }
 

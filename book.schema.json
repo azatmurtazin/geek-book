@@ -75,6 +75,10 @@
       "description": "The table of contents, relative to the book root (default: <bookDir>/SUMMARY.md). Its chapter links stay relative to the book directory.",
       "type": "string"
     },
+    "chapters": {
+      "description": "The chapter prose directory, relative to the book root (default: <bookDir>/chapters). The chapter paths in SUMMARY.md stay relative to the book directory.",
+      "type": "string"
+    },
     "readme": {
       "description": "The website's home page, relative to the book root (default: <bookDir>/README.md). With no file there the home page redirects to the first chapter.",
       "type": "string"

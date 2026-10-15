@@ -205,6 +205,7 @@ export interface BookConfig {
   bookDir: string;
   /** Absolute path of the table of contents (default `<bookDir>/SUMMARY.md`). */
   summary: string;
+  /** Absolute path of the chapter prose (default `<bookDir>/chapters`). */
   chapters: string;
   /** Absolute path of the website's home page (default `<bookDir>/README.md`;
    * with no file there the home page redirects to the first chapter). */
@@ -390,9 +391,11 @@ function load(): BookConfig {
 
   const bookDir = path.resolve(root, asString(raw.bookDir, DEFAULTS.bookDir));
   const cover = asString(raw.cover, "");
-  // The front page and the table of contents may sit anywhere; their entries
-  // still resolve against `bookDir`, as the builders and the linter expect.
+  // The table of contents, the front page and the prose directory may sit
+  // anywhere; SUMMARY's chapter paths still resolve against `bookDir`, as the
+  // builders and the linter expect.
   const summary = asString(raw.summary, "");
+  const chapters = asString(raw.chapters, "");
   const readme = asString(raw.readme, "");
   const text = asString(fonts.text, DEFAULTS.fonts.text);
   const code = asString(fonts.code, DEFAULTS.fonts.code);
@@ -420,7 +423,7 @@ function load(): BookConfig {
     strings: asStringMap(raw.strings),
     bookDir,
     summary: summary ? path.resolve(root, summary) : path.join(bookDir, "SUMMARY.md"),
-    chapters: path.join(bookDir, "chapters"),
+    chapters: chapters ? path.resolve(root, chapters) : path.join(bookDir, "chapters"),
     readme: readme ? path.resolve(root, readme) : path.join(bookDir, "README.md"),
     cover: cover ? path.resolve(root, cover) : path.join(bookDir, "cover.jpg"),
     outputWeb: path.resolve(root, asString(output.web, DEFAULTS.webOutput)),

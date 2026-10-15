@@ -13,9 +13,12 @@ export const CHAPTERS = CONFIG.chapters;
 export const README = CONFIG.readme;
 export const COVER = CONFIG.cover;
 
-/** All `.md` files under `dir`, as absolute paths. */
+/** All `.md` files under `dir`, as absolute paths; none when `dir` is absent. */
 export function markdownFilesUnder(dir: string): string[] {
   const out: string[] = [];
+  if (!fs.existsSync(dir)) {
+    return out;
+  }
   (function walk(d) {
     for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
       const full = path.join(d, entry.name);

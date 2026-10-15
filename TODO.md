@@ -124,9 +124,8 @@ Larger or narrower; pick by demand.
 ### Layout
 
 - [x] `readme` — names the web home page (default `<bookDir>/README.md`), easy
-- [ ] `chapters` — more invasive: the `chapters/` prefix is baked into the summary
-      convention (`src/lint/summary.ts`), the `.md` to `.html` mapping, and the
-      group-index rules, so relocating it means following that prefix everywhere
+- [x] `chapters` — the prose directory (default `<bookDir>/chapters`); the
+      SUMMARY prefix the linter keyed on now comes from the configured path
 
 ### Build and preview
 

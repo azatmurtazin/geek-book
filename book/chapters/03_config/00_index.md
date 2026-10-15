@@ -46,6 +46,7 @@ checks the file against it — the same schema, so the two can never disagree.
 | `strings` | English | Overrides for the fixed interface labels. |
 | `bookDir` | `book` | Where the sources live. |
 | `summary` | `<bookDir>/SUMMARY.md` | The table of contents the build follows. |
+| `chapters` | `<bookDir>/chapters` | The directory the chapter prose lives in. |
 | `readme` | `<bookDir>/README.md` | The website's home page. |
 | `output.web` | `build/html` | Where the website is written. |
 | `output.pdf` | `build/book.pdf` | Where the PDF is written. |
@@ -61,11 +62,15 @@ one, so the number still lives in exactly one place. `docs` exists because a
 book repo holds Markdown outside `book/` — a README, a changelog — whose links
 the linter should resolve just the same.
 
-## The front page
+## Sources
 
-The website's home page is `book/README.md`. `readme` names another file — like
-`summary`, relative to the book root — and the linter checks its links just the
-same; with no file there, the home page is a redirect to the first chapter.
+The summary, the chapter prose and the website's front page default to
+`book/SUMMARY.md`, `book/chapters/` and `book/README.md`. Each moves with its own
+key — `summary`, `chapters` and `readme`, all relative to the book root — and the
+build, the linter and the server follow. The chapter paths inside SUMMARY.md stay
+relative to the book directory, so a book that moves `chapters` updates them to
+match; the `summary` check names any that do not. With no `readme` file, the
+website's home page is a redirect to the first chapter.
 
 ## Language
 

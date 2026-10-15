@@ -55,6 +55,6 @@ engine, the linter, the server and both editions follow:
 ```
 
 `bookDir` is resolved relative to the book root, so the SUMMARY, the front page,
-the chapters and the images all move with it. `summary` and `readme` move the
-table of contents and the front page on their own, both relative to the book
-root; the chapters and the images stay under `bookDir`.
+the chapters and the images all move with it. `summary`, `chapters` and `readme`
+move the table of contents, the prose directory and the front page on their own,
+all relative to the book root; the images stay under `bookDir`.
