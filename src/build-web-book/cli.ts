@@ -17,7 +17,7 @@ import { CONFIG } from "../lib/book-config.js";
 import { escapeHtml } from "../lib/html.js";
 import { parseSummary } from "../lib/summary.js";
 import { renderSourceToHtml } from "../md-to-html/render.js";
-import { assemblePage, rewriteImages, rewriteLinks, stylesheet, type NavSlot } from "./site.js";
+import { assemblePage, rewriteImages, rewriteLinks, stylesheet, headHtml, type NavSlot } from "./site.js";
 import { REMOTE_IMAGE_DIR, RemoteImages } from "../lib/remote-images.js";
 
 function usage(): void {
@@ -30,6 +30,15 @@ export async function main(args: string[]): Promise<number> {
     return 2;
   }
   const outputDir = args[0] ? path.resolve(args[0]) : CONFIG.outputWeb;
+
+  // The book's own website files, when it names them; say which is missing
+  // rather than failing later inside a read.
+  for (const [label, file] of [["web.css", CONFIG.web.css], ["web.head", CONFIG.web.head]] as const) {
+    if (file && !fs.existsSync(file)) {
+      process.stderr.write(`geek-book: ${label}: no such file ${path.relative(CONFIG.root, file)}\n`);
+      return 1;
+    }
+  }
 
   if (!fs.existsSync(SUMMARY)) {
     process.stderr.write(`geek-book: no SUMMARY.md at ${SUMMARY}\n`);
@@ -92,6 +101,7 @@ export async function main(args: string[]): Promise<number> {
   const remote = new RemoteImages(path.join(outputDir, REMOTE_IMAGE_DIR));
 
   const homeOutputRel = "index.html";
+  const head = headHtml();
 
   const writePage = (
     outputRel: string,
@@ -110,6 +120,7 @@ export async function main(args: string[]): Promise<number> {
       homeOutputRel,
       prev,
       next,
+      head,
     });
     const outFile = path.join(outputDir, outputRel);
     fs.mkdirSync(path.dirname(outFile), { recursive: true });

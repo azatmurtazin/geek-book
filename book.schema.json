@@ -262,6 +262,21 @@
           "type": "string"
         }
       }
+    },
+    "web": {
+      "description": "What the website adds to the built-in look. The standalone page the md command renders keeps its own layout.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "css": {
+          "description": "A file of CSS, relative to the book root, appended after the built-in stylesheet.",
+          "type": "string"
+        },
+        "head": {
+          "description": "A file of HTML, relative to the book root, injected into every page's <head> (analytics, meta).",
+          "type": "string"
+        }
+      }
     }
   }
 }

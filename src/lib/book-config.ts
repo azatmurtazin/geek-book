@@ -155,6 +155,19 @@ export interface TexConfig {
   preamble: string;
 }
 
+/**
+ * What a book may add to the website: a stylesheet appended after the built-in
+ * one, and extra HTML for every page's `<head>`. Both name plain files relative
+ * to the book root — the web's counterpart to `tex.preamble`. They do not touch
+ * the standalone page the `md` command renders, which has its own layout.
+ */
+export interface WebConfig {
+  /** Absolute path of extra CSS appended after the built-in stylesheet, or "". */
+  css: string;
+  /** Absolute path of extra `<head>` HTML injected into every page, or "". */
+  head: string;
+}
+
 export interface BookConfig {
   /** The book root: the directory the CLI runs from, or the directory of the
    * config file named by `--config`. */
@@ -191,6 +204,8 @@ export interface BookConfig {
   languages: Set<string>;
   /** The typefaces both editions are set in. */
   fonts: FontsConfig;
+  /** The website's extra stylesheet and head HTML. */
+  web: WebConfig;
   /** The printed edition's page, palette and type scale. */
   tex: TexConfig;
 }
@@ -198,9 +213,10 @@ export interface BookConfig {
 const DEFAULTS = {
   language: "en",
   bookDir: "book",
-  web: "build/html",
-  pdf: "build/book.pdf",
+  webOutput: "build/html",
+  pdfOutput: "build/book.pdf",
   docs: ["README.md", "CONTRIBUTING.md"],
+  web: { css: "", head: "" },
   fonts: {
     text: "Literata",
     bold: "Literata:mode=harf;wght=700",
@@ -334,6 +350,7 @@ function load(): BookConfig {
   const raw = readJson(configFile) ?? {};
   const fonts = (raw.fonts ?? {}) as Record<string, unknown>;
   const output = (raw.output ?? {}) as Record<string, unknown>;
+  const web = (raw.web ?? {}) as Record<string, unknown>;
   const tex = (raw.tex ?? {}) as Record<string, unknown>;
   const geometryRaw = (tex.geometry ?? {}) as Record<string, unknown>;
   const packageJson = readJson(path.join(root, "package.json")) ?? {};
@@ -346,6 +363,8 @@ function load(): BookConfig {
   const text = asString(fonts.text, DEFAULTS.fonts.text);
   const code = asString(fonts.code, DEFAULTS.fonts.code);
   const builtIn = text === DEFAULTS.fonts.text && code === DEFAULTS.fonts.code;
+  const webCss = asString(web.css, DEFAULTS.web.css);
+  const webHead = asString(web.head, DEFAULTS.web.head);
 
   const paper = asPaper(geometryRaw.paper, DEFAULTS.tex.geometry.paper);
   const top = asMillimetres(geometryRaw.top, DEFAULTS.tex.geometry.top);
@@ -370,8 +389,8 @@ function load(): BookConfig {
     chapters: path.join(bookDir, "chapters"),
     readme: path.join(bookDir, "README.md"),
     cover: cover ? path.resolve(root, cover) : path.join(bookDir, "cover.jpg"),
-    outputWeb: path.resolve(root, asString(output.web, DEFAULTS.web)),
-    outputPdf: path.resolve(root, asString(output.pdf, DEFAULTS.pdf)),
+    outputWeb: path.resolve(root, asString(output.web, DEFAULTS.webOutput)),
+    outputPdf: path.resolve(root, asString(output.pdf, DEFAULTS.pdfOutput)),
     docs: (asStringList(raw.docs) ?? [...DEFAULTS.docs]).map((doc) => path.resolve(root, doc)),
     languages: new Set(asStringList(raw.languages) ?? DEFAULT_LANGS),
     fonts: {
@@ -401,6 +420,10 @@ function load(): BookConfig {
       colors: readColors((tex.colors ?? {}) as Record<string, unknown>),
       type: readType((tex.type ?? {}) as Record<string, unknown>),
       preamble: extraPreamble ? path.resolve(root, extraPreamble) : "",
+    },
+    web: {
+      css: webCss ? path.resolve(root, webCss) : "",
+      head: webHead ? path.resolve(root, webHead) : "",
     },
   };
 }

@@ -51,12 +51,14 @@ labels, English by default.
 
 ### 3. `web.css` escape hatch
 
-The web's answer to `tex.preamble`; today the layout and CSS live in the package.
+Done. `web.css` names a stylesheet appended after the built-in one and
+`web.head` a file of `<head>` HTML; both are files, like `tex.preamble`. The
+standalone `md` layout is not the website and does not share them.
 
-- [ ] `web.css` key naming a file, appended after the built-in stylesheet
-- [ ] thread it through `stylesheet()` in `src/build-web-book/site.ts`
-- [ ] consider a `web.head` string for extra `<head>` HTML (analytics, meta)
-- [ ] decide whether the standalone `md` layout (`_layouts/default.html`) shares it
+- [x] `web.css` key naming a file, appended after the built-in stylesheet
+- [x] thread it through `stylesheet()` in `src/build-web-book/site.ts`
+- [x] consider a `web.head` string for extra `<head>` HTML (analytics, meta)
+- [x] decide whether the standalone `md` layout (`_layouts/default.html`) shares it
 
 ### 3b. Derive the web palette from `tex.colors`
 

@@ -27,6 +27,7 @@
 - [Configuration](chapters/03_config/00_index.md)
   - [Fonts](chapters/03_config/01_fonts.md)
   - [The printed page](chapters/03_config/02_print.md)
+  - [The website](chapters/03_config/03_web.md)
 
 # Publishing
 

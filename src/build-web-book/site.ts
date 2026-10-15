@@ -3,6 +3,7 @@
 // internal .md links and #anchors are rewritten to the built .html files.
 
 import path from "node:path";
+import fs from "node:fs";
 import { escapeHtml, brandHtml } from "../lib/html.js";
 import { CONFIG } from "../lib/book-config.js";
 import { resolveImagePath } from "../lib/images.js";
@@ -218,6 +219,7 @@ function pageDocument(opts: {
   prev: { label: string; href: string } | null;
   next: { label: string; href: string } | null;
   styleHref: string;
+  head: string;
 }): string {
   const prevNav = opts.prev
     ? `<div class="prev"><span class="nav-label">${escapeHtml(ui("previous"))}</span><a href="${opts.prev.href}">${escapeHtml(opts.prev.label)}</a></div>`
@@ -234,6 +236,7 @@ function pageDocument(opts: {
 <title>${escapeHtml(opts.title)}</title>
 ${FONT_LINKS}
 <link rel="stylesheet" href="${opts.styleHref}">
+${opts.head}
 <noscript><style>.theme-toggle { display: none; }</style></noscript>
 </head>
 <body>
@@ -274,6 +277,8 @@ export function assemblePage(opts: {
   homeOutputRel: string;
   prev: NavSlot | null;
   next: NavSlot | null;
+  /** Extra `<head>` HTML from the book's `web.head`, or "". */
+  head: string;
 }): string {
   const from = opts.activeOutputRel ?? "index.html";
   const homeHref = hrefFrom(from, opts.homeOutputRel);
@@ -287,14 +292,27 @@ export function assemblePage(opts: {
     prev: opts.prev ? { label: opts.prev.label, href: hrefFrom(from, opts.prev.outputRel) } : null,
     next: opts.next ? { label: opts.next.label, href: hrefFrom(from, opts.next.outputRel) } : null,
     styleHref,
+    head: opts.head,
   });
 }
 
+/** A book's own file, read as UTF-8, or "" when the config names none. */
+function bookFile(file: string): string {
+  return file ? fs.readFileSync(file, "utf8").trim() : "";
+}
+
+/** The book's own `<head>` HTML (`web.head`), injected into every page, or "". */
+export function headHtml(): string {
+  return bookFile(CONFIG.web.head);
+}
+
 /** The site's stylesheet: the configured families, the content rules shared
- *  with the standalone layout, and the layout itself — three sources that are
- *  pasted together here rather than at a CSS build step. */
+ *  with the standalone layout, the layout itself, and the book's own `web.css`
+ *  last — three built-in sources pasted together here rather than at a CSS build
+ *  step, with the book's file able to override any of them. */
 export function stylesheet(): string {
   const content = readCss(import.meta.url, "../lib/content.css");
   const layout = readCss(import.meta.url, "site.css");
-  return [FONT_CSS_VARS, content, layout].join("\n\n");
+  const book = bookFile(CONFIG.web.css);
+  return [FONT_CSS_VARS, content, layout, book].filter(Boolean).join("\n\n");
 }

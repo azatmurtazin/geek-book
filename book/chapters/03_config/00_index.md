@@ -52,6 +52,7 @@ checks the file against it — the same schema, so the two can never disagree.
 | `languages` | the built-in set | Fence languages the linter accepts. |
 | `fonts` | Literata, JetBrains Mono | See [Fonts](01_fonts.md). |
 | `tex` | the engine's page | See [The printed page](02_print.md). |
+| `web` | none | Extra CSS and `<head>` HTML. See [The website](03_web.md). |
 
 The version is read from the book's own `package.json` unless the config names
 one, so the number still lives in exactly one place. `docs` exists because a

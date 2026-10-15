@@ -88,6 +88,10 @@ function printConfig(): void {
       outputPdf: rel(CONFIG.outputPdf),
       docs: CONFIG.docs.map(rel),
       fonts: CONFIG.fonts,
+      web: {
+        css: CONFIG.web.css ? rel(CONFIG.web.css) : "",
+        head: CONFIG.web.head ? rel(CONFIG.web.head) : "",
+      },
       tex: {
         geometry: CONFIG.tex.geometry,
         colors: CONFIG.tex.colors,
