@@ -106,21 +106,21 @@ a tag named there is also accepted by the linter.
 
 ### Markdown and rendering
 
-- [ ] `marked` options in `src/md-to-html/render.ts`: `breaks` (single newline to
+- [x] `marked` options in `src/md-to-html/render.ts`: `breaks` (single newline to
       `<br>`), smart typography
 - [ ] heading anchor style — shared with the linter, so riskier than it looks
 
 ### Diagrams
 
-- [ ] derive the mermaid palette (`src/diagrams/render.ts`) from `tex.colors`
+- [x] derive the mermaid palette (`src/diagrams/render.ts`) from `tex.colors`
       rather than the hard-coded grey, so diagrams follow the book automatically
-- [ ] expose `theme` / font size if a book wants something other than the greys
+- [x] expose `theme` / font size if a book wants something other than the greys
 
 ### Printed edition (`tex`)
 
-- [ ] `tex.class` and one- vs two-sided (`preamble.tex` is `book`, `oneside`; the
+- [x] `tex.class` and one- vs two-sided (`preamble.tex` is `book`, `oneside`; the
       running-head design assumes one-sided)
-- [ ] `tex.tocDepth` (`preamble.tex` sets `tocdepth` to chapters only)
+- [x] `tex.tocDepth` (`preamble.tex` sets `tocdepth` to chapters only)
 - [ ] richer front matter (title page, colophon, copyright, ISBN) — `tex.preamble`
       covers it for now
 
@@ -132,11 +132,11 @@ a tag named there is also accepted by the linter.
 
 ### Build and preview
 
-- [ ] `serve` default port (`src/serve/cli.ts`)
-- [ ] remote-image fetch timeout and accepted content types
+- [x] `serve` default port (`src/serve/cli.ts`)
+- [x] remote-image fetch timeout and accepted content types
       (`src/lib/remote-images.ts`)
-- [ ] incremental vs always-`rm -rf` rebuild (`src/build-web-book/cli.ts`)
-- [ ] output naming / pretty URLs
+- [x] incremental vs always-`rm -rf` rebuild (`src/build-web-book/cli.ts`)
+- [x] output naming / pretty URLs
 
 ## Deliberately not configurable
 
