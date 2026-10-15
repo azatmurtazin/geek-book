@@ -3,7 +3,9 @@
 *Every command the engine carries.*
 
 The engine is one binary with a handful of subcommands. All of them run from the
-book root and read `book.config.json` there; most take an optional path.
+book root and read `book.config.json` there; most take an optional path. A
+`--config <file>` option, written anywhere on the line, builds the book beside
+that config file instead.
 
 | Command | What it does |
 | --- | --- |
@@ -14,6 +16,21 @@ book root and read `book.config.json` there; most take an optional path.
 | `geek-book md <in> [out]` | Render one Markdown file to a standalone page. |
 | `geek-book pdf-info <pdf>` | Page count, size and friends, via poppler. |
 | `geek-book config` | Print the resolved book configuration. |
+
+## Choosing the book
+
+By default the book is the directory the command runs from. `--config <file>`
+names another `book.config.json`, and the book becomes the directory holding it:
+the sources, the `package.json` the version is read from, and the default output
+paths are all resolved there.
+
+```sh
+geek-book --config ../my-book/book.config.json web
+geek-book web --config ../my-book/book.config.json
+```
+
+The option may sit before or after the command — the two lines above are the
+same — and the file it names must exist.
 
 ## Building
 

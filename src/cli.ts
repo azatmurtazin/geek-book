@@ -12,10 +12,15 @@
 //   geek-book md <in> [out]    render one Markdown file on its own
 //   geek-book pdf-info <pdf>   page count, page size and friends
 //   geek-book config           print the resolved book configuration
+//
+// `--config <file>` may sit anywhere on the line. The book is then the one
+// beside that config file rather than the directory the CLI runs from, so a
+// checkout can build another book without changing directory.
 
+import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { CONFIG } from "./lib/book-config.js";
+import { CONFIG, takeConfigOption } from "./lib/book-config.js";
 
 interface Command {
   /** One-liner for the help text. */
@@ -66,6 +71,7 @@ function printConfig(): void {
   console.log(JSON.stringify(
     {
       root: ".",
+      configFile: rel(CONFIG.configFile),
       title: CONFIG.title,
       tagline: CONFIG.tagline,
       author: CONFIG.author,
@@ -103,12 +109,27 @@ function usage(): void {
     "",
     "The book is the directory geek-book runs from: it reads book.config.json and",
     "the sources under book/, then writes the website and the print PDF.",
+    "",
+    "`--config <file>` builds the book beside another config file instead.",
   ];
   process.stderr.write(`${lines.join("\n")}\n`);
 }
 
 async function main(argv: string[]): Promise<number> {
-  const [command, ...args] = argv;
+  const option = takeConfigOption(argv);
+  if (option.missingValue) {
+    process.stderr.write("geek-book: --config needs a file\n\n");
+    usage();
+    return 2;
+  }
+  if (option.file) {
+    const file = path.resolve(process.cwd(), option.file);
+    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
+      process.stderr.write(`geek-book: no such config file: ${option.file}\n`);
+      return 2;
+    }
+  }
+  const [command, ...args] = option.argv;
   if (!command || command === "help" || command === "--help" || command === "-h") {
     usage();
     return command ? 0 : 2;

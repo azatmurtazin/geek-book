@@ -56,7 +56,8 @@ to your book, and `npx geek-book config` prints what the engine resolved. See
 can be run alone; see [Commands](./book/chapters/04_publishing/01_commands.md)
 and [Linting](./book/chapters/04_publishing/02_lint.md). The same two editions
 are built and shipped by the
-[CI templates](./book/chapters/04_publishing/03_ci.md).
+[CI templates](./book/chapters/04_publishing/03_ci.md). A command builds the book
+in the working directory; `--config <file>` points it at another config instead.
 
 ## This repository
 

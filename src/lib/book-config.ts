@@ -12,6 +12,51 @@ import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_LANGS } from "./langs.js";
 
+/** The config file's conventional name, at the root the CLI runs from. */
+export const CONFIG_FILE = "book.config.json";
+
+/**
+ * The `--config` option pulled out of `argv`, wherever on the line it sits,
+ * written `--config <file>` or `--config=<file>`. A book is normally the
+ * directory the CLI runs from; naming a config builds the book beside that file
+ * instead, so one checkout can build another without changing directory.
+ */
+export interface ConfigOption {
+  /** The named config file, or null when `--config` is absent. */
+  file: string | null;
+  /** True when `--config` was written with no file after it. */
+  missingValue: boolean;
+  /** `argv` with the option removed, for the chosen command to parse. */
+  argv: string[];
+}
+
+/** Read the `--config` option from `argv` and hand back the rest. */
+export function takeConfigOption(argv: string[]): ConfigOption {
+  const rest: string[] = [];
+  let file: string | null = null;
+  let missingValue = false;
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === "--config") {
+      const value = argv[i + 1];
+      // A following flag is not a filename, so the option has no value.
+      if (value === undefined || value.startsWith("-")) {
+        missingValue = true;
+      } else {
+        file = value;
+        i += 1;
+      }
+    } else if (arg.startsWith("--config=")) {
+      const value = arg.slice("--config=".length);
+      if (value === "") missingValue = true;
+      else file = value;
+    } else {
+      rest.push(arg);
+    }
+  }
+  return { file, missingValue, argv: rest };
+}
+
 /**
  * The typefaces the book is set in. A book names families, never files: the
  * website loads the families from the webfont stylesheet, and the printed
@@ -111,8 +156,11 @@ export interface TexConfig {
 }
 
 export interface BookConfig {
-  /** The book root: the directory the CLI runs from. */
+  /** The book root: the directory the CLI runs from, or the directory of the
+   * config file named by `--config`. */
   root: string;
+  /** Absolute path of the config file that named this book. */
+  configFile: string;
   title: string;
   tagline: string;
   author: string;
@@ -253,8 +301,15 @@ function readType(raw: Record<string, unknown>): TypeConfig {
 }
 
 function load(): BookConfig {
-  const root = process.cwd();
-  const raw = readJson(path.join(root, "book.config.json")) ?? {};
+  const cwd = process.cwd();
+  // `--config <file>` names the book: its directory is the root, so the paths
+  // inside the config resolve beside it. Without one the book is the directory
+  // the CLI runs from. The choice is made here, at import, because `CONFIG` is
+  // read at module scope by the builders and the linter.
+  const named = takeConfigOption(process.argv.slice(2)).file;
+  const configFile = named ? path.resolve(cwd, named) : path.join(cwd, CONFIG_FILE);
+  const root = named ? path.dirname(configFile) : cwd;
+  const raw = readJson(configFile) ?? {};
   const fonts = (raw.fonts ?? {}) as Record<string, unknown>;
   const output = (raw.output ?? {}) as Record<string, unknown>;
   const tex = (raw.tex ?? {}) as Record<string, unknown>;
@@ -277,6 +332,7 @@ function load(): BookConfig {
 
   return {
     root,
+    configFile,
     title: asString(raw.title, asString(packageJson.name, "Untitled book")),
     tagline: asString(raw.tagline, ""),
     author: asString(raw.author, ""),
