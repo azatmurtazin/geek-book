@@ -4,12 +4,6 @@
 // groups as string | undefined; the small `match*` wrappers below narrow them
 // so the checks read cleanly.
 
-export const MAX_LINE = 100;
-// Cross-language comparison tables are the point of the book and cannot fit in
-// 100 columns, so they get their own, looser budget.
-export const MAX_TABLE_LINE = 240;
-export const MAX_DIAGRAM_COLS = 80;
-
 const FENCE_RE = /^(?<indent>\s*)(?<ticks>`{3,}|~{3,})(?<info>.*)$/;
 const HEADING_RE = /^(?<hashes>#{1,6})\s+(?<text>.*?)\s*#*$/;
 // An inline code span. Prose that documents a link (`` `[x](a.md)` ``) is not a

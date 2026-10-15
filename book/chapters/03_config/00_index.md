@@ -50,6 +50,7 @@ checks the file against it — the same schema, so the two can never disagree.
 | `output.pdf` | `build/book.pdf` | Where the PDF is written. |
 | `docs` | `README.md`, `CONTRIBUTING.md` | Root Markdown whose links are linted. |
 | `languages` | the built-in set | Fence languages the linter accepts. |
+| `lint` | 100 / 240 / 80 | Line budgets the chapter check enforces. |
 | `fonts` | Literata, JetBrains Mono | See [Fonts](01_fonts.md). |
 | `tex` | the engine's page | See [The printed page](02_print.md). |
 | `web` | none | Extra CSS and `<head>` HTML. See [The website](03_web.md). |
@@ -89,3 +90,19 @@ website's, with `home` on the standalone rendered page.
 This key is not the linter's [`languages`](../01_writing/05_code.md), which is
 the set of code-fence tags it accepts. `language` is what the book itself is
 written in.
+
+## Line budgets
+
+The `chapters` family holds prose to 100 columns, a table row to 240 and a
+`text` or `ascii` diagram to 80 — the widths the printed page and the code
+panels were sized for. A book whose subject needs a different measure sets its
+own:
+
+```json
+{
+  "lint": { "proseWidth": 88, "tableWidth": 200, "diagramWidth": 100 }
+}
+```
+
+Only the numbers change; what each check looks at is the same. See
+[Linting](../04_publishing/02_lint.md).

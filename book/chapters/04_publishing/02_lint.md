@@ -25,10 +25,14 @@ The prose itself:
 - exactly one `#` title, on the file's first line, with no skipped heading level;
 - every fenced block is tagged with a language — a language outside the declared
   set is a warning;
-- a `text` or `ascii` fence stays within the 80-column print budget;
+- a `text` or `ascii` fence stays within the print budget, 80 columns by default;
 - no tabs, no trailing whitespace, a trailing newline, and prose lines inside
-  100 columns — unless the line carries a run too long to wrap, such as a URL,
-  which no amount of editing could bring inside the budget.
+  the prose budget, 100 columns by default — unless the line carries a run too
+  long to wrap, such as a URL, which no amount of editing could bring inside the
+  budget.
+
+The three budgets — prose, table row and diagram — are the `lint` block in
+`book.config.json`; see [Configuration](../03_config/00_index.md).
 
 ## links
 

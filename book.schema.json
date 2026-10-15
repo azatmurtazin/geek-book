@@ -108,6 +108,28 @@
         "type": "string"
       }
     },
+    "lint": {
+      "description": "The linter's line budgets, in columns.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "proseWidth": {
+          "description": "The longest prose line the chapter check allows (default: 100).",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "tableWidth": {
+          "description": "The longest Markdown table row (default: 240).",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "diagramWidth": {
+          "description": "The widest text or ascii fence (default: 80).",
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
     "fonts": {
       "description": "The typefaces both editions are set in (default: Literata and JetBrains Mono).",
       "type": "object",

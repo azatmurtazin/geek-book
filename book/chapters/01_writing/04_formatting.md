@@ -23,8 +23,8 @@ anchors and the table of contents.
 | Diagram | inline SVG | figure | one source, two renderings |
 
 Tables are pipes and a rule, and the align row is optional. The linter allows a
-table row up to 240 columns, wider than prose, because a comparison table is
-often the point of the page.
+table row up to 240 columns by default, wider than prose, because a comparison
+table is often the point of the page.
 
 ## A quote
 

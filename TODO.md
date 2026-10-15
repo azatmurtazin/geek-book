@@ -72,12 +72,13 @@ zebra) stay in their stylesheets, and the night palette remains the engine's.
 
 ### 4. Linter budgets
 
-Constants in `src/lint/markdown.ts`: `MAX_LINE = 100`, `MAX_TABLE_LINE = 240`,
-`MAX_DIAGRAM_COLS = 80`.
+Done. A `lint` block (`lint.proseWidth` 100, `lint.tableWidth` 240,
+`lint.diagramWidth` 80) drives the chapter check; the constants that used to
+live in `src/lint/markdown.ts` are gone.
 
-- [ ] a `lint` block (`lint.proseWidth`, `lint.tableWidth`, `lint.diagramWidth`)
-- [ ] thread them through `src/lint/chapter.ts` and the message strings
-- [ ] expose it in the schema and the Configuration chapter
+- [x] a `lint` block (`lint.proseWidth`, `lint.tableWidth`, `lint.diagramWidth`)
+- [x] thread them through `src/lint/chapter.ts` and the message strings
+- [x] expose it in the schema and the Configuration chapter
 
 ## Backlog
 

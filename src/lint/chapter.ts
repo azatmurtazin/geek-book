@@ -6,9 +6,6 @@ import {
   expandTabs,
   matchFence,
   matchHeading,
-  MAX_DIAGRAM_COLS,
-  MAX_LINE,
-  MAX_TABLE_LINE,
   parseFenceLang,
   type Heading,
 } from "./markdown.js";
@@ -41,9 +38,9 @@ export function checkChapter(reporter: Reporter, file: string): void {
         && !fence.info.trim()) {
         if (fenceLang === "text" || fenceLang === "plaintext" || fenceLang === "ascii") {
           const width = maxDiagramWidth(lines.slice(diagramStart, i - 1));
-          if (width > MAX_DIAGRAM_COLS) {
+          if (width > CONFIG.lint.diagramWidth) {
             reporter.error(file, diagramStart + 1,
-              `text diagram is ${width} columns wide, budget is ${MAX_DIAGRAM_COLS}`);
+              `text diagram is ${width} columns wide, budget is ${CONFIG.lint.diagramWidth}`);
           }
         }
         inFence = false;
@@ -74,13 +71,13 @@ export function checkChapter(reporter: Reporter, file: string): void {
       reporter.error(file, i, "tab character — indent with spaces");
     }
 
-    if (line.length > MAX_LINE) {
+    if (line.length > CONFIG.lint.proseWidth) {
       if (line.trimStart().startsWith("|")) {
-        if (line.length > MAX_TABLE_LINE) {
-          reporter.error(file, i, `table row is ${line.length} columns, budget is ${MAX_TABLE_LINE}`);
+        if (line.length > CONFIG.lint.tableWidth) {
+          reporter.error(file, i, `table row is ${line.length} columns, budget is ${CONFIG.lint.tableWidth}`);
         }
       } else if (!hasUnbreakableRun(line)) {
-        reporter.error(file, i, `line is ${line.length} columns, budget is ${MAX_LINE}`);
+        reporter.error(file, i, `line is ${line.length} columns, budget is ${CONFIG.lint.proseWidth}`);
       }
     }
 
@@ -104,7 +101,7 @@ export function checkChapter(reporter: Reporter, file: string): void {
  * nothing in the line for the writer to cut.
  */
 function hasUnbreakableRun(line: string): boolean {
-  return line.split(/\s+/).some((run) => run.length > MAX_LINE);
+  return line.split(/\s+/).some((run) => run.length > CONFIG.lint.proseWidth);
 }
 
 export function checkHeadings(reporter: Reporter, file: string, headings: Heading[]): void {

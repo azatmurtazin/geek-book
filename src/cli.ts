@@ -99,6 +99,7 @@ function printConfig(): void {
         preamble: CONFIG.tex.preamble ? rel(CONFIG.tex.preamble) : "",
       },
       languages: [...CONFIG.languages],
+      lint: CONFIG.lint,
     },
     null,
     2,

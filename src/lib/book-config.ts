@@ -168,6 +168,20 @@ export interface WebConfig {
   head: string;
 }
 
+/**
+ * The linter's line budgets, in columns. Prose and table rows are counted in
+ * characters; a `text` or `ascii` diagram is measured by its own box. The
+ * defaults are the widths the printed page and the code panels were sized for.
+ */
+export interface LintConfig {
+  /** Longest prose line the chapter check allows (default 100). */
+  proseWidth: number;
+  /** Longest Markdown table row (default 240). */
+  tableWidth: number;
+  /** Widest `text` or `ascii` fence (default 80). */
+  diagramWidth: number;
+}
+
 export interface BookConfig {
   /** The book root: the directory the CLI runs from, or the directory of the
    * config file named by `--config`. */
@@ -202,6 +216,8 @@ export interface BookConfig {
   docs: string[];
   /** Fence languages the linter accepts. */
   languages: Set<string>;
+  /** Line budgets the chapter check enforces. */
+  lint: LintConfig;
   /** The typefaces both editions are set in. */
   fonts: FontsConfig;
   /** The website's extra stylesheet and head HTML. */
@@ -216,6 +232,7 @@ const DEFAULTS = {
   webOutput: "build/html",
   pdfOutput: "build/book.pdf",
   docs: ["README.md", "CONTRIBUTING.md"],
+  lint: { proseWidth: 100, tableWidth: 240, diagramWidth: 80 },
   web: { css: "", head: "" },
   fonts: {
     text: "Literata",
@@ -292,6 +309,11 @@ function asPoints(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+/** A line budget in columns: a positive finite number, else the default. */
+function asWidth(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 /** The document class size: LaTeX takes 10, 11 or 12. */
 function asBaseSize(value: unknown, fallback: number): number {
   return value === 10 || value === 11 || value === 12 ? value : fallback;
@@ -338,6 +360,14 @@ function readType(raw: Record<string, unknown>): TypeConfig {
   };
 }
 
+function readLint(raw: Record<string, unknown>): LintConfig {
+  return {
+    proseWidth: asWidth(raw.proseWidth, DEFAULTS.lint.proseWidth),
+    tableWidth: asWidth(raw.tableWidth, DEFAULTS.lint.tableWidth),
+    diagramWidth: asWidth(raw.diagramWidth, DEFAULTS.lint.diagramWidth),
+  };
+}
+
 function load(): BookConfig {
   const cwd = process.cwd();
   // `--config <file>` names the book: its directory is the root, so the paths
@@ -351,6 +381,7 @@ function load(): BookConfig {
   const fonts = (raw.fonts ?? {}) as Record<string, unknown>;
   const output = (raw.output ?? {}) as Record<string, unknown>;
   const web = (raw.web ?? {}) as Record<string, unknown>;
+  const lint = (raw.lint ?? {}) as Record<string, unknown>;
   const tex = (raw.tex ?? {}) as Record<string, unknown>;
   const geometryRaw = (tex.geometry ?? {}) as Record<string, unknown>;
   const packageJson = readJson(path.join(root, "package.json")) ?? {};
@@ -393,6 +424,7 @@ function load(): BookConfig {
     outputPdf: path.resolve(root, asString(output.pdf, DEFAULTS.pdfOutput)),
     docs: (asStringList(raw.docs) ?? [...DEFAULTS.docs]).map((doc) => path.resolve(root, doc)),
     languages: new Set(asStringList(raw.languages) ?? DEFAULT_LANGS),
+    lint: readLint(lint),
     fonts: {
       text,
       // The default bold face belongs to the default family: a book that names
