@@ -1,7 +1,8 @@
 // Minimal static file server for previewing the built website.
 //
 // Usage: geek-book serve [DIRECTORY] [PORT]
-// (DIRECTORY resolves from the book root; default: the web output dir, port 4000)
+// (DIRECTORY resolves from the book root; default: the web output dir, and the
+// port defaults to `serve.port` in book.config.json, 4000 by default.)
 
 import fs from "node:fs";
 import http from "node:http";
@@ -30,7 +31,7 @@ const MIME: Record<string, string> = {
 
 export function main(args: string[]): number {
   let dir: string | null = null;
-  let port = "4000";
+  let port = String(CONFIG.serve.port);
   for (const arg of args) {
     if (/^\d+$/.test(arg)) {
       port = arg;

@@ -35,7 +35,7 @@ const CONTENT_TYPES: Record<string, string> = {
 };
 
 /** Extensions that mark a URL as pointing at an image, for unlabeled hosts. */
-const IMAGE_EXTENSIONS = new Set([...Object.values(CONTENT_TYPES), ".jpeg", ".tiff"]);
+const EXTRA_IMAGE_EXTENSIONS = [".jpeg", ".tiff"];
 
 /** Content types servers send when they do not label the file: trust the URL. */
 const UNLABELED = new Set(["", "application/octet-stream", "binary/octet-stream"]);
@@ -43,11 +43,17 @@ const UNLABELED = new Set(["", "application/octet-stream", "binary/octet-stream"
 /** What LuaTeX reads off disk without a converter. */
 const PRINT_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".pdf"]);
 
-const FETCH_TIMEOUT_MS = 30_000;
+/** Seconds one fetch may take when the config names no timeout. */
+const DEFAULT_TIMEOUT_S = 30;
 
 export interface RemoteImageOptions {
   /** Reject formats the printed edition cannot embed. */
   print?: boolean;
+  /** Seconds one fetch may take before it fails (default 30). */
+  timeout?: number;
+  /** Accepted content type → the extension the file is saved as (default: the
+   * built-in map). */
+  types?: Record<string, string>;
 }
 
 /**
@@ -59,12 +65,20 @@ export interface RemoteImageOptions {
 export class RemoteImages {
   private readonly dir: string;
   private readonly print: boolean;
+  private readonly timeoutMs: number;
+  private readonly types: Record<string, string>;
+  private readonly extensions: Set<string>;
   private readonly files = new Map<string, string>();
   private downloads = 0;
 
   constructor(dir: string, options: RemoteImageOptions = {}) {
     this.dir = dir;
     this.print = options.print === true;
+    this.timeoutMs = (options.timeout ?? 0) > 0 ? (options.timeout as number) * 1000 : 30_000;
+    // An empty map is the engine's own: a book only names types to narrow or
+    // extend what a fetch accepts.
+    this.types = options.types && Object.keys(options.types).length > 0 ? options.types : CONTENT_TYPES;
+    this.extensions = new Set([...Object.values(this.types), ".jpeg", ".tiff"]);
   }
 
   /** How many files this build fetched; repeats of a URL do not count again. */
@@ -108,7 +122,7 @@ export class RemoteImages {
       response = await fetch(url, {
         redirect: "follow",
         headers: { "user-agent": "geek-book" },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        signal: AbortSignal.timeout(this.timeoutMs),
       });
     } catch (error) {
       throw new Error(`cannot fetch image ${url}: ${(error as Error).message}`);
@@ -117,7 +131,7 @@ export class RemoteImages {
       throw new Error(`cannot fetch image ${url}: HTTP ${response.status}`);
     }
     const type = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
-    const ext = imageExtension(type, url);
+    const ext = this.extensionFor(type, url);
     if (ext === null) {
       throw new Error(`not an image: ${url} (served ${type || "no content type"})`);
     }
@@ -131,19 +145,20 @@ export class RemoteImages {
     this.files.set(url, name);
     this.downloads += 1;
   }
-}
 
-/** The extension to save a fetched image under, or `null` when it is not one. */
-function imageExtension(contentType: string, url: string): string | null {
-  const byType = CONTENT_TYPES[contentType];
-  if (byType !== undefined) {
-    return byType;
-  }
-  if (UNLABELED.has(contentType)) {
-    const ext = path.posix.extname(new URL(url).pathname).toLowerCase();
-    if (IMAGE_EXTENSIONS.has(ext)) {
-      return ext;
+  /** The extension to save a fetched image under, or `null` when the type is
+   *  not one this build accepts. An unlabeled host falls back to the URL. */
+  private extensionFor(contentType: string, url: string): string | null {
+    const byType = this.types[contentType];
+    if (byType) {
+      return byType;
     }
+    if (UNLABELED.has(contentType)) {
+      const ext = path.posix.extname(new URL(url).pathname).toLowerCase();
+      if (this.extensions.has(ext)) {
+        return ext;
+      }
+    }
+    return null;
   }
-  return null;
 }

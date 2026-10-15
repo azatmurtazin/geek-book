@@ -86,6 +86,7 @@ function printConfig(): void {
       cover: rel(CONFIG.cover),
       outputWeb: rel(CONFIG.outputWeb),
       outputPdf: rel(CONFIG.outputPdf),
+      outputClean: CONFIG.outputClean,
       docs: CONFIG.docs.map(rel),
       fonts: CONFIG.fonts,
       web: {
@@ -104,7 +105,9 @@ function printConfig(): void {
       },
       languages: [...CONFIG.languages],
       code: CONFIG.code,
+      images: CONFIG.images,
       lint: CONFIG.lint,
+      serve: CONFIG.serve,
     },
     null,
     2,

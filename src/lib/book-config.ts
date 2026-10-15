@@ -214,6 +214,24 @@ export interface CodeLangConfig {
   comment: CommentStyle | "";
 }
 
+/** Remote images the build fetches into the output, so neither edition sends
+ *  the reader to the origin (see `lib/remote-images.ts`). */
+export interface ImagesConfig {
+  /** Seconds one fetch may take before it fails (default 30), so a slow host
+   *  stalls the build for a bounded time. */
+  timeout: number;
+  /** Accepted content types, each mapped to the extension the file is saved
+   *  as. Empty keeps the engine's built-in map. */
+  types: Record<string, string>;
+}
+
+/** The preview server's defaults. */
+export interface ServeConfig {
+  /** The port `geek-book serve` listens on when its argument names none
+   *  (default 4000). */
+  port: number;
+}
+
 export interface BookConfig {
   /** The book root: the directory the CLI runs from, or the directory of the
    * config file named by `--config`. */
@@ -247,6 +265,9 @@ export interface BookConfig {
   /** Absolute output paths. */
   outputWeb: string;
   outputPdf: string;
+  /** Whether the website build empties its output directory first (default
+   *  true). A book that keeps its own files there sets this false. */
+  outputClean: boolean;
   /** Extra Markdown at the root whose links the linter also checks. */
   docs: string[];
   /** Fence languages the linter accepts. */
@@ -255,6 +276,8 @@ export interface BookConfig {
    * comment style for what the built-in table does not know. Each key is also
    * accepted by the linter. */
   code: Record<string, CodeLangConfig>;
+  /** Remote-image fetching. */
+  images: ImagesConfig;
   /** Line budgets the chapter check enforces. */
   lint: LintConfig;
   /** The typefaces both editions are set in. */
@@ -263,6 +286,8 @@ export interface BookConfig {
   web: WebConfig;
   /** The printed edition's page, palette and type scale. */
   tex: TexConfig;
+  /** The preview server's defaults. */
+  serve: ServeConfig;
 }
 
 const DEFAULTS = {
@@ -271,6 +296,9 @@ const DEFAULTS = {
   webOutput: "build/html",
   pdfOutput: "build/book.pdf",
   docs: ["README.md", "CONTRIBUTING.md"],
+  outputClean: true,
+  images: { timeout: 30, types: {} },
+  serve: { port: 4000 },
   lint: { proseWidth: 100, tableWidth: 240, diagramWidth: 80 },
   web: { css: "", head: "", baseUrl: "", favicon: "", links: [] },
   fonts: {
@@ -388,6 +416,34 @@ function asBaseSize(value: unknown, fallback: number): number {
   return value === 10 || value === 11 || value === 12 ? value : fallback;
 }
 
+/** A boolean, else the default. */
+function asBool(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+/** A duration in seconds: a positive finite number, else the default. */
+function asSeconds(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+/** A TCP port: a whole number in range, else the default. */
+function asPort(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 65535
+    ? value
+    : fallback;
+}
+
+/** Accepted remote-image content types, each mapped to a file extension. */
+function asContentTypes(value: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (typeof value !== "object" || value === null) return out;
+  for (const [type, ext] of Object.entries(value as Record<string, unknown>)) {
+    const key = type.trim().toLowerCase();
+    if (key && typeof ext === "string" && ext.trim()) out[key] = ext.trim();
+  }
+  return out;
+}
+
 /** Round to hundredths, so derived lengths read cleanly in the config dump. */
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -467,6 +523,8 @@ function load(): BookConfig {
   const fonts = (raw.fonts ?? {}) as Record<string, unknown>;
   const output = (raw.output ?? {}) as Record<string, unknown>;
   const web = (raw.web ?? {}) as Record<string, unknown>;
+  const images = (raw.images ?? {}) as Record<string, unknown>;
+  const serve = (raw.serve ?? {}) as Record<string, unknown>;
   const lint = (raw.lint ?? {}) as Record<string, unknown>;
   const codeLangs = readCode((raw.code ?? {}) as Record<string, unknown>);
   const tex = (raw.tex ?? {}) as Record<string, unknown>;
@@ -521,9 +579,14 @@ function load(): BookConfig {
     cover: cover ? path.resolve(root, cover) : path.join(bookDir, "cover.jpg"),
     outputWeb: path.resolve(root, asString(output.web, DEFAULTS.webOutput)),
     outputPdf: path.resolve(root, asString(output.pdf, DEFAULTS.pdfOutput)),
+    outputClean: asBool(output.clean, DEFAULTS.outputClean),
     docs: (asStringList(raw.docs) ?? [...DEFAULTS.docs]).map((doc) => path.resolve(root, doc)),
     languages,
     code: codeLangs,
+    images: {
+      timeout: asSeconds(images.timeout, DEFAULTS.images.timeout),
+      types: asContentTypes(images.types),
+    },
     lint: readLint(lint),
     fonts: {
       text,
@@ -560,6 +623,9 @@ function load(): BookConfig {
       description: asString(web.description, asString(raw.tagline, "")),
       favicon: webFavicon ? path.resolve(root, webFavicon) : "",
       links: asWebLinks(web.links),
+    },
+    serve: {
+      port: asPort(serve.port, DEFAULTS.serve.port),
     },
   };
 }

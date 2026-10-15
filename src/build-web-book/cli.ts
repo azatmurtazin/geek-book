@@ -94,7 +94,12 @@ export async function main(args: string[]): Promise<number> {
     next: index + 1 < written.length ? written[index + 1] : null,
   }));
 
-  fs.rmSync(outputDir, { recursive: true, force: true });
+  // A clean build starts from an empty directory. `output.clean: false` writes
+  // over what is there instead, so a file the book keeps beside the site — or a
+  // preview the reader is looking at — survives. Removed pages then linger.
+  if (CONFIG.outputClean) {
+    fs.rmSync(outputDir, { recursive: true, force: true });
+  }
   fs.mkdirSync(path.join(outputDir, "assets"), { recursive: true });
   fs.writeFileSync(path.join(outputDir, "assets", "style.css"), stylesheet());
 
@@ -110,7 +115,10 @@ export async function main(args: string[]): Promise<number> {
     path.relative(CONFIG.root, path.join(BOOK, relBook)).split(path.sep).join("/");
 
   // Remote images are fetched into the site, so a reader needs no other server.
-  const remote = new RemoteImages(path.join(outputDir, REMOTE_IMAGE_DIR));
+  const remote = new RemoteImages(path.join(outputDir, REMOTE_IMAGE_DIR), {
+    timeout: CONFIG.images.timeout,
+    types: CONFIG.images.types,
+  });
 
   const homeOutputRel = "index.html";
   const head = headHtml();

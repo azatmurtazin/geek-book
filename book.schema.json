@@ -99,6 +99,10 @@
         "pdf": {
           "description": "The PDF output file (default: build/book.pdf).",
           "type": "string"
+        },
+        "clean": {
+          "description": "Whether the website build empties its output directory first (default: true). Set false to write over what is there: files geek-book does not write stay, and pages removed from the book may linger.",
+          "type": "boolean"
         }
       }
     },
@@ -153,6 +157,25 @@
             "description": "The comment syntax (default: the built-in choice, usually none).",
             "type": "string",
             "enum": ["slash", "hash"]
+          }
+        }
+      }
+    },
+    "images": {
+      "description": "Remote images the build fetches and carries, so neither edition sends the reader to the origin.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "timeout": {
+          "description": "Seconds one remote-image fetch may take before it fails (default: 30).",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "types": {
+          "description": "Accepted content types, each mapped to the file extension it is saved as. Empty keeps the engine's built-in map; a type left out is refused.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
           }
         }
       }
@@ -355,6 +378,19 @@
               }
             }
           }
+        }
+      }
+    },
+    "serve": {
+      "description": "The preview server's defaults.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "description": "The port geek-book serve listens on when its argument names none (default: 4000).",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
         }
       }
     }

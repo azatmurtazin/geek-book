@@ -84,7 +84,11 @@ export async function main(args: string[]): Promise<number> {
   const texFile = path.join(buildDir, "book.tex");
   const figuresDir = path.join(buildDir, "figures");
   // Remote images land among the figures they will be embedded as.
-  const remote = new RemoteImages(figuresDir, { print: true });
+  const remote = new RemoteImages(figuresDir, {
+    print: true,
+    timeout: CONFIG.images.timeout,
+    types: CONFIG.images.types,
+  });
 
   if (!fs.existsSync(SUMMARY)) {
     process.stderr.write(`geek-book: no SUMMARY.md at ${SUMMARY}\n`);
