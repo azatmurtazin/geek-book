@@ -100,7 +100,7 @@ export class RemoteImages {
   /** Fetch every remote image `markdown` references, ignoring code samples. */
   async collect(markdown: string): Promise<void> {
     const urls: string[] = [];
-    marked.walkTokens(marked.lexer(markdown), (token) => {
+    marked.walkTokens(marked.lexer(markdown, { gfm: true }), (token) => {
       if (token.type !== "image") {
         return;
       }
