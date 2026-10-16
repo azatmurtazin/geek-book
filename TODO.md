@@ -212,9 +212,10 @@ points and their exports stay put so the CLIs do not change. Line counts as of
 - [ ] `src/build-tex-book/tex.ts` (372) → `escape.ts` (`texEscape`,
       `texEscapeCode`), `blocks.ts`, `inline.ts`, `figures.ts` (picture
       measuring), `tables.ts`
-- [ ] `src/diagrams/render.ts` (356) → `theme.ts` (the `tex.colors` mapping),
-      `shims.ts` (the jsdom measurement shims), `fixup.ts` (viewBox/text
-      rewriting), `render.ts` (loader + entry points)
+- [x] `src/diagrams/render.ts` (356) → `theme.ts` (the `tex.colors` mapping),
+      `shims.ts` (the jsdom DOM and measurement shims), `fixup.ts` (viewBox/text
+      rewriting), `render.ts` (loader + entry points, unchanged surface — the
+      whole web build is byte-identical across the split)
 - [ ] `src/build-web-book/site.ts` (348) → `links.ts` (`rewriteLinks`,
       `rewriteImages`), `nav.ts` (sidebar + footer), `page.ts` (`assemblePage`,
       `headHtml`, `stylesheet`)

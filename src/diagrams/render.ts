@@ -1,156 +1,33 @@
 // Build-time rendering of ```mermaid``` fences to inline SVG.
 //
-// Mermaid is a browser component, so this module shims a minimal DOM with
-// jsdom before importing it, stubs the SVG measurement APIs jsdom does not
-// implement (jsdom performs no layout), and rewrites the <foreignObject>
-// labels mermaid emits into native SVG <text>, so the diagram renders the same
-// inline on the web and as a PDF figure in the LaTeX build (rsvg-convert does
-// not reliably draw <foreignObject> XHTML).
+// Mermaid is a browser component, so a minimal DOM is shimmed with jsdom before
+// importing it, the SVG measurement APIs jsdom does not implement are stubbed
+// (jsdom performs no layout), and the <foreignObject> labels mermaid emits are
+// rewritten into native SVG <text>, so the diagram renders the same inline on
+// the web and as a PDF figure in the LaTeX build (rsvg-convert does not
+// reliably draw <foreignObject> XHTML).
+//
+// The pieces live beside this file: `shims.ts` (the jsdom DOM and measurement
+// stubs), `theme.ts` (the palette mapping) and `fixup.ts` (the viewBox and
+// label rewriting). This module is the loader and the entry points.
 //
 // The rendered <svg> is self-contained (geometry + labels), so website pages
 // embed it inline with no client-side JavaScript, and the book build gets the
 // identical diagram.
 
-import { JSDOM } from "jsdom";
 import { diagramFamily } from "../lib/fonts.js";
-import type { BookConfig, ColorsConfig } from "../lib/book-config.js";
-
-const FONT_SIZE = 13;
-const LABEL_FILL = "#202020";
-
-// Build mermaid theme variables from the book's printed palette so diagrams follow `tex.colors`.
-function themeVariables(cfg: BookConfig) {
-  const colors: ColorsConfig = cfg.tex.colors;
-
-  return {
-    background: "#ffffff",
-    primaryColor: colors.codeBackground,
-    primaryBorderColor: colors.muted,
-    primaryTextColor: colors.codeForeground,
-    secondaryColor: colors.codeBackground,
-    secondaryBorderColor: colors.muted,
-    secondaryTextColor: colors.codeForeground,
-    tertiaryColor: colors.codeBackground,
-    tertiaryBorderColor: colors.muted,
-    tertiaryTextColor: colors.codeForeground,
-    lineColor: colors.muted,
-    edgeLabelBackground: "#ffffff",
-    mainBkg: colors.codeBackground,
-    nodeBorder: colors.muted,
-    nodeTextColor: colors.codeForeground,
-    textColor: colors.codeForeground,
-    titleColor: colors.codeForeground,
-    noteBkgColor: colors.calloutBackground,
-    noteBorderColor: colors.calloutBorder,
-    noteTextColor: colors.calloutForeground,
-    clusterBkg: "#ffffff",
-    clusterBorder: colors.rule,
-    actorBkg: colors.codeBackground,
-    actorBorder: colors.muted,
-    actorTextColor: colors.codeForeground,
-    actorLineColor: colors.muted,
-    labelBoxBkgColor: colors.codeBackground,
-    labelBoxBorderColor: colors.muted,
-    labelTextColor: colors.codeForeground,
-    signalColor: colors.muted,
-    signalTextColor: colors.codeForeground,
-    activationBkgColor: colors.codeBackground,
-    activationBorderColor: colors.muted,
-    sequenceNumberColor: colors.codeForeground,
-    loopTextColor: colors.codeForeground,
-    stateBkg: colors.codeBackground,
-    stateBorder: colors.muted,
-    stateLabelColor: colors.codeForeground,
-    stateEndColor: colors.muted,
-    innerEndBackground: colors.muted,
-    specialStateColor: colors.muted,
-    labelBackgroundColor: colors.codeBackground,
-    compositeBackground: "#ffffff",
-    compositeTitleBackground: colors.codeBackground,
-  };
-}
+import type { BookConfig } from "../lib/book-config.js";
+import { FONT_SIZE, themeVariables } from "./theme.js";
+import { installBrowserShims } from "./shims.js";
+import { fixViewBox, foreignObjectToText } from "./fixup.js";
 
 let mermaidPromise: Promise<typeof import("mermaid")> | null = null;
 
-function setGlobal(key: string, value: unknown): void {
-  (globalThis as unknown as Record<string, unknown>)[key] = value;
-}
-
-type Measurable = {
-  querySelectorAll?: (selector: string) => unknown[];
-  prototype: {
-    getBBox?: () => unknown;
-    getComputedTextLength?: () => unknown;
-  };
-};
-
-function labelChars(el: unknown): number {
-  let best = "";
-  const meas = el as Measurable;
-  const foreigns = meas.querySelectorAll?.("foreignObject") ?? [];
-  for (const foreign of foreigns as { textContent?: string }[]) {
-    const s = (foreign.textContent ?? "").replace(/\s+/g, " ").trim();
-    if (s.length > best.length) best = s;
-  }
-  return best.length;
-}
-
-/** jsdom has no layout engine; size boxes from their label text. */
-function shimMeasurement(windowObject: unknown): void {
-  const proto = (windowObject as { SVGElement?: Measurable }).SVGElement?.prototype;
-  if (!proto) return;
-  proto.getBBox = function (this: unknown) {
-    const chars = labelChars(this);
-    const width = chars ? chars * 6.2 + 16 : 22;
-    return { x: 0, y: 0, width, height: 24 };
-  } as never;
-  proto.getComputedTextLength = function (this: unknown) {
-    return Math.max(10, labelChars(this) * 6.2);
-  } as never;
-  // mermaid sizes HTML labels through getBoundingClientRect, which jsdom
-  // always reports as 0×0 — that makes flowchart edge labels come back as
-  // translate(undefined, NaN). Return a text-sized box instead.
-  const elementProto = (windowObject as { Element?: Measurable }).Element?.prototype as
-    | { getBoundingClientRect?: unknown }
-    | undefined;
-  if (elementProto === undefined) return;
-  elementProto.getBoundingClientRect = function (this: unknown) {
-    const txt = ((this as { textContent?: string }).textContent ?? "")
-      .replace(/\s+/g, " ")
-      .trim();
-    const width = txt.length > 0 ? Math.max(10, txt.length * 6.2 + 6) : 0;
-    const height = txt.length > 0 ? 20 : 0;
-    return {
-      x: 0,
-      y: 0,
-      top: 0,
-      left: 0,
-      right: width,
-      bottom: height,
-      width,
-      height,
-      toJSON: () => ({}),
-    };
-  } as never;
-}
-
 async function mermaid(cfg: BookConfig): Promise<typeof import("mermaid")> {
   if (mermaidPromise === null) {
-    const dom = new JSDOM("<!doctype html><html><body></body></html>", {
-      pretendToBeVisual: true,
-    });
     // The DOM must exist before mermaid's dependencies (dompurify, d3) load,
     // so the module is imported dynamically, after the globals are installed.
-    const win = dom.window as Record<string, unknown>;
-    setGlobal("window", win);
-    setGlobal("document", win.document);
-    Object.defineProperty(globalThis, "navigator", {
-      value: win.navigator,
-      configurable: true,
-    });
-    setGlobal("XMLSerializer", win.XMLSerializer);
-    if (win.CSSStyleSheet !== undefined) setGlobal("CSSStyleSheet", win.CSSStyleSheet);
-    shimMeasurement(win);
+    installBrowserShims();
     mermaidPromise = import("mermaid");
   }
   const mod = await mermaidPromise;
@@ -163,38 +40,6 @@ async function mermaid(cfg: BookConfig): Promise<typeof import("mermaid")> {
     flowchart: { htmlLabels: true },
   });
   return mod;
-}
-
-/** Turn one <foreignObject> label into a centered native <text>. */
-function foreignObjectToText(cfg: BookConfig, attrs: string, inner: string): string {
-  const x = /x="(-?[\d.]+)"/.exec(attrs)?.[1] ?? "0";
-  const y = /y="(-?[\d.]+)"/.exec(attrs)?.[1] ?? "0";
-  const width = /width="([\d.]+)"/.exec(attrs)?.[1] ?? "0";
-  const height = /height="([\d.]+)"/.exec(attrs)?.[1] ?? "0";
-  const lines = inner
-    .replace(/<br\s*\/?>/g, "\n")
-    .replace(/<\/p>/g, "\n")
-    .replace(/<[^>]+>/g, "")
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (lines.length === 0) return "";
-  const cx = Number(x) + Number(width) / 2;
-  const cy = Number(y) + Number(height) / 2;
-  const lineHeight = FONT_SIZE * 1.05;
-  const start = cy - ((lines.length - 1) * lineHeight) / 2;
-  const tspans = lines
-    .map(
-      (line, i) =>
-        `<tspan x="${cx.toFixed(1)}" dy="${i === 0 ? start.toFixed(1) : lineHeight}">${line
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")}</tspan>`,
-    )
-    .join("");
-  return (
-    `<text text-anchor="middle" font-family="${diagramFamily(cfg)}" font-size="${FONT_SIZE}" ` +
-    `fill="${LABEL_FILL}">${tspans}</text>`
-  );
 }
 
 /**
@@ -212,93 +57,6 @@ export async function renderMermaid(cfg: BookConfig, source: string, id: string)
     foreignObjectToText(cfg, attrs, inner),
   );
   return out;
-}
-
-type Box = { minX: number; minY: number; maxX: number; maxY: number };
-
-function blankBox(): Box {
-  return { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-}
-
-/**
- * mermaid sizes its viewBox from `getBBox()`, which jsdom cannot do (no
- * layout). Recompute the content bounds from the geometry and translate
- * chains mermaid emitted, and rewrite the viewBox so the diagram scales and
- * crops correctly. Runs before the foreignObject rewrite so the label boxes
- * still carry width/height.
- */
-function fixViewBox(svg: string): string {
-  const box = blankBox();
-  const stack: Array<{ tx: number; ty: number }> = [{ tx: 0, ty: 0 }];
-  const push = (x: number, y: number, w: number, h: number): void => {
-    box.minX = Math.min(box.minX, x);
-    box.minY = Math.min(box.minY, y);
-    box.maxX = Math.max(box.maxX, x + w);
-    box.maxY = Math.max(box.maxY, y + h);
-  };
-  const token =
-    /<style[\s\S]*?<\/style>|<!--[\s\S]*?-->|<(\/?)([a-zA-Z][\w-]*)([^<>]*?)(\/?)>/g;
-  let m: RegExpExecArray | null;
-  while ((m = token.exec(svg)) !== null) {
-    if (m[1] === "/") {
-      if (m[2] === "g" && stack.length > 1) stack.pop();
-      continue;
-    }
-    const name = m[2];
-    const attrs = m[3];
-    const parent = stack[stack.length - 1];
-    if (name === "g") {
-      const tr = /translate\(\s*(-?[\d.e]+)[,\s]+(-?[\d.e]+)\s*\)/.exec(attrs);
-      stack.push(
-        tr
-          ? { tx: parent.tx + Number(tr[1]), ty: parent.ty + Number(tr[2]) }
-          : { tx: parent.tx, ty: parent.ty },
-      );
-    }
-    if (name === "rect") {
-      const x = num(attrs, "x");
-      const y = num(attrs, "y");
-      const w = num(attrs, "width");
-      const h = num(attrs, "height");
-      if (x !== null && y !== null && w !== null && h !== null) {
-        push(parent.tx + x, parent.ty + y, w, h);
-      }
-    } else if (name === "circle" || name === "ellipse") {
-      const cx = num(attrs, "cx");
-      const cy = num(attrs, "cy");
-      const r = num(attrs, name === "circle" ? "r" : "rx");
-      if (cx !== null && cy !== null && r !== null) {
-        push(parent.tx + cx - r, parent.ty + cy - r, 2 * r, 2 * r);
-      }
-    } else if (name === "foreignObject") {
-      const x = num(attrs, "x") ?? 0;
-      const y = num(attrs, "y") ?? 0;
-      const w = num(attrs, "width") ?? 0;
-      const h = num(attrs, "height") ?? 0;
-      push(parent.tx + x, parent.ty + y, w, h);
-    } else if (name === "path") {
-      const numbers = (attrs.match(/-?\d+\.?\d*/g) ?? []).map(Number);
-      for (let i = 0; i + 1 < numbers.length; i += 2) {
-        push(numbers[i], numbers[i + 1], 0, 0);
-      }
-    }
-  }
-  if (!Number.isFinite(box.minX)) return svg;
-  const pad = 16;
-  const x = box.minX - pad;
-  const y = box.minY - pad;
-  const width = box.maxX - box.minX + 2 * pad;
-  const height = box.maxY - box.minY + 2 * pad;
-  const rounded = (v: number): string => `${Math.round(v * 10) / 10}`;
-  return svg
-    .replace(/ viewBox="[^"]*"/, ` viewBox="${rounded(x)} ${rounded(y)} ${rounded(width)} ${rounded(height)}"`)
-    .replace(/style="max-width: [\d.]+px;?"/, `style="max-width: ${rounded(width)}px;"`);
-}
-
-function num(attrs: string, name: string): number | null {
-  const re = new RegExp(`(?:^|\\s)${name}="(-?[\\d.e]+)"`);
-  const hit = re.exec(attrs);
-  return hit === null ? null : Number(hit[1]);
 }
 
 /**
