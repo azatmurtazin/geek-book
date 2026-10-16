@@ -335,7 +335,9 @@ function inlineTex(cfg: BookConfig, nodes: Inline[], mode: InlineMode): string {
         out += inlineTex(cfg, node.content, mode);
         break;
       case "break":
-        out += "\\newline";
+        // `{}` after the control word: `\newline` followed straight by a letter
+        // would read as `\newlineb`, an undefined control sequence.
+        out += "\\newline{}";
         break;
       case "link":
         out += linkTex(cfg, node, mode);
