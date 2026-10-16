@@ -74,15 +74,35 @@ describe("parity — same fence label", () => {
 });
 
 describe("parity — golden fixture round-trips", () => {
-  it("writes the HTML and TeX representations of the golden chapter", async () => {
+  /** The fresh rendering of the golden chapter, both targets. */
+  async function render(): Promise<{ html: string; tex: string }> {
     const md = await goldenMd();
-    const html = renderBody(cfg, md);
     const chapter = await parseChapter(cfg, md, chapterContext());
-    const tex = chapterTex(cfg, chapter);
-    fs.writeFileSync(path.join(goldenDir, "chapter.html"), html);
-    fs.writeFileSync(path.join(goldenDir, "chapter.tex"), tex);
-    // The files are committed: their diffs will reveal rendering changes.
-    expect(html.length).toBeGreaterThan(0);
-    expect(tex.length).toBeGreaterThan(0);
+    return { html: renderBody(cfg, md), tex: chapterTex(cfg, chapter) };
+  }
+
+  /** One trailing newline on both sides, whatever the renderer ended with. */
+  const norm = (text: string): string => text.replace(/\n*$/, "\n");
+
+  /**
+   * Compare a rendering against its committed copy. A rendering change fails
+   * here and shows up as a diff; `GOLDEN_UPDATE=1 npx vitest run test/parity`
+   * rewrites the copies after a change was meant.
+   */
+  function golden(name: string, fresh: string): void {
+    const file = path.join(goldenDir, name);
+    if (process.env.GOLDEN_UPDATE) {
+      fs.writeFileSync(file, norm(fresh));
+      return;
+    }
+    expect(norm(fs.readFileSync(file, "utf8"))).toBe(norm(fresh));
+  }
+
+  it("matches the committed HTML rendering", async () => {
+    golden("chapter.html", (await render()).html);
+  });
+
+  it("matches the committed TeX rendering", async () => {
+    golden("chapter.tex", (await render()).tex);
   });
 });
