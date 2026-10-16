@@ -215,8 +215,11 @@ points and their exports stay put so the CLIs do not change. Line counts as of
 - [ ] `src/build-web-book/site.ts` (348) → `links.ts` (`rewriteLinks`,
       `rewriteImages`), `nav.ts` (sidebar + footer), `page.ts` (`assemblePage`,
       `headHtml`, `stylesheet`)
-- [ ] `src/build-tex-book/parse.ts` (334) → `blocks.ts`, `inlines.ts`,
-      `links.ts` (`linkTarget`), `images.ts` (`placeImage`), `entities.ts`
+- [x] `src/build-tex-book/parse.ts` (334) → `blocks.ts` (`walk`, `blocksOf`,
+      `diagramFigure`, `standaloneImage`), `inlines.ts`, `links.ts`
+      (`linkTarget`), `images.ts` (`placeImage`), `entities.ts`. A seventh,
+      `state.ts`, holds the `ParseState` the walk threads through them all;
+      `parse.ts` keeps only `tokensToIr`, `parseChapter` and the mermaid drawing
 
 ### md → html (`src/md-to-html/`)
 
@@ -253,11 +256,11 @@ points and their exports stay put so the CLIs do not change. Line counts as of
 The one promise the engine makes is that both editions come from the same
 source. Test it directly:
 
-- [ ] the same heading produces the same anchor as an HTML `id` and a TeX
+- [x] the same heading produces the same anchor as an HTML `id` and a TeX
       `\\label`
-- [ ] the same `{{ token }}` resolves to the same string in both
-- [ ] the same fence produces a label chip in HTML and a label line in TeX
-- [ ] a golden file: one fixture chapter through both pipelines, committed
+- [x] the same `{{ token }}` resolves to the same string in both
+- [x] the same fence produces a label chip in HTML and a label line in TeX
+- [x] a golden file: one fixture chapter through both pipelines, committed
       beside the tests, so a rendering change shows up as a diff
 
 ### Order
