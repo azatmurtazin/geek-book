@@ -204,8 +204,11 @@ Each file splits along the seams its own comments already describe; the entry
 points and their exports stay put so the CLIs do not change. Line counts as of
 `a76f217`.
 
-- [ ] `src/lib/book-config.ts` (644) → `types.ts` (the interfaces),
-      `defaults.ts`, `validators.ts` (the `as*` family), `load.ts`
+- [x] `src/lib/book-config.ts` (644) → `book-config/types.ts` (the shapes and
+      the paper table), `book-config/defaults.ts` (`DEFAULTS`),
+      `book-config/validators.ts` (the `as*` family) and `book-config/load.ts`
+      (`load`, `takeConfigOption`, `CONFIG_FILE`). `book-config.ts` stays as the
+      public face that re-exports them, so no importer changes
 - [ ] `src/build-tex-book/tex.ts` (372) → `escape.ts` (`texEscape`,
       `texEscapeCode`), `blocks.ts`, `inline.ts`, `figures.ts` (picture
       measuring), `tables.ts`
