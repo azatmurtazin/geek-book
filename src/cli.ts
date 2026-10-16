@@ -28,7 +28,7 @@ interface Command {
   run: (args: string[]) => Promise<number> | number;
 }
 
-const cfg: BookConfig = loadConfig();
+const cfg: BookConfig = loadConfig(process.cwd(), takeConfigOption(process.argv.slice(2)).file);
 
 const COMMANDS: Record<string, Command> = {
   web: {

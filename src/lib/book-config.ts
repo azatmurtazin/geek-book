@@ -520,13 +520,13 @@ function asCommentStyle(value: unknown): CommentStyle | "" {
   return value === "slash" || value === "hash" ? value : "";
 }
 
-export function load(): BookConfig {
-  const cwd = process.cwd();
-  // `--config <file>` names the book: its directory is the root, so the paths
-  // inside the config resolve beside it. Without one the book is the directory
-  // the CLI runs from. The choice is made here, at import, because `CONFIG` is
-  // read at module scope by the builders and the linter.
-  const named = takeConfigOption(process.argv.slice(2)).file;
+/**
+ * The book for `cwd`, or for the config file `named` (`--config <file>`), whose
+ * directory is then the root, so the paths inside the config resolve beside it.
+ * Both default to the process; tests pass them explicitly, so a fixture book
+ * loads without changing directory or reading the command line.
+ */
+export function load(cwd: string = process.cwd(), named: string | null = null): BookConfig {
   const configFile = named ? path.resolve(cwd, named) : path.join(cwd, CONFIG_FILE);
   const root = named ? path.dirname(configFile) : cwd;
   const raw = readJson(configFile) ?? {};
