@@ -222,3 +222,36 @@ describe("tokensToIr — the pure walk", () => {
     expect(pure).toEqual(wrapped);
   });
 });
+
+describe("parseChapter — smart typography", () => {
+  /** A config with the key on; the fixture keeps it off. */
+  const smart = { ...cfg, markdown: { ...cfg.markdown, smartTypography: true } };
+
+  it("is off by default, straight and flat", async () => {
+    expect((await blocks('He said "hi" -- then'))[0]).toEqual({
+      kind: "paragraph",
+      content: [{ kind: "text", text: 'He said "hi" -- then' }],
+    });
+  });
+
+  it("smartens the printed prose too", async () => {
+    const chapter = await parseChapter(smart, 'He said "hi" -- then', chapterContext());
+    expect(chapter.blocks[0]).toEqual({
+      kind: "paragraph",
+      content: [{ kind: "text", text: "He said \u201chi\u201d \u2013 then" }],
+    });
+  });
+
+  it("gives a heading the same slug the web id carries", async () => {
+    const chapter = await parseChapter(smart, "## A -- B", chapterContext());
+    expect(chapter.blocks[0]).toMatchObject({ kind: "heading", anchors: ["c3--a--b"] });
+  });
+
+  it("leaves a code span as written", async () => {
+    const chapter = await parseChapter(smart, '`"x" -- y`', chapterContext());
+    expect(chapter.blocks[0]).toEqual({
+      kind: "paragraph",
+      content: [{ kind: "code", text: '"x" -- y' }],
+    });
+  });
+});

@@ -9,6 +9,7 @@ import type {
   ColorsConfig,
   CommentStyle,
   LintConfig,
+  MarkdownConfig,
   PaperName,
   TypeConfig,
   WebLinkConfig,
@@ -167,6 +168,12 @@ export function readLint(raw: Record<string, unknown>): LintConfig {
     proseWidth: asWidth(raw.proseWidth, DEFAULTS.lint.proseWidth),
     tableWidth: asWidth(raw.tableWidth, DEFAULTS.lint.tableWidth),
     diagramWidth: asWidth(raw.diagramWidth, DEFAULTS.lint.diagramWidth),
+  };
+}
+
+export function readMarkdown(raw: Record<string, unknown>): MarkdownConfig {
+  return {
+    smartTypography: asBool(raw.smartTypography, DEFAULTS.markdown.smartTypography),
   };
 }
 

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Reporter } from "./errors.js";
 import { slugify, splitLines } from "../lib/markdown.js";
+import { smartTypography } from "../lib/smart-typography.js";
 import {
   imageTargets,
   linkTargets,
@@ -45,7 +46,9 @@ export function checkLinks(
       }
       const heading = matchHeading(line);
       if (heading) {
-        heads.push(slugify(heading.text));
+        // Headings are raw lines here, so ask the same smartener the build asks
+        // before slugging: the id must match the one the renderers emit.
+        heads.push(slugify(cfg.markdown.smartTypography ? smartTypography(heading.text) : heading.text));
       }
     }
     anchors.set(targetPath, new Set(heads));

@@ -142,6 +142,17 @@
         }
       }
     },
+    "markdown": {
+      "description": "How the Markdown source is read before either edition renders it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "smartTypography": {
+          "description": "Turn straight quotes into curly ones, and -- / --- into en and em dashes, in the prose (default: false). Code, link targets and raw HTML are left alone.",
+          "type": "boolean"
+        }
+      }
+    },
     "code": {
       "description": "A book's own code-fence languages: the label a block shows and how its comments are marked, for a language outside the built-in set. Each key is added to `languages`.",
       "type": "object",

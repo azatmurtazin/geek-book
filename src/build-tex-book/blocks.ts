@@ -2,6 +2,7 @@
 
 import type { Token, Tokens } from "marked";
 import { markedInstance, plainText, slugify } from "../lib/markdown.js";
+import { applySmartTypography } from "../lib/smart-typography.js";
 import type { BookConfig } from "../lib/book-config.js";
 import type { Align, Block, Figure } from "./ir.js";
 import type { ParseState } from "./state.js";
@@ -11,7 +12,11 @@ import { inlinesOf, text } from "./inlines.js";
 
 /** The walk's entry: prepared Markdown → blocks. No fetching, drawing or reading. */
 export function walk(cfg: BookConfig, markdown: string, state: ParseState): Block[] {
-  return blocksOf(cfg, markedInstance(cfg).lexer(markdown), state);
+  const tokens = markedInstance(cfg).lexer(markdown);
+  // `markedInstance`'s hook only runs under `parse`, which the website takes;
+  // the printed edition walks the tokens itself and smartens the same way.
+  if (cfg.markdown.smartTypography) applySmartTypography(tokens);
+  return blocksOf(cfg, tokens, state);
 }
 
 /** The blocks of a token list: a chapter, a callout, or one list item. */

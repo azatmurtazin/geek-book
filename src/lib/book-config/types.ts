@@ -155,6 +155,14 @@ export interface LintConfig {
   diagramWidth: number;
 }
 
+/** How the Markdown source is read before either edition renders it. */
+export interface MarkdownConfig {
+  /** Turn straight quotes into curly ones and `--`/`---` into en and em dashes
+   *  in the prose (default false). Code, link targets and raw HTML are left
+   *  alone. */
+  smartTypography: boolean;
+}
+
 /** How comments are introduced in a code fence. */
 export type CommentStyle = "slash" | "hash";
 
@@ -233,6 +241,8 @@ export interface BookConfig {
   images: ImagesConfig;
   /** Line budgets the chapter check enforces. */
   lint: LintConfig;
+  /** How the Markdown source is read before it is rendered. */
+  markdown: MarkdownConfig;
   /** The typefaces both editions are set in. */
   fonts: FontsConfig;
   /** The website's extra stylesheet and head HTML. */

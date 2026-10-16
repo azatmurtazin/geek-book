@@ -29,6 +29,7 @@ import {
   readCode,
   readColors,
   readLint,
+  readMarkdown,
   readType,
   round2,
 } from "./validators.js";
@@ -102,6 +103,7 @@ export function load(cwd: string = process.cwd(), named: string | null = null): 
   const images = (raw.images ?? {}) as Record<string, unknown>;
   const serve = (raw.serve ?? {}) as Record<string, unknown>;
   const lint = (raw.lint ?? {}) as Record<string, unknown>;
+  const markdown = (raw.markdown ?? {}) as Record<string, unknown>;
   const codeLangs = readCode((raw.code ?? {}) as Record<string, unknown>);
   const tex = (raw.tex ?? {}) as Record<string, unknown>;
   const geometryRaw = (tex.geometry ?? {}) as Record<string, unknown>;
@@ -164,6 +166,7 @@ export function load(cwd: string = process.cwd(), named: string | null = null): 
       types: asContentTypes(images.types),
     },
     lint: readLint(lint),
+    markdown: readMarkdown(markdown),
     fonts: {
       text,
       // The default bold face belongs to the default family: a book that names

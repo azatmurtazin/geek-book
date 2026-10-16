@@ -109,10 +109,11 @@ a tag named there is also accepted by the linter.
 - [ ] `marked` options in `src/md-to-html/render.ts`: `breaks` (single newline to
       `<br>`) — tried and reverted in `b47108f`: with `lint.proseWidth`
       hard-wrapping the prose, every source line break became a `<br>` (312 in
-      the guide itself). If it comes back it belongs behind a config key,
-      default off.
-- [ ] smart typography (curly quotes, en/em dashes) — marked v18 ships no
-      option for it, so a small custom extension or a dependency
+      the guide itself). If it comes back it belongs under `markdown`, default
+      off.
+- [x] smart typography (curly quotes, en/em dashes) — marked v18 ships no
+      option, so a small custom token walk (`src/lib/smart-typography.ts`),
+      off by default under `markdown.smartTypography`
 - [ ] heading anchor style — shared with the linter, so riskier than it looks
 
 ### Diagrams

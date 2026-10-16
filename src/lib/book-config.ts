@@ -24,6 +24,7 @@ export type {
   GeometryConfig,
   ImagesConfig,
   LintConfig,
+  MarkdownConfig,
   PaperName,
   ServeConfig,
   TexConfig,

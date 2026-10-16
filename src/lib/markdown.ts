@@ -7,6 +7,7 @@ import type { Token, Tokens, RendererThis } from "marked";
 import type { BookConfig } from "./book-config.js";
 import { escapeHtml } from "./html.js";
 import { codeLabel } from "./code-meta.js";
+import { applySmartTypography } from "./smart-typography.js";
 import { highlightComments } from "../md-to-html/render.js";
 
 /** Split on newlines the way Python's `splitlines()` did (no trailing empty). */
@@ -40,7 +41,7 @@ export function plainText(tokens: Token[]): string {
 }
 
 export function markedInstance(cfg: BookConfig): Marked {
-  return new Marked({
+  const marked = new Marked({
     gfm: true,
     renderer: {
       heading(this: RendererThis, { tokens, depth }: Tokens.Heading): string {
@@ -58,4 +59,17 @@ export function markedInstance(cfg: BookConfig): Marked {
       },
     }
   });
+  if (cfg.markdown.smartTypography) {
+    // Hooks run only on `parse`, which the website takes; the printed edition
+    // lexes the same source and applies the same walk itself (see blocks.ts).
+    marked.use({
+      hooks: {
+        processAllTokens(tokens): Token[] {
+          applySmartTypography(tokens);
+          return tokens;
+        },
+      },
+    });
+  }
+  return marked;
 }

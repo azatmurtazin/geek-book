@@ -112,6 +112,7 @@ function printConfig(cfg: BookConfig): void {
       code: cfg.code,
       images: cfg.images,
       lint: cfg.lint,
+      markdown: cfg.markdown,
       serve: cfg.serve,
     },
     null,

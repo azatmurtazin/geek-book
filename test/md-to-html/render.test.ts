@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { highlightComments, renderBody, renderStandaloneHtml } from "../../src/md-to-html/render.js";
 import { slugify } from "../../src/lib/markdown.js";
+import { smartTypography } from "../../src/lib/smart-typography.js";
 import type { BookConfig } from "../../src/lib/book-config.js";
 import { fixtureConfig } from "../helpers/config.js";
 
@@ -63,6 +64,43 @@ describe("renderBody — code fences", () => {
 
   it("leaves a language with no known label bare", () => {
     expect(renderBody(cfg, "```text\nplain\n```")).not.toContain("code-block");
+  });
+});
+
+describe("renderBody — smart typography", () => {
+  /** A config that turns the key on; the fixture itself keeps it off. */
+  const smart: BookConfig = { ...cfg, markdown: { ...cfg.markdown, smartTypography: true } };
+
+  it("is off by default, straight and flat", () => {
+    expect(renderBody(cfg, 'a "b" -- c')).toContain('a &quot;b&quot; -- c');
+  });
+
+  it("curls quotes and dashes when the book asks", () => {
+    expect(renderBody(smart, 'a "b" -- c')).toContain("a \u201cb\u201d \u2013 c");
+    expect(renderBody(smart, "a---b")).toContain("a\u2014b");
+  });
+
+  it("pairs a quote that wraps emphasis", () => {
+    expect(renderBody(smart, '"**bold**"')).toContain("\u201c<strong>bold</strong>\u201d");
+  });
+
+  it("leaves code and link targets alone", () => {
+    const html = renderBody(smart, '`"x"` and ["y"](https://example.com/a--b)');
+    expect(html).toContain("<code>&quot;x&quot;</code>");
+    expect(html).toContain('href="https://example.com/a--b"');
+    expect(html).toContain("\u201cy\u201d");
+  });
+
+  it("keys heading ids off the smartened text, as the linter does", () => {
+    // `--` folds to an en dash, which the slug drops, so the id keeps two dashes.
+    expect(renderBody(smart, "## A -- B")).toContain('<h2 id="a--b">A \u2013 B</h2>');
+  });
+
+  it("gives a heading the linter's id, even around a code span", () => {
+    const line = "The `--config` flag";
+    const id = slugify(smartTypography(line));
+    expect(id).toBe("the---config-flag");
+    expect(renderBody(smart, `## ${line}`)).toContain(`<h2 id="${id}">`);
   });
 });
 

@@ -17,6 +17,7 @@ export const DEFAULTS = {
   images: { timeout: 30, types: {} },
   serve: { port: 4000 },
   lint: { proseWidth: 100, tableWidth: 240, diagramWidth: 80 },
+  markdown: { smartTypography: false },
   web: { css: "", head: "", baseUrl: "", favicon: "", links: [] },
   fonts: {
     text: "Literata",

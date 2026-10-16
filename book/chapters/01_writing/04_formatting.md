@@ -51,3 +51,19 @@ relative path. A link that leaves the book keeps its address: [the CommonMark
 spec](https://commonmark.org/) is off the site and out of the PDF. The site
 hands the address to the browser, the printed page marks it as a link that
 leaves the book, and the link check is what actually visits it.
+
+## Smart typography
+
+By default the prose keeps the characters as written: a straight quote is a
+straight quote, and two hyphens are two hyphens. A book that would rather have
+the typographer's marks turns them on with `markdown.smartTypography`:
+
+```json
+{ "markdown": { "smartTypography": true } }
+```
+
+Then a pair of straight quotes becomes `“curly”` ones, and `--` and `---` become
+an en dash and an em dash. The change reaches the prose of both editions, and
+nothing else — code, link addresses and raw HTML are left as written. The
+identifiers headings get follow the same text, so an anchor written against a
+smartened heading still resolves.
