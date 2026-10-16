@@ -165,14 +165,17 @@ devDependency.
 
 ### Harness
 
-- [x] `test/` beside `src/`, mirroring its layout (`test/lib/` so far; the
-      pipeline dirs arrive with their suites)
+- [x] `test/` beside `src/`, mirroring its layout (`test/lib/`,
+      `test/md-to-html/`; the rest arrives with their suites)
 - [x] add `vitest` as a devDependency with a `test` script (`vitest run`), a
       `just test` recipe and a `pre-commit` hook after `lint`
 - [x] widen `tsconfig.json`'s `include` to cover `test/`, so `npm run
       typecheck` checks the tests too
 - [x] tests assert on strings and structures, never on `build/`; no LuaLaTeX or
       jsdom in the unit tier
+- [x] a `test/helpers/config.ts` builder over `test/fixtures/`, so a test loads
+      a fixture book instead of the working directory (`load` now takes its
+      root and config file explicitly)
 
 ### What is left before the pipelines are testable
 
@@ -213,15 +216,17 @@ points and their exports stay put so the CLIs do not change. Line counts as of
 
 ### md → html (`src/md-to-html/`)
 
-- [ ] heading ids: slug rule, depth, and that the id matches what the linter
+- [x] heading ids: slug rule, depth, and that the id matches what the linter
       expects (`slugify` in `src/lib/markdown.ts` is shared on purpose)
-- [ ] code fences: `language-` class, the label chip from `code`, comment
+- [x] code fences: `language-` class, the label chip from `code`, comment
       `<span>`s from `tokenizeCode`, escaping byte-for-byte
-- [ ] single newlines stay soft — no `<br>` in hard-wrapped prose (the `b47108f`
+- [x] single newlines stay soft — no `<br>` in hard-wrapped prose (the `b47108f`
       regression) — and GFM tables/lists/strikethrough round-trip
-- [ ] placeholders substituted in prose, left alone inside fences
-- [ ] `pageTitle` from the first `#`, and the layout's `{{ … }}` slots all filled
-- [ ] `escapeHtml` on every interpolated value (title, tagline, code, links)
+- [x] placeholders substituted in prose, left alone inside fences
+- [x] `pageTitle` from the first `#`, and the layout's `{{ … }}` slots all filled
+- [ ] `escapeHtml` on every interpolated value (title, tagline, code, links) —
+      the suite found the page title goes into `<title>` raw (`wrapInLayout`);
+      an `it.todo` in the suite pins it
 
 ### md → tex (`src/build-tex-book/`)
 

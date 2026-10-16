@@ -1,0 +1,10 @@
+{
+  "title": "Fixture Book",
+  "tagline": "a book for tests",
+  "author": "Test Author",
+  "version": "1.2.3",
+  "language": "en",
+  "placeholders": { "edition": "second" },
+  "code": { "rust": { "label": "Rust", "comment": "slash" } },
+  "languages": ["rust", "text", "markdown"]
+}
