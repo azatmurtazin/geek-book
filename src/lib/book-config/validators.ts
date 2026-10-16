@@ -8,13 +8,15 @@ import type {
   CodeLangConfig,
   ColorsConfig,
   CommentStyle,
+  DiagramTheme,
+  DiagramsConfig,
   LintConfig,
   MarkdownConfig,
   PaperName,
   TypeConfig,
   WebLinkConfig,
 } from "./types.js";
-import { PAPERS } from "./types.js";
+import { DIAGRAM_THEMES, PAPERS } from "./types.js";
 import { DEFAULTS } from "./defaults.js";
 
 export function asString(value: unknown, fallback: string): string {
@@ -86,6 +88,11 @@ export function asPoints(value: unknown, fallback: number): number {
 
 /** A line budget in columns: a positive finite number, else the default. */
 export function asWidth(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+/** A size in pixels: a positive finite number, else the default. */
+export function asPixels(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
@@ -174,6 +181,19 @@ export function readLint(raw: Record<string, unknown>): LintConfig {
 export function readMarkdown(raw: Record<string, unknown>): MarkdownConfig {
   return {
     smartTypography: asBool(raw.smartTypography, DEFAULTS.markdown.smartTypography),
+  };
+}
+
+/** A diagram theme: `auto` (the palette from `tex.colors`) or a Mermaid theme. */
+function asDiagramTheme(value: unknown, fallback: DiagramTheme): DiagramTheme {
+  const name = typeof value === "string" ? value.trim() : "";
+  return (DIAGRAM_THEMES as readonly string[]).includes(name) ? (name as DiagramTheme) : fallback;
+}
+
+export function readDiagrams(raw: Record<string, unknown>): DiagramsConfig {
+  return {
+    theme: asDiagramTheme(raw.theme, DEFAULTS.diagrams.theme),
+    fontSize: asPixels(raw.fontSize, DEFAULTS.diagrams.fontSize),
   };
 }
 

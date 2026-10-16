@@ -15,9 +15,8 @@
 // embed it inline with no client-side JavaScript, and the book build gets the
 // identical diagram.
 
-import { diagramFamily } from "../lib/fonts.js";
 import type { BookConfig } from "../lib/book-config.js";
-import { FONT_SIZE, themeVariables } from "./theme.js";
+import { diagramOptions } from "./theme.js";
 import { installBrowserShims } from "./shims.js";
 import { fixViewBox, foreignObjectToText } from "./fixup.js";
 
@@ -31,14 +30,7 @@ async function mermaid(cfg: BookConfig): Promise<typeof import("mermaid")> {
     mermaidPromise = import("mermaid");
   }
   const mod = await mermaidPromise;
-  mod.default.initialize({
-    startOnLoad: false,
-    theme: "default",
-    securityLevel: "loose",
-    fontFamily: diagramFamily(cfg),
-    themeVariables: { fontSize: `${FONT_SIZE}px`, fontFamily: diagramFamily(cfg), ...themeVariables(cfg) },
-    flowchart: { htmlLabels: true },
-  });
+  mod.default.initialize(diagramOptions(cfg));
   return mod;
 }
 

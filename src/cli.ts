@@ -90,6 +90,7 @@ function printConfig(cfg: BookConfig): void {
       outputPdf: rel(cfg.root, cfg.outputPdf),
       outputClean: cfg.outputClean,
       docs: cfg.docs.map((path) => rel(cfg.root, path)),
+      diagrams: cfg.diagrams,
       fonts: cfg.fonts,
       web: {
         css: cfg.web.css ? rel(cfg.root, cfg.web.css) : "",

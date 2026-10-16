@@ -18,6 +18,7 @@ export const DEFAULTS = {
   serve: { port: 4000 },
   lint: { proseWidth: 100, tableWidth: 240, diagramWidth: 80 },
   markdown: { smartTypography: false },
+  diagrams: { theme: "auto" as const, fontSize: 13 },
   web: { css: "", head: "", baseUrl: "", favicon: "", links: [] },
   fonts: {
     text: "Literata",

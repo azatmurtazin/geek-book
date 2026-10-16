@@ -6,7 +6,6 @@
 
 import { diagramFamily } from "../lib/fonts.js";
 import type { BookConfig } from "../lib/book-config.js";
-import { FONT_SIZE } from "./theme.js";
 
 const LABEL_FILL = "#202020";
 
@@ -26,7 +25,8 @@ export function foreignObjectToText(cfg: BookConfig, attrs: string, inner: strin
   if (lines.length === 0) return "";
   const cx = Number(x) + Number(width) / 2;
   const cy = Number(y) + Number(height) / 2;
-  const lineHeight = FONT_SIZE * 1.05;
+  const fontSize = cfg.diagrams.fontSize;
+  const lineHeight = fontSize * 1.05;
   const start = cy - ((lines.length - 1) * lineHeight) / 2;
   const tspans = lines
     .map(
@@ -37,7 +37,7 @@ export function foreignObjectToText(cfg: BookConfig, attrs: string, inner: strin
     )
     .join("");
   return (
-    `<text text-anchor="middle" font-family="${diagramFamily(cfg)}" font-size="${FONT_SIZE}" ` +
+    `<text text-anchor="middle" font-family="${diagramFamily(cfg)}" font-size="${fontSize}" ` +
     `fill="${LABEL_FILL}">${tspans}</text>`
   );
 }

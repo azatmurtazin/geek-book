@@ -153,6 +153,23 @@
         }
       }
     },
+    "diagrams": {
+      "description": "How the Mermaid diagrams are drawn, in both editions.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "theme": {
+          "description": "The diagram theme (default: auto). auto derives the palette from tex.colors; a Mermaid theme name (default, dark, forest, neutral, ...) draws in that theme instead.",
+          "type": "string",
+          "enum": ["auto", "default", "base", "dark", "forest", "neutral", "neo", "neo-dark", "redux", "redux-dark", "redux-color", "redux-dark-color", "null"]
+        },
+        "fontSize": {
+          "description": "The diagram type size, in pixels (default: 13).",
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
     "code": {
       "description": "A book's own code-fence languages: the label a block shows and how its comments are marked, for a language outside the built-in set. Each key is added to `languages`.",
       "type": "object",

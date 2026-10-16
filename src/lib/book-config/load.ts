@@ -28,6 +28,7 @@ import {
   asWidth,
   readCode,
   readColors,
+  readDiagrams,
   readLint,
   readMarkdown,
   readType,
@@ -104,6 +105,7 @@ export function load(cwd: string = process.cwd(), named: string | null = null): 
   const serve = (raw.serve ?? {}) as Record<string, unknown>;
   const lint = (raw.lint ?? {}) as Record<string, unknown>;
   const markdown = (raw.markdown ?? {}) as Record<string, unknown>;
+  const diagrams = (raw.diagrams ?? {}) as Record<string, unknown>;
   const codeLangs = readCode((raw.code ?? {}) as Record<string, unknown>);
   const tex = (raw.tex ?? {}) as Record<string, unknown>;
   const geometryRaw = (tex.geometry ?? {}) as Record<string, unknown>;
@@ -167,6 +169,7 @@ export function load(cwd: string = process.cwd(), named: string | null = null): 
     },
     lint: readLint(lint),
     markdown: readMarkdown(markdown),
+    diagrams: readDiagrams(diagrams),
     fonts: {
       text,
       // The default bold face belongs to the default family: a book that names

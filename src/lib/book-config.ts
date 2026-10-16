@@ -20,6 +20,8 @@ export type {
   ColorKey,
   ColorsConfig,
   CommentStyle,
+  DiagramTheme,
+  DiagramsConfig,
   FontsConfig,
   GeometryConfig,
   ImagesConfig,

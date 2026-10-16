@@ -120,7 +120,7 @@ a tag named there is also accepted by the linter.
 
 - [x] derive the mermaid palette (`src/diagrams/render.ts`) from `tex.colors`
       rather than the hard-coded grey, so diagrams follow the book automatically
-- [ ] expose `theme` / font size if a book wants something other than the greys
+- [x] expose `theme` / font size if a book wants something other than the greys
       (still hardcoded: `FONT_SIZE = 13` and `theme: "default"` in
       `src/diagrams/render.ts`)
 

@@ -1,12 +1,12 @@
-// The diagram palette and type size.
+// The diagram palette, type size and theme.
 //
 // Mermaid theme variables built from the book's printed colours, so a diagram
-// follows `tex.colors` on the page and on paper alike.
+// follows `tex.colors` on the page and on paper alike. A book that wants
+// another look names a Mermaid theme under `diagrams.theme` instead.
 
+import { diagramFamily } from "../lib/fonts.js";
 import type { BookConfig, ColorsConfig } from "../lib/book-config.js";
-
-/** Diagram type size, in px; also the label line height in `fixup.ts`. */
-export const FONT_SIZE = 13;
+import type { MermaidConfig } from "mermaid";
 
 // Build mermaid theme variables from the book's printed palette so diagrams follow `tex.colors`.
 export function themeVariables(cfg: BookConfig) {
@@ -57,5 +57,32 @@ export function themeVariables(cfg: BookConfig) {
     labelBackgroundColor: colors.codeBackground,
     compositeBackground: "#ffffff",
     compositeTitleBackground: colors.codeBackground,
+  };
+}
+
+/**
+ * The options Mermaid is initialised with for a book: its theme, its type size
+ * and — under the default `auto` theme — the palette derived from `tex.colors`.
+ * Kept apart from the loader in `render.ts` so it needs no DOM and can be read
+ * on its own.
+ */
+export function diagramOptions(cfg: BookConfig): MermaidConfig {
+  const theme = cfg.diagrams.theme;
+  const derived = theme === "auto";
+  const fontFamily = diagramFamily(cfg);
+
+  return {
+    startOnLoad: false,
+    // `auto` keeps Mermaid's own default look and tints it with the book's
+    // palette below; a named theme is used as it is, palette and all.
+    theme: derived ? "default" : theme,
+    securityLevel: "loose",
+    fontFamily,
+    themeVariables: {
+      fontSize: `${cfg.diagrams.fontSize}px`,
+      fontFamily,
+      ...(derived ? themeVariables(cfg) : {}),
+    },
+    flowchart: { htmlLabels: true },
   };
 }

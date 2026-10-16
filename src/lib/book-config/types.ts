@@ -163,6 +163,38 @@ export interface MarkdownConfig {
   smartTypography: boolean;
 }
 
+/**
+ * The themes a diagram may be drawn in. `auto` — the default — builds the
+ * palette from `tex.colors`, so a diagram follows the book; every other value
+ * is one of Mermaid's own themes, used as it is (see `src/diagrams/theme.ts`).
+ */
+export const DIAGRAM_THEMES = [
+  "auto",
+  "default",
+  "base",
+  "dark",
+  "forest",
+  "neutral",
+  "neo",
+  "neo-dark",
+  "redux",
+  "redux-dark",
+  "redux-color",
+  "redux-dark-color",
+  "null",
+] as const;
+
+export type DiagramTheme = (typeof DIAGRAM_THEMES)[number];
+
+/** How the `mermaid` diagrams are drawn, in both editions. */
+export interface DiagramsConfig {
+  /** `auto` derives the palette from `tex.colors`; a Mermaid theme name such as
+   *  `dark`, `forest` or `neutral` draws in that theme instead. */
+  theme: DiagramTheme;
+  /** The diagram type size, in pixels (default 13). */
+  fontSize: number;
+}
+
 /** How comments are introduced in a code fence. */
 export type CommentStyle = "slash" | "hash";
 
@@ -243,6 +275,8 @@ export interface BookConfig {
   lint: LintConfig;
   /** How the Markdown source is read before it is rendered. */
   markdown: MarkdownConfig;
+  /** How the diagrams are drawn. */
+  diagrams: DiagramsConfig;
   /** The typefaces both editions are set in. */
   fonts: FontsConfig;
   /** The website's extra stylesheet and head HTML. */
