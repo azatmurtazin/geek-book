@@ -12,62 +12,63 @@
 // identical diagram.
 
 import { JSDOM } from "jsdom";
-import { DIAGRAM_FAMILY } from "../lib/fonts.js";
-
-import { CONFIG } from "../lib/book-config.js";
+import { diagramFamily } from "../lib/fonts.js";
+import type { BookConfig, ColorsConfig } from "../lib/book-config.js";
 
 const FONT_SIZE = 13;
 const LABEL_FILL = "#202020";
 
-// Build mermaid theme variables from the book's printed palette so diagrams
-// follow `tex.colors`.
-const colors = CONFIG.tex.colors;
-const THEME_VARIABLES = {
-  background: "#ffffff",
-  primaryColor: colors.codeBackground,
-  primaryBorderColor: colors.muted,
-  primaryTextColor: colors.codeForeground,
-  secondaryColor: colors.codeBackground,
-  secondaryBorderColor: colors.muted,
-  secondaryTextColor: colors.codeForeground,
-  tertiaryColor: colors.codeBackground,
-  tertiaryBorderColor: colors.muted,
-  tertiaryTextColor: colors.codeForeground,
-  lineColor: colors.muted,
-  edgeLabelBackground: "#ffffff",
-  mainBkg: colors.codeBackground,
-  nodeBorder: colors.muted,
-  nodeTextColor: colors.codeForeground,
-  textColor: colors.codeForeground,
-  titleColor: colors.codeForeground,
-  noteBkgColor: colors.calloutBackground,
-  noteBorderColor: colors.calloutBorder,
-  noteTextColor: colors.calloutForeground,
-  clusterBkg: "#ffffff",
-  clusterBorder: colors.rule,
-  actorBkg: colors.codeBackground,
-  actorBorder: colors.muted,
-  actorTextColor: colors.codeForeground,
-  actorLineColor: colors.muted,
-  labelBoxBkgColor: colors.codeBackground,
-  labelBoxBorderColor: colors.muted,
-  labelTextColor: colors.codeForeground,
-  signalColor: colors.muted,
-  signalTextColor: colors.codeForeground,
-  activationBkgColor: colors.codeBackground,
-  activationBorderColor: colors.muted,
-  sequenceNumberColor: colors.codeForeground,
-  loopTextColor: colors.codeForeground,
-  stateBkg: colors.codeBackground,
-  stateBorder: colors.muted,
-  stateLabelColor: colors.codeForeground,
-  stateEndColor: colors.muted,
-  innerEndBackground: colors.muted,
-  specialStateColor: colors.muted,
-  labelBackgroundColor: colors.codeBackground,
-  compositeBackground: "#ffffff",
-  compositeTitleBackground: colors.codeBackground,
-};
+// Build mermaid theme variables from the book's printed palette so diagrams follow `tex.colors`.
+function themeVariables(cfg: BookConfig) {
+  const colors: ColorsConfig = cfg.tex.colors;
+
+  return {
+    background: "#ffffff",
+    primaryColor: colors.codeBackground,
+    primaryBorderColor: colors.muted,
+    primaryTextColor: colors.codeForeground,
+    secondaryColor: colors.codeBackground,
+    secondaryBorderColor: colors.muted,
+    secondaryTextColor: colors.codeForeground,
+    tertiaryColor: colors.codeBackground,
+    tertiaryBorderColor: colors.muted,
+    tertiaryTextColor: colors.codeForeground,
+    lineColor: colors.muted,
+    edgeLabelBackground: "#ffffff",
+    mainBkg: colors.codeBackground,
+    nodeBorder: colors.muted,
+    nodeTextColor: colors.codeForeground,
+    textColor: colors.codeForeground,
+    titleColor: colors.codeForeground,
+    noteBkgColor: colors.calloutBackground,
+    noteBorderColor: colors.calloutBorder,
+    noteTextColor: colors.calloutForeground,
+    clusterBkg: "#ffffff",
+    clusterBorder: colors.rule,
+    actorBkg: colors.codeBackground,
+    actorBorder: colors.muted,
+    actorTextColor: colors.codeForeground,
+    actorLineColor: colors.muted,
+    labelBoxBkgColor: colors.codeBackground,
+    labelBoxBorderColor: colors.muted,
+    labelTextColor: colors.codeForeground,
+    signalColor: colors.muted,
+    signalTextColor: colors.codeForeground,
+    activationBkgColor: colors.codeBackground,
+    activationBorderColor: colors.muted,
+    sequenceNumberColor: colors.codeForeground,
+    loopTextColor: colors.codeForeground,
+    stateBkg: colors.codeBackground,
+    stateBorder: colors.muted,
+    stateLabelColor: colors.codeForeground,
+    stateEndColor: colors.muted,
+    innerEndBackground: colors.muted,
+    specialStateColor: colors.muted,
+    labelBackgroundColor: colors.codeBackground,
+    compositeBackground: "#ffffff",
+    compositeTitleBackground: colors.codeBackground,
+  };
+}
 
 let mermaidPromise: Promise<typeof import("mermaid")> | null = null;
 
@@ -133,7 +134,7 @@ function shimMeasurement(windowObject: unknown): void {
   } as never;
 }
 
-async function mermaid(): Promise<typeof import("mermaid")> {
+async function mermaid(cfg: BookConfig): Promise<typeof import("mermaid")> {
   if (mermaidPromise === null) {
     const dom = new JSDOM("<!doctype html><html><body></body></html>", {
       pretendToBeVisual: true,
@@ -157,15 +158,15 @@ async function mermaid(): Promise<typeof import("mermaid")> {
     startOnLoad: false,
     theme: "default",
     securityLevel: "loose",
-    fontFamily: DIAGRAM_FAMILY,
-    themeVariables: { fontSize: `${FONT_SIZE}px`, fontFamily: DIAGRAM_FAMILY, ...THEME_VARIABLES },
+    fontFamily: diagramFamily(cfg),
+    themeVariables: { fontSize: `${FONT_SIZE}px`, fontFamily: diagramFamily(cfg), ...themeVariables(cfg) },
     flowchart: { htmlLabels: true },
   });
   return mod;
 }
 
 /** Turn one <foreignObject> label into a centered native <text>. */
-function foreignObjectToText(attrs: string, inner: string): string {
+function foreignObjectToText(cfg: BookConfig, attrs: string, inner: string): string {
   const x = /x="(-?[\d.]+)"/.exec(attrs)?.[1] ?? "0";
   const y = /y="(-?[\d.]+)"/.exec(attrs)?.[1] ?? "0";
   const width = /width="([\d.]+)"/.exec(attrs)?.[1] ?? "0";
@@ -191,7 +192,7 @@ function foreignObjectToText(attrs: string, inner: string): string {
     )
     .join("");
   return (
-    `<text text-anchor="middle" font-family="${DIAGRAM_FAMILY}" font-size="${FONT_SIZE}" ` +
+    `<text text-anchor="middle" font-family="${diagramFamily(cfg)}" font-size="${FONT_SIZE}" ` +
     `fill="${LABEL_FILL}">${tspans}</text>`
   );
 }
@@ -199,8 +200,8 @@ function foreignObjectToText(attrs: string, inner: string): string {
 /**
  * Standalone <svg> with mermaid's <foreignObject> labels as SVG <text>.
  */
-export async function renderMermaid(source: string, id: string): Promise<string> {
-  const mod = await mermaid();
+export async function renderMermaid(cfg: BookConfig, source: string, id: string): Promise<string> {
+  const mod = await mermaid(cfg);
   const { svg } = await mod.default.render(id, source);
   const start = svg.indexOf("<svg");
   const end = svg.lastIndexOf("</svg>");
@@ -208,7 +209,7 @@ export async function renderMermaid(source: string, id: string): Promise<string>
   let out = svg.slice(start, end + "</svg>".length);
   out = fixViewBox(out);
   out = out.replace(/<foreignObject([^>]*)>([\s\S]*?)<\/foreignObject>/g, (_, attrs: string, inner: string) =>
-    foreignObjectToText(attrs, inner),
+    foreignObjectToText(cfg, attrs, inner),
   );
   return out;
 }
@@ -334,7 +335,7 @@ export async function preprocessMermaidMd(
     i += 1;
     index += 1;
     diagrams.set(index, body.join("\n"));
-    out.push("", `::pe-diagram-${index}::`, "");
+    out.push("", `::gb-diagram-${index}::`, "");
   }
   return { markdown: out.join("\n"), diagrams };
 }
@@ -344,11 +345,11 @@ export function substituteDiagrams(bodyHtml: string, rendered: Map<number, strin
   let out = bodyHtml;
   for (const [index, svg] of rendered) {
     const block = `<div class="diagram">\n${svg}\n</div>`;
-    const marker = `<p>::pe-diagram-${index}::</p>`;
+    const marker = `<p>::gb-diagram-${index}::</p>`;
     if (out.includes(marker)) {
       out = out.replace(marker, block);
     } else {
-      out = out.replace(`::pe-diagram-${index}::`, block);
+      out = out.replace(`::gb-diagram-${index}::`, block);
     }
   }
   return out;

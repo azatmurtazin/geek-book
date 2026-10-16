@@ -8,8 +8,7 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import process from "node:process";
-import { ROOT } from "../lint/paths.js";
-import { CONFIG } from "../lib/book-config.js";
+import type { BookConfig } from "../lib/book-config.js";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -29,9 +28,9 @@ const MIME: Record<string, string> = {
   ".woff2": "font/woff2",
 };
 
-export function main(args: string[]): number {
+export function main(cfg: BookConfig, args: string[]): number {
   let dir: string | null = null;
-  let port = String(CONFIG.serve.port);
+  let port = String(cfg.serve.port);
   for (const arg of args) {
     if (/^\d+$/.test(arg)) {
       port = arg;
@@ -39,7 +38,7 @@ export function main(args: string[]): number {
       dir = arg;
     }
   }
-  const root = dir ? path.resolve(ROOT, dir) : CONFIG.outputWeb;
+  const root = dir ? path.resolve(cfg.root, dir) : cfg.outputWeb;
   if (!fs.existsSync(root)) {
     process.stderr.write(`serve: ${root}: no such directory (run 'geek-book web' first)\n`);
     return 1;

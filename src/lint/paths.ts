@@ -1,17 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CONFIG } from "../lib/book-config.js";
 
-// Where the book lives. Resolved by `CONFIG` from the working directory (the
+// Where the book lives. Resolved by `BookConfig` from the working directory (the
 // book root) and its book.config.json, so the builders, the linter and the
 // server all agree no matter where the engine itself is installed.
-
-export const ROOT = CONFIG.root;
-export const BOOK = CONFIG.bookDir;
-export const SUMMARY = CONFIG.summary;
-export const CHAPTERS = CONFIG.chapters;
-export const README = CONFIG.readme;
-export const COVER = CONFIG.cover;
 
 /** All `.md` files under `dir`, as absolute paths; none when `dir` is absent. */
 export function markdownFilesUnder(dir: string): string[] {

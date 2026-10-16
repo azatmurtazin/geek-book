@@ -13,8 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
-import { BOOK, COVER, SUMMARY } from "../lint/paths.js";
-import { CONFIG } from "../lib/book-config.js";
+import type { BookConfig } from "../lib/book-config.js";
 import { parseSummary } from "../lib/summary.js";
 import { pdfPages } from "../pdf-info/pdf.js";
 import { RemoteImages } from "../lib/remote-images.js";
@@ -61,9 +60,9 @@ function tailOf(file: string): string {
   return lines.slice(-25).join("\n");
 }
 
-function coverInclude(buildDir: string): string {
-  if (!fs.existsSync(COVER)) return "";
-  const relative = path.relative(buildDir, COVER).split(path.sep).join("/");
+function coverInclude(cfg: BookConfig, buildDir: string): string {
+  if (!fs.existsSync(cfg.cover)) return "";
+  const relative = path.relative(buildDir, cfg.cover).split(path.sep).join("/");
   const target = relative.startsWith("..") || path.isAbsolute(relative) ? relative : `./${relative}`;
   return [
     "\\noindent\\includegraphics[width=\\linewidth,height=\\textheight,keepaspectratio]{" + target + "}",
@@ -71,12 +70,12 @@ function coverInclude(buildDir: string): string {
   ].join("\n");
 }
 
-export async function main(args: string[]): Promise<number> {
+export async function main(cfg: BookConfig, args: string[]): Promise<number> {
   if (args.length > 1) {
     usage();
     return 2;
   }
-  const outputPdf = args[0] ? path.resolve(args[0]) : CONFIG.outputPdf;
+  const outputPdf = args[0] ? path.resolve(args[0]) : cfg.outputPdf;
   const buildDir = path.dirname(outputPdf);
   // Name every TeX output (.pdf/.log/.aux/.toc) after the finished PDF, so
   // scratch files sit beside it and any output name works.
@@ -84,23 +83,23 @@ export async function main(args: string[]): Promise<number> {
   const texFile = path.join(buildDir, "book.tex");
   const figuresDir = path.join(buildDir, "figures");
   // Remote images land among the figures they will be embedded as.
-  const remote = new RemoteImages(figuresDir, {
+  const remote = new RemoteImages(cfg, figuresDir, {
     print: true,
-    timeout: CONFIG.images.timeout,
-    types: CONFIG.images.types,
+    timeout: cfg.images.timeout,
+    types: cfg.images.types,
   });
 
-  if (!fs.existsSync(SUMMARY)) {
-    process.stderr.write(`geek-book: no SUMMARY.md at ${SUMMARY}\n`);
+  if (!fs.existsSync(cfg.summary)) {
+    process.stderr.write(`geek-book: no SUMMARY.md at ${cfg.summary}\n`);
     return 1;
   }
-  const items = parseSummary(fs.readFileSync(SUMMARY, "utf8"));
+  const items = parseSummary(fs.readFileSync(cfg.summary, "utf8"));
 
   const idOf = new Map<string, number>();
   const chapterOf = new Map<number, string>();
   let chapterCount = 0;
   for (const item of items) {
-    if (item.kind !== "entry" || !item.relBook || !fs.existsSync(path.join(BOOK, item.relBook))) continue;
+    if (item.kind !== "entry" || !item.relBook || !fs.existsSync(path.join(cfg.bookDir, item.relBook))) continue;
     idOf.set(item.relBook, chapterCount);
     chapterOf.set(chapterCount, item.relBook);
     chapterCount++;
@@ -116,7 +115,7 @@ export async function main(args: string[]): Promise<number> {
   // read here: stop early if that file is missing, before any chapter work.
   let preamble: string;
   try {
-    preamble = preambleTex();
+    preamble = preambleTex(cfg);
   } catch (error) {
     process.stderr.write(`geek-book: ${(error as Error).message}\n`);
     return 1;
@@ -141,13 +140,13 @@ export async function main(args: string[]): Promise<number> {
     };
     let chapter: Chapter;
     try {
-      chapter = await parseChapter(fs.readFileSync(path.join(BOOK, item.relBook), "utf8"), ctx);
+      chapter = await parseChapter(cfg, fs.readFileSync(path.join(cfg.bookDir, item.relBook), "utf8"), ctx);
     } catch (error) {
       // A remote image the build could not fetch: the message says which URL.
       process.stderr.write(`geek-book: ${(error as Error).message}\n`);
       return 1;
     }
-    const tex = chapterTex(chapter, {
+    const tex = chapterTex(cfg, chapter, {
       tocDepth: item.indent && item.indent > 0 ? 1 : 0,
       runningTitle: item.label,
     });
@@ -162,9 +161,9 @@ export async function main(args: string[]): Promise<number> {
       }
     }
     for (const image of images) {
-      const source = path.join(BOOK, image.relBook);
+      const source = path.join(cfg.bookDir, image.relBook);
       if (!fs.existsSync(source)) {
-        process.stderr.write(`geek-book: missing image ${path.relative(CONFIG.root, source)}\n`);
+        process.stderr.write(`geek-book: missing image ${path.relative(cfg.root, source)}\n`);
         return 1;
       }
       fs.copyFileSync(source, path.join(figuresDir, image.name));
@@ -178,7 +177,7 @@ export async function main(args: string[]): Promise<number> {
     // Front matter (cover, contents) is bare; \pecnumberedplain restores the
     // chapter-opener page style once the contents are past.
     "\\pagestyle{empty}",
-    coverInclude(buildDir),
+    coverInclude(cfg, buildDir),
     "\\tableofcontents",
     "\\clearpage",
     "\\pecnumberedplain",
@@ -216,7 +215,7 @@ export async function main(args: string[]): Promise<number> {
   if (remote.fetched > 0) {
     console.log(`geek-book: fetched ${remote.fetched} remote ${remote.fetched === 1 ? "image" : "images"}`);
   }
-  console.log(`geek-book: ${path.relative(CONFIG.root, outputPdf)} (${chapterCount} chapters, ${pages} pages)`);
+  console.log(`geek-book: ${path.relative(cfg.root, outputPdf)} (${chapterCount} chapters, ${pages} pages)`);
   return 0;
 }
 

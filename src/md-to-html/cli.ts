@@ -12,12 +12,13 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { renderStandaloneHtmlFromSource } from "./render.js";
+import type { BookConfig } from "../lib/book-config.js";
 
 function usage(): void {
   process.stderr.write("usage: geek-book md <input.md> [output.html]\n");
 }
 
-export async function main(args: string[]): Promise<number> {
+export async function main(cfg: BookConfig, args: string[]): Promise<number> {
   if (args.length < 1 || args.length > 2) {
     usage();
     return 2;
@@ -32,7 +33,7 @@ export async function main(args: string[]): Promise<number> {
   const output = outputArg ? path.resolve(outputArg) : input.replace(/\.md$/i, ".html");
 
   const source = fs.readFileSync(input, "utf8");
-  const html = await renderStandaloneHtmlFromSource(source);
+  const html = await renderStandaloneHtmlFromSource(cfg, source);
 
   fs.mkdirSync(path.dirname(output), { recursive: true });
   fs.writeFileSync(output, html);

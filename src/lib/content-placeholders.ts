@@ -10,16 +10,18 @@
 // and only the known keys are replaced — anything else, such as Go's `{{.}}`,
 // passes through.
 
-import { CONFIG } from "./book-config.js";
+import type { BookConfig } from "./book-config.js";
 
-const PLACEHOLDERS: Record<string, string> = {
-  // A book's own tokens first, so the built-in keys below win on a clash.
-  ...CONFIG.placeholders,
-  version: CONFIG.version,
-  title: CONFIG.title,
-  author: CONFIG.author,
-  tagline: CONFIG.tagline,
-};
+function placeholders(cfg: BookConfig): Record<string, string> {
+  return {
+    // A book's own tokens first, so the built-in keys below win on a clash.
+    ...cfg.placeholders,
+    version: cfg.version,
+    title: cfg.title,
+    author: cfg.author,
+    tagline: cfg.tagline,
+  };
+}
 
 const PLACEHOLDER = /\{\{\s*([a-z][a-z0-9-]*)\s*\}\}/g;
 const FENCE = /^\s{0,3}(?:```|~~~)/;
@@ -28,7 +30,7 @@ const FENCE = /^\s{0,3}(?:```|~~~)/;
  * Fill the content placeholders in a chapter's Markdown. Both renderers call
  * this before parsing, so the site and the book substitute identically.
  */
-export function substituteContentPlaceholders(source: string): string {
+export function substituteContentPlaceholders(cfg: BookConfig, source: string): string {
   let inFence = false;
   return source
     .split("\n")
@@ -37,7 +39,7 @@ export function substituteContentPlaceholders(source: string): string {
         inFence = !inFence;
         return line;
       }
-      return inFence ? line : line.replace(PLACEHOLDER, (whole, key: string) => PLACEHOLDERS[key] ?? whole);
+      return inFence ? line : line.replace(PLACEHOLDER, (whole, key: string) => placeholders(cfg)[key] ?? whole);
     })
     .join("\n");
 }

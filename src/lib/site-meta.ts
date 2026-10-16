@@ -4,15 +4,15 @@
 // two editions cannot describe the same book differently.
 
 import { escapeHtml } from "./html.js";
-import { CONFIG } from "./book-config.js";
+import type { BookConfig } from "./book-config.js";
 
 /**
  * The path the site is served under — `web.baseUrl`'s path — so the root links
  * (the brand and the standalone page's Home link) land on the site rather than
  * on the host's root. `/` when no base URL is set, which is the common case.
  */
-export function basePath(): string {
-  const base = CONFIG.web.baseUrl;
+export function basePath(cfg: BookConfig): string {
+  const base = cfg.web.baseUrl;
   if (!base) return "/";
   if (base.startsWith("/")) return base;
   try {
@@ -26,8 +26,8 @@ export function basePath(): string {
  * The absolute URL of a page, or "" when `web.baseUrl` is empty or a bare path.
  * The home page is the base itself, so its canonical does not name index.html.
  */
-export function pageUrl(outputRel: string): string {
-  const base = CONFIG.web.baseUrl;
+export function pageUrl(cfg: BookConfig, outputRel: string): string {
+  const base = cfg.web.baseUrl;
   if (!base || base.startsWith("/")) return "";
   return outputRel === "index.html" ? base : `${base}${outputRel}`;
 }
@@ -37,20 +37,20 @@ export function pageUrl(outputRel: string): string {
  * base URL is known, and the Open Graph and Twitter card tags social sites read.
  * `url` is "" for a page with no absolute address (the standalone layout).
  */
-export function metaTags(opts: { title: string; url: string }): string {
-  const description = CONFIG.web.description;
+export function metaTags(cfg: BookConfig, opts: { title: string; url: string }): string {
+  const description = cfg.web.description;
   const lines: string[] = [];
   if (description) {
     lines.push(`<meta name="description" content="${escapeHtml(description)}">`);
   }
-  if (CONFIG.author) {
-    lines.push(`<meta name="author" content="${escapeHtml(CONFIG.author)}">`);
+  if (cfg.author) {
+    lines.push(`<meta name="author" content="${escapeHtml(cfg.author)}">`);
   }
   if (opts.url) {
     lines.push(`<link rel="canonical" href="${escapeHtml(opts.url)}">`);
   }
   lines.push(`<meta property="og:type" content="website">`);
-  lines.push(`<meta property="og:site_name" content="${escapeHtml(CONFIG.title)}">`);
+  lines.push(`<meta property="og:site_name" content="${escapeHtml(cfg.title)}">`);
   lines.push(`<meta property="og:title" content="${escapeHtml(opts.title)}">`);
   if (description) {
     lines.push(`<meta property="og:description" content="${escapeHtml(description)}">`);

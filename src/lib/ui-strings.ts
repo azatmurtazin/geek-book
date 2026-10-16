@@ -9,7 +9,7 @@
 // `languages` (which are the fence tags it accepts). A book that names a
 // `language` and wants a translated interface says so here.
 
-import { CONFIG } from "./book-config.js";
+import type { BookConfig } from "./book-config.js";
 
 /** The built-in English labels, keyed as the config's `strings` overrides them. */
 export const UI_DEFAULTS = {
@@ -24,6 +24,6 @@ export const UI_DEFAULTS = {
 export type UIKey = keyof typeof UI_DEFAULTS;
 
 /** The label for `key`: the book's override, else the English default. */
-export function ui(key: UIKey): string {
-  return CONFIG.strings[key] ?? UI_DEFAULTS[key];
+export function ui(cfg: BookConfig, key: UIKey): string {
+  return cfg.strings[key] ?? UI_DEFAULTS[key];
 }

@@ -12,11 +12,10 @@
 // pictures. Nothing here knows how any of it looks.
 
 import path from "node:path";
-import { marked } from "marked";
 import type { Token, Tokens } from "marked";
-import { plainText, slugify } from "../lib/markdown.js";
+import { markedInstance, plainText, slugify } from "../lib/markdown.js";
 import { resolveImagePath } from "../lib/images.js";
-import { CONFIG } from "../lib/book-config.js";
+import type { BookConfig } from "../lib/book-config.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
 import { preprocessMermaidMd, renderMermaid } from "../diagrams/render.js";
 import type {
@@ -45,8 +44,8 @@ interface ParseState {
 }
 
 /** One chapter as a tree, with the files its build has to prepare. */
-export async function parseChapter(source: string, ctx: ChapterContext): Promise<Chapter> {
-  const substituted = substituteContentPlaceholders(source);
+export async function parseChapter(cfg: BookConfig, source: string, ctx: ChapterContext): Promise<Chapter> {
+  const substituted = substituteContentPlaceholders(cfg, source);
   // Remote images have to be on disk before the walk reaches them.
   await ctx.remote?.collect(substituted);
   const { markdown, diagrams } = await preprocessMermaidMd(substituted);
@@ -58,12 +57,13 @@ export async function parseChapter(source: string, ctx: ChapterContext): Promise
     byIndex: new Map(),
   };
   for (const [index, diagram] of diagrams) {
-    const figure = await mermaidFigure(diagram, ctx.chapterId, index);
+    const figure = await mermaidFigure(cfg, diagram, ctx.chapterId, index);
     state.figures.push(figure);
     state.byIndex.set(index, figure);
   }
+  const md = markedInstance(cfg);
   return {
-    blocks: blocksOf(marked.lexer(markdown, { gfm: true }), state),
+    blocks: blocksOf(cfg, md.lexer(markdown), state),
     figures: state.figures,
     images: state.images,
   };
@@ -76,8 +76,13 @@ export async function parseChapter(source: string, ctx: ChapterContext): Promise
  * drawing it cannot lay out. A diagram that carries no viewBox keeps a `null`
  * size, and the serializer places it as it sees fit.
  */
-async function mermaidFigure(source: string, chapterId: number, index: number): Promise<Figure> {
-  const svg = await renderMermaid(source, `tex-dgm-${chapterId}-${index}`);
+async function mermaidFigure(
+  cfg: BookConfig,
+  source: string,
+  chapterId: number,
+  index: number
+): Promise<Figure> {
+  const svg = await renderMermaid(cfg, source, `tex-dgm-${chapterId}-${index}`);
   const viewBox = /viewBox="(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+)"/.exec(svg);
   return {
     name: `c${chapterId}-d${index}.pdf`,
@@ -87,7 +92,7 @@ async function mermaidFigure(source: string, chapterId: number, index: number): 
 }
 
 /** The blocks of a token list: a chapter, a callout, or one list item. */
-function blocksOf(tokens: Token[], state: ParseState): Block[] {
+function blocksOf(cfg: BookConfig, tokens: Token[], state: ParseState): Block[] {
   const out: Block[] = [];
   for (const token of tokens) {
     switch (token.type) {
@@ -105,7 +110,7 @@ function blocksOf(tokens: Token[], state: ParseState): Block[] {
         out.push({
           kind: "heading",
           depth: t.depth,
-          text: inlinesOf(t.tokens, state),
+          text: inlinesOf(cfg, t.tokens, state),
           anchors: t.depth === 1 ? [`c${state.ctx.chapterId}`, slug] : [slug],
         });
         break;
@@ -116,7 +121,7 @@ function blocksOf(tokens: Token[], state: ParseState): Block[] {
         break;
       }
       case "blockquote":
-        out.push({ kind: "callout", blocks: blocksOf((token as Tokens.Blockquote).tokens, state) });
+        out.push({ kind: "callout", blocks: blocksOf(cfg, (token as Tokens.Blockquote).tokens, state) });
         break;
       case "list": {
         const t = token as Tokens.List;
@@ -124,7 +129,7 @@ function blocksOf(tokens: Token[], state: ParseState): Block[] {
           kind: "list",
           ordered: t.ordered === true,
           start: Number(t.start || 1),
-          items: t.items.map((item) => blocksOf(item.tokens, state)),
+          items: t.items.map((item) => blocksOf(cfg, item.tokens, state)),
         });
         break;
       }
@@ -133,8 +138,8 @@ function blocksOf(tokens: Token[], state: ParseState): Block[] {
         out.push({
           kind: "table",
           align: t.align.map(asAlign),
-          header: t.header.map((cell) => inlinesOf(cell.tokens, state)),
-          rows: t.rows.map((row) => row.map((cell) => inlinesOf(cell.tokens, state))),
+          header: t.header.map((cell) => inlinesOf(cfg, cell.tokens, state)),
+          rows: t.rows.map((row) => row.map((cell) => inlinesOf(cfg, cell.tokens, state))),
         });
         break;
       }
@@ -147,17 +152,17 @@ function blocksOf(tokens: Token[], state: ParseState): Block[] {
         }
         const stand = standaloneImage(t.tokens ?? []);
         if (stand !== null) {
-          out.push(imageNode(stand, state));
+          out.push(imageNode(cfg, stand, state));
           break;
         }
-        out.push({ kind: "paragraph", content: inlinesOf(t.tokens ?? [], state) });
+        out.push({ kind: "paragraph", content: inlinesOf(cfg, t.tokens ?? [], state) });
         break;
       }
       case "text": {
         const t = token as Tokens.Text;
         out.push({
           kind: "paragraph",
-          content: t.tokens?.length ? inlinesOf(t.tokens, state) : [text(decodeEntities(t.text))],
+          content: t.tokens?.length ? inlinesOf(cfg, t.tokens, state) : [text(decodeEntities(t.text))],
         });
         break;
       }
@@ -173,7 +178,7 @@ function blocksOf(tokens: Token[], state: ParseState): Block[] {
 
 /** The drawing a paragraph stands in for, when it is a diagram placeholder. */
 function diagramFigure(paragraph: Tokens.Paragraph, state: ParseState): Figure | null {
-  const placeholder = /^::pe-diagram-(\d+)::$/.exec(paragraph.text.trim());
+  const placeholder = /^::gb-diagram-(\d+)::$/.exec(paragraph.text.trim());
   if (placeholder === null) {
     return null;
   }
@@ -197,13 +202,13 @@ function standaloneImage(tokens: Token[]): Tokens.Image | null {
   return found;
 }
 
-function inlinesOf(tokens: Token[], state: ParseState): Inline[] {
+function inlinesOf(cfg: BookConfig, tokens: Token[], state: ParseState): Inline[] {
   const out: Inline[] = [];
   for (const token of tokens) {
     switch (token.type) {
       case "text": {
         const t = token as Tokens.Text;
-        out.push(...(t.tokens?.length ? inlinesOf(t.tokens, state) : [text(decodeEntities(t.text))]));
+        out.push(...(t.tokens?.length ? inlinesOf(cfg, t.tokens, state) : [text(decodeEntities(t.text))]));
         break;
       }
       case "escape":
@@ -213,13 +218,13 @@ function inlinesOf(tokens: Token[], state: ParseState): Inline[] {
         out.push({ kind: "code", text: (token as Tokens.Codespan).text });
         break;
       case "strong":
-        out.push({ kind: "strong", content: inlinesOf((token as Tokens.Strong).tokens, state) });
+        out.push({ kind: "strong", content: inlinesOf(cfg, (token as Tokens.Strong).tokens, state) });
         break;
       case "em":
-        out.push({ kind: "em", content: inlinesOf((token as Tokens.Em).tokens, state) });
+        out.push({ kind: "em", content: inlinesOf(cfg, (token as Tokens.Em).tokens, state) });
         break;
       case "del":
-        out.push({ kind: "del", content: inlinesOf((token as Tokens.Del).tokens, state) });
+        out.push({ kind: "del", content: inlinesOf(cfg, (token as Tokens.Del).tokens, state) });
         break;
       case "br":
         out.push({ kind: "break" });
@@ -228,7 +233,7 @@ function inlinesOf(tokens: Token[], state: ParseState): Inline[] {
         out.push(text(decodeEntities((token as Tokens.HTML | Tokens.Tag).text)));
         break;
       case "image":
-        out.push(imageNode(token as Tokens.Image, state));
+        out.push(imageNode(cfg, token as Tokens.Image, state));
         break;
       case "link": {
         const t = token as Tokens.Link;
@@ -236,7 +241,7 @@ function inlinesOf(tokens: Token[], state: ParseState): Inline[] {
           kind: "link",
           href: t.href ?? "",
           target: linkTarget(t.href ?? "", state.ctx),
-          content: inlinesOf(t.tokens, state),
+          content: inlinesOf(cfg, t.tokens, state),
         });
         break;
       }
@@ -252,10 +257,10 @@ function text(value: string): Inline {
   return { kind: "text", text: value };
 }
 
-function imageNode(token: Tokens.Image, state: ParseState): ImageNode {
+function imageNode(cfg: BookConfig, token: Tokens.Image, state: ParseState): ImageNode {
   return {
     kind: "image",
-    ref: placeImage(token.href ?? "", state),
+    ref: placeImage(cfg, token.href ?? "", state),
     alt: decodeEntities(token.text),
   };
 }
@@ -270,13 +275,13 @@ function imageNode(token: Tokens.Image, state: ParseState): ImageNode {
  * nothing fetches (data:, mailto:) has no file, and the picture falls back to
  * its alt text.
  */
-function placeImage(src: string, state: ParseState): ImageRef | null {
+function placeImage(cfg: BookConfig, src: string, state: ParseState): ImageRef | null {
   const relBook = resolveImagePath(src, state.ctx.relBook);
   if (relBook === null) {
     const file = state.ctx.remote?.fileFor(src) ?? null;
     return file === null ? null : { file, name: path.basename(file) };
   }
-  const file = path.join(CONFIG.bookDir, relBook);
+  const file = path.join(cfg.bookDir, relBook);
   const known = state.copies.get(relBook);
   if (known !== undefined) {
     return { file, name: known };

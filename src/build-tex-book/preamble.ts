@@ -15,7 +15,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CONFIG, PAPERS, type ColorKey } from "../lib/book-config.js";
+import { PAPERS, type BookConfig, type ColorKey } from "../lib/book-config.js";
 import { UI_DEFAULTS } from "../lib/ui-strings.js";
 import { texEscape } from "./tex.js";
 
@@ -40,8 +40,8 @@ const COLORS: ReadonlyArray<[ColorKey, string]> = [
 const UPPERCASE = ["rule", "codebg", "codefg"];
 
 /** The colour block: the configured palette, then the aliases above. */
-function colorsTex(): string {
-  const hex = new Map(COLORS.map(([key, tex]) => [tex, CONFIG.tex.colors[key].replace(/^#/, "")]));
+function colorsTex(cfg: BookConfig): string {
+  const hex = new Map(COLORS.map(([key, tex]) => [tex, cfg.tex.colors[key].replace(/^#/, "")]));
   const lines = COLORS.map(([, tex]) => `\\definecolor{${tex}}{HTML}{${hex.get(tex)}}`);
   lines.push(
     "% \\MakeUppercase (table headers, headings) uppercases character tokens",
@@ -113,33 +113,33 @@ function babelPreamble(language: string): string {
  * language pack's caption — except in English, which loads no babel and whose
  * LaTeX default is "Contents", where the engine supplies its own name.
  */
-function contentsLine(babel: string): string {
-  const override = CONFIG.strings.contents;
+function contentsLine(cfg: BookConfig, babel: string): string {
+  const override = cfg.strings.contents;
   if (override === undefined && babel !== "") return "";
   const name = override ?? UI_DEFAULTS.contents;
   return `\\AtBeginDocument{\\renewcommand{\\contentsname}{${texEscape(name)}}}`;
 }
 
 /** Every value preamble.tex names, from the book's config. */
-function placeholders(): Record<string, string> {
-  const { geometry, type } = CONFIG.tex;
-  const babel = babelPreamble(CONFIG.language);
+function placeholders(cfg: BookConfig): Record<string, string> {
+  const { geometry, type } = cfg.tex;
+  const babel = babelPreamble(cfg.language);
   return {
     babel,
-    contents: contentsLine(babel),
-    "text-font": texEscape(CONFIG.fonts.text),
+    contents: contentsLine(cfg, babel),
+    "text-font": texEscape(cfg.fonts.text),
     // Fontspec takes the bold face as an option, and only when the book names
     // one: empty leaves `\setmainfont{…}` bare.
-    "text-font-options": CONFIG.fonts.bold ? `[BoldFont={${texEscape(CONFIG.fonts.bold)}}]` : "",
-    "code-font": texEscape(CONFIG.fonts.code),
-    "book-title": texEscape(CONFIG.title),
+    "text-font-options": cfg.fonts.bold ? `[BoldFont={${texEscape(cfg.fonts.bold)}}]` : "",
+    "code-font": texEscape(cfg.fonts.code),
+    "book-title": texEscape(cfg.title),
     "base-size": `${type.base}pt`,
     paper: PAPERS[geometry.paper].option,
-    side: CONFIG.tex.side,
-    "doc-class": CONFIG.tex.class,
+    side: cfg.tex.side,
+    "doc-class": cfg.tex.class,
     geometry: `top=${geometry.top}mm,bottom=${geometry.bottom}mm,left=${geometry.left}mm,right=${geometry.right}mm`,
-    colors: colorsTex(),
-    "toc-depth": String(CONFIG.tex.tocDepth),
+    colors: colorsTex(cfg),
+    "toc-depth": String(cfg.tex.tocDepth),
     "chapter-size": `${type.chapter}`,
     "chapter-leading": `${leading(type.chapter)}`,
     "section-size": `${type.section}`,
@@ -170,12 +170,12 @@ const PLACEHOLDER = /<<\s*([a-z][a-z0-9-]*)\s*>>/g;
  *
  * A book's `tex.preamble` file, when named, is appended after all of it.
  */
-export function preambleTex(): string {
-  const values = placeholders();
+export function preambleTex(cfg: BookConfig): string {
+  const values = placeholders(cfg);
   const base = readPreamble()
     .replace(PLACEHOLDER, (whole, key: string) => values[key] ?? whole)
     .trim();
-  const extra = CONFIG.tex.preamble ? readLatex(CONFIG.tex.preamble) : "";
+  const extra = cfg.tex.preamble ? readLatex(cfg, cfg.tex.preamble) : "";
   return extra ? `${base}\n\n${extra}` : base;
 }
 
@@ -185,9 +185,9 @@ function readPreamble(): string {
 }
 
 /** Extra LaTeX a book supplies, with a message that names the file if missing. */
-function readLatex(file: string): string {
+function readLatex(cfg: BookConfig, file: string): string {
   if (!fs.existsSync(file)) {
-    throw new Error(`the tex.preamble file is missing: ${path.relative(CONFIG.root, file)}`);
+    throw new Error(`the tex.preamble file is missing: ${path.relative(cfg.root, file)}`);
   }
   return fs.readFileSync(file, "utf8").trim();
 }

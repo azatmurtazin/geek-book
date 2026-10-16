@@ -520,7 +520,7 @@ function asCommentStyle(value: unknown): CommentStyle | "" {
   return value === "slash" || value === "hash" ? value : "";
 }
 
-function load(): BookConfig {
+export function load(): BookConfig {
   const cwd = process.cwd();
   // `--config <file>` names the book: its directory is the root, so the paths
   // inside the config resolve beside it. Without one the book is the directory
@@ -642,6 +642,3 @@ function load(): BookConfig {
     },
   };
 }
-
-/** The book being built, resolved once per process from the working directory. */
-export const CONFIG: BookConfig = load();

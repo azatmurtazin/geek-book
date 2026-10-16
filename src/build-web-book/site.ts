@@ -5,12 +5,12 @@
 import path from "node:path";
 import fs from "node:fs";
 import { escapeHtml, brandHtml } from "../lib/html.js";
-import { CONFIG } from "../lib/book-config.js";
+import type { BookConfig } from "../lib/book-config.js";
 import { resolveImagePath } from "../lib/images.js";
 import { REMOTE_IMAGE_DIR, type RemoteImages } from "../lib/remote-images.js";
-import { FONT_CSS_VARS, FONT_LINKS } from "../lib/fonts.js";
+import { fontCssVars, fontLinks } from "../lib/fonts.js";
 import { readCss } from "../lib/css.js";
-import { WEB_PALETTE_VARS } from "../lib/web-palette.js";
+import { webPaletteVars } from "../lib/web-palette.js";
 import { metaTags, pageUrl } from "../lib/site-meta.js";
 import { ui } from "../lib/ui-strings.js";
 
@@ -93,10 +93,10 @@ function linkHref(href: string, sourcePath: string | null, url: string): string 
 }
 
 /** The footer: the book's name and version, then the book's own links. */
-function footerHtml(sourcePath: string | null, url: string): string {
-  const head = `${escapeHtml(CONFIG.title)} ${escapeHtml(CONFIG.version)}`;
-  const text = CONFIG.tagline ? `${head} — ${escapeHtml(CONFIG.tagline)}` : head;
-  const links = CONFIG.web.links
+function footerHtml(cfg: BookConfig, sourcePath: string | null, url: string): string {
+  const head = `${escapeHtml(cfg.title)} ${escapeHtml(cfg.version)}`;
+  const text = cfg.tagline ? `${head} — ${escapeHtml(cfg.tagline)}` : head;
+  const links = cfg.web.links
     .map((link) => `<a href="${escapeHtml(linkHref(link.href, sourcePath, url))}">${escapeHtml(link.label)}</a>`)
     .join("");
   const nav = links ? `<span class="book-footer-links">${links}</span>` : "";
@@ -110,6 +110,7 @@ function footerHtml(sourcePath: string | null, url: string): string {
  * heading stay in the open.
  */
 function sidebarHtml(
+  cfg: BookConfig,
   items: { kind: "group" | "entry"; label: string; relBook?: string; indent?: number }[],
   pages: Map<string, string>,
   activeOutputRel: string | null,
@@ -164,7 +165,7 @@ function sidebarHtml(
   });
 
   return `<nav class="sidebar">
-  <div class="sidebar-brand"><a href="${homeHref}">${brandHtml(CONFIG.title)}</a></div>
+  <div class="sidebar-brand"><a href="${homeHref}">${brandHtml(cfg.title)}</a></div>
   <ul>
     ${rows.join("\n    ")}
   </ul>
@@ -224,7 +225,7 @@ const SITE_SCRIPT = `(() => {
   });
 })();`;
 
-function pageDocument(opts: {
+function pageDocument(cfg: BookConfig, opts: {
   title: string;
   content: string;
   sidebar: string;
@@ -241,37 +242,37 @@ function pageDocument(opts: {
   head: string;
 }): string {
   const prevNav = opts.prev
-    ? `<div class="prev"><span class="nav-label">${escapeHtml(ui("previous"))}</span><a href="${opts.prev.href}">${escapeHtml(opts.prev.label)}</a></div>`
+    ? `<div class="prev"><span class="nav-label">${escapeHtml(ui(cfg, "previous"))}</span><a href="${opts.prev.href}">${escapeHtml(opts.prev.label)}</a></div>`
     : "";
   const nextNav = opts.next
-    ? `<div class="next"><span class="nav-label">${escapeHtml(ui("next"))}</span><a href="${opts.next.href}">${escapeHtml(opts.next.label)}</a></div>`
+    ? `<div class="next"><span class="nav-label">${escapeHtml(ui(cfg, "next"))}</span><a href="${opts.next.href}">${escapeHtml(opts.next.label)}</a></div>`
     : "";
   const favicon = opts.faviconHref ? `<link rel="icon" href="${opts.faviconHref}">\n` : "";
   return `<!DOCTYPE html>
-<html lang="${escapeHtml(CONFIG.language)}">
+<html lang="${escapeHtml(cfg.language)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script>${SITE_SCRIPT}</script>
 <title>${escapeHtml(opts.title)}</title>
-${FONT_LINKS}
+${fontLinks(cfg)}
 ${opts.meta}
 ${favicon}<link rel="stylesheet" href="${opts.styleHref}">
 ${opts.head}
 <noscript><style>.theme-toggle { display: none; }</style></noscript>
 </head>
 <body>
-<input type="checkbox" id="sidebar-toggle" aria-label="${escapeHtml(ui("toggle-navigation"))}">
+<input type="checkbox" id="sidebar-toggle" aria-label="${escapeHtml(ui(cfg, "toggle-navigation"))}">
 ${opts.sidebar}
 <div class="page-wrapper">
   <header class="book-header">
-    <label for="sidebar-toggle" class="menu-toggle" title="${escapeHtml(ui("toggle-navigation"))}">&#9776;</label>
+    <label for="sidebar-toggle" class="menu-toggle" title="${escapeHtml(ui(cfg, "toggle-navigation"))}">&#9776;</label>
     <span class="header-title">${escapeHtml(opts.headerTitle)}</span>
     <span class="header-nav">
-      ${opts.prev ? `<a href="${opts.prev.href}">&#8592; ${escapeHtml(ui("previous"))}</a>` : ""}
-      ${opts.next ? `<a href="${opts.next.href}">${escapeHtml(ui("next"))} &#8594;</a>` : ""}
+      ${opts.prev ? `<a href="${opts.prev.href}">&#8592; ${escapeHtml(ui(cfg, "previous"))}</a>` : ""}
+      ${opts.next ? `<a href="${opts.next.href}">${escapeHtml(ui(cfg, "next"))} &#8594;</a>` : ""}
     </span>
-    <button class="theme-toggle" type="button" aria-pressed="false" aria-label="${escapeHtml(ui("toggle-theme"))}" title="${escapeHtml(ui("toggle-theme"))}">
+    <button class="theme-toggle" type="button" aria-pressed="false" aria-label="${escapeHtml(ui(cfg, "toggle-theme"))}" title="${escapeHtml(ui(cfg, "toggle-theme"))}">
       <span class="theme-icon-sun" aria-hidden="true">&#9728;</span>
       <span class="theme-icon-moon" aria-hidden="true">&#9790;</span>
     </button>
@@ -289,7 +290,7 @@ function hrefFrom(fromOutputRel: string, toOutputRel: string): string {
   return rel || path.posix.basename(toOutputRel);
 }
 
-export function assemblePage(opts: {
+export function assemblePage(cfg: BookConfig, opts: {
   title: string;
   content: string;
   items: { kind: "group" | "entry"; label: string; relBook?: string; indent?: number }[];
@@ -308,19 +309,19 @@ export function assemblePage(opts: {
   const from = opts.activeOutputRel ?? "index.html";
   const homeHref = hrefFrom(from, opts.homeOutputRel);
   const styleHref = hrefFrom(from, "assets/style.css");
-  const url = pageUrl(from);
-  const sidebar = sidebarHtml(opts.items, opts.pages, opts.activeOutputRel, homeHref);
-  return pageDocument({
+  const url = pageUrl(cfg, from);
+  const sidebar = sidebarHtml(cfg, opts.items, opts.pages, opts.activeOutputRel, homeHref);
+  return pageDocument(cfg, {
     title: opts.title,
     content: opts.content,
     sidebar,
-    headerTitle: opts.title === CONFIG.title ? CONFIG.title : `${CONFIG.title} — ${opts.title}`,
+    headerTitle: opts.title === cfg.title ? cfg.title : `${cfg.title} — ${opts.title}`,
     prev: opts.prev ? { label: opts.prev.label, href: hrefFrom(from, opts.prev.outputRel) } : null,
     next: opts.next ? { label: opts.next.label, href: hrefFrom(from, opts.next.outputRel) } : null,
     styleHref,
-    meta: metaTags({ title: opts.title, url }),
+    meta: metaTags(cfg, { title: opts.title, url }),
     faviconHref: opts.faviconOutput ? hrefFrom(from, opts.faviconOutput) : null,
-    footer: footerHtml(opts.sourcePath, url),
+    footer: footerHtml(cfg, opts.sourcePath, url),
     head: opts.head,
   });
 }
@@ -331,17 +332,17 @@ function bookFile(file: string): string {
 }
 
 /** The book's own `<head>` HTML (`web.head`), injected into every page, or "". */
-export function headHtml(): string {
-  return bookFile(CONFIG.web.head);
+export function headHtml(cfg: BookConfig): string {
+  return bookFile(cfg.web.head);
 }
 
 /** The site's stylesheet: the configured families and palette, the content
  *  rules shared with the standalone layout, the layout itself, and the book's
  *  own `web.css` last — four built-in sources pasted together here rather than
  *  at a CSS build step, with the book's file able to override any of them. */
-export function stylesheet(): string {
+export function stylesheet(cfg: BookConfig): string {
   const content = readCss(import.meta.url, "../lib/content.css");
   const layout = readCss(import.meta.url, "site.css");
-  const book = bookFile(CONFIG.web.css);
-  return [FONT_CSS_VARS, WEB_PALETTE_VARS, content, layout, book].filter(Boolean).join("\n\n");
+  const book = bookFile(cfg.web.css);
+  return [fontCssVars(cfg), webPaletteVars(cfg), content, layout, book].filter(Boolean).join("\n\n");
 }

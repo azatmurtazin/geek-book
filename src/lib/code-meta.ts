@@ -6,12 +6,12 @@
 // the same in the website and the PDF.
 
 import { CODE_LABELS, HASH_COMMENT_LANGS, SLASH_COMMENT_LANGS } from "./langs.js";
-import { CONFIG } from "./book-config.js";
+import type { BookConfig } from "./book-config.js";
 
 /** How comments are introduced in `lang`, or null when it has none. */
-export function commentStyle(lang: string): "slash" | "hash" | null {
+export function commentStyle(cfg: BookConfig, lang: string): "slash" | "hash" | null {
   const key = lang.toLowerCase();
-  const custom = CONFIG.code[key]?.comment;
+  const custom = cfg.code[key]?.comment;
   if (custom === "slash" || custom === "hash") return custom;
   if (SLASH_COMMENT_LANGS.has(key)) return "slash";
   if (HASH_COMMENT_LANGS.has(key)) return "hash";
@@ -19,7 +19,7 @@ export function commentStyle(lang: string): "slash" | "hash" | null {
 }
 
 /** The chip a code block shows for `lang`, or undefined for none. */
-export function codeLabel(lang: string): string | undefined {
+export function codeLabel(cfg: BookConfig, lang: string): string | undefined {
   const key = lang.toLowerCase();
-  return CONFIG.code[key]?.label || CODE_LABELS[key];
+  return cfg.code[key]?.label || CODE_LABELS[key];
 }

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import type { Reporter } from "./errors.js";
-import { CONFIG } from "../lib/book-config.js";
+import type { BookConfig } from "../lib/book-config.js";
 import { splitLines } from "../lib/markdown.js";
 import {
   expandTabs,
@@ -11,7 +11,7 @@ import {
 } from "./markdown.js";
 
 /** Structural checks for a single chapter file. */
-export function checkChapter(reporter: Reporter, file: string): void {
+export function checkChapter(cfg: BookConfig, reporter: Reporter, file: string): void {
   const raw = fs.readFileSync(file, "utf8");
 
   if (raw && !raw.endsWith("\n")) {
@@ -38,9 +38,9 @@ export function checkChapter(reporter: Reporter, file: string): void {
         && !fence.info.trim()) {
         if (fenceLang === "text" || fenceLang === "plaintext" || fenceLang === "ascii") {
           const width = maxDiagramWidth(lines.slice(diagramStart, i - 1));
-          if (width > CONFIG.lint.diagramWidth) {
+          if (width > cfg.lint.diagramWidth) {
             reporter.error(file, diagramStart + 1,
-              `text diagram is ${width} columns wide, budget is ${CONFIG.lint.diagramWidth}`);
+              `text diagram is ${width} columns wide, budget is ${cfg.lint.diagramWidth}`);
           }
         }
         inFence = false;
@@ -57,7 +57,7 @@ export function checkChapter(reporter: Reporter, file: string): void {
       diagramStart = i;
       if (!fenceLang) {
         reporter.error(file, i, "fenced block has no language tag (use `text` for output, `mermaid` for diagrams)");
-      } else if (!CONFIG.languages.has(fenceLang)) {
+      } else if (!cfg.languages.has(fenceLang)) {
         reporter.warn(file, i, `unusual code fence language '${fenceLang}'`);
       }
       continue;
@@ -71,13 +71,13 @@ export function checkChapter(reporter: Reporter, file: string): void {
       reporter.error(file, i, "tab character — indent with spaces");
     }
 
-    if (line.length > CONFIG.lint.proseWidth) {
+    if (line.length > cfg.lint.proseWidth) {
       if (line.trimStart().startsWith("|")) {
-        if (line.length > CONFIG.lint.tableWidth) {
-          reporter.error(file, i, `table row is ${line.length} columns, budget is ${CONFIG.lint.tableWidth}`);
+        if (line.length > cfg.lint.tableWidth) {
+          reporter.error(file, i, `table row is ${line.length} columns, budget is ${cfg.lint.tableWidth}`);
         }
-      } else if (!hasUnbreakableRun(line)) {
-        reporter.error(file, i, `line is ${line.length} columns, budget is ${CONFIG.lint.proseWidth}`);
+      } else if (!hasUnbreakableRun(cfg, line)) {
+        reporter.error(file, i, `line is ${line.length} columns, budget is ${cfg.lint.proseWidth}`);
       }
     }
 
@@ -100,8 +100,8 @@ export function checkChapter(reporter: Reporter, file: string): void {
  * A URL destination or a pasted identifier is the usual reason, and there is
  * nothing in the line for the writer to cut.
  */
-function hasUnbreakableRun(line: string): boolean {
-  return line.split(/\s+/).some((run) => run.length > CONFIG.lint.proseWidth);
+function hasUnbreakableRun(cfg: BookConfig, line: string): boolean {
+  return line.split(/\s+/).some((run) => run.length > cfg.lint.proseWidth);
 }
 
 export function checkHeadings(reporter: Reporter, file: string, headings: Heading[]): void {

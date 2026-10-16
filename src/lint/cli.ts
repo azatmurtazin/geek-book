@@ -41,8 +41,8 @@ import { checkChapter } from "./chapter.js";
 import { checkConfig } from "./config.js";
 import { checkLinks } from "./links.js";
 import { checkTree, summaryLinks } from "./summary.js";
-import { BOOK, CHAPTERS, README, ROOT, SUMMARY, markdownFilesUnder } from "./paths.js";
-import { CONFIG } from "../lib/book-config.js";
+import { markdownFilesUnder } from "./paths.js";
+import type { BookConfig } from "../lib/book-config.js";
 
 const CHECKS = ["summary", "chapters", "links", "config"] as const;
 type CheckName = (typeof CHECKS)[number];
@@ -51,7 +51,7 @@ function isCheckName(value: string): value is CheckName {
   return (CHECKS as readonly string[]).includes(value);
 }
 
-export function main(args: string[]): number {
+export function main(cfg: BookConfig, args: string[]): number {
   const verbose = args.includes("-v") || args.includes("--verbose");
   const selected = args.filter((arg) => !arg.startsWith("-"));
   const unknown = selected.filter((arg) => !isCheckName(arg));
@@ -61,46 +61,46 @@ export function main(args: string[]): number {
   }
   const wanted = new Set<CheckName>(selected.length ? selected.filter(isCheckName) : [...CHECKS]);
 
-  const reporter = new Reporter(ROOT);
+  const reporter = new Reporter(cfg.root);
 
   // Every family needs the same file lists: the plan from SUMMARY.md, and the
   // written files on disk (planned first, then any unlisted strays).
-  const plannedPaths = summaryLinks(reporter);
-  const planned = new Set(plannedPaths.map((p) => path.resolve(BOOK, p)));
-  const plannedFiles = plannedPaths.map((p) => path.join(BOOK, p));
+  const plannedPaths = summaryLinks(cfg, reporter);
+  const planned = new Set(plannedPaths.map((p) => path.resolve(cfg.bookDir, p)));
+  const plannedFiles = plannedPaths.map((p) => path.join(cfg.bookDir, p));
   const written = plannedFiles.filter((p) => fs.existsSync(p));
-  written.push(...markdownFilesUnder(CHAPTERS).filter((p) => !plannedFiles.includes(p)).sort());
+  written.push(...markdownFilesUnder(cfg.chapters).filter((p) => !plannedFiles.includes(p)).sort());
 
   if (wanted.has("summary")) {
-    checkTree(reporter, plannedPaths);
+    checkTree(cfg, reporter, plannedPaths);
   }
 
   if (wanted.has("chapters")) {
     for (const chapter of written) {
-      checkChapter(reporter, chapter);
+      checkChapter(cfg, reporter, chapter);
     }
   }
 
   if (wanted.has("links")) {
     for (const chapter of written) {
-      checkLinks(reporter, chapter, written, planned);
+      checkLinks(cfg, reporter, chapter, written, planned);
     }
 
     // The summary's chapter paths are written from the book directory, not from
     // the file, which a config may put elsewhere.
-    if (fs.existsSync(SUMMARY)) {
-      checkLinks(reporter, SUMMARY, written, planned, BOOK);
+    if (fs.existsSync(cfg.summary)) {
+      checkLinks(cfg, reporter, cfg.summary, written, planned, cfg.bookDir);
     }
 
-    for (const extra of [README, ...CONFIG.docs]) {
+    for (const extra of [cfg.readme, ...cfg.docs]) {
       if (fs.existsSync(extra)) {
-        checkLinks(reporter, extra, written, planned);
+        checkLinks(cfg, reporter, extra, written, planned);
       }
     }
   }
 
   if (wanted.has("config")) {
-    checkConfig(reporter);
+    checkConfig(cfg, reporter);
   }
 
   for (const message of reporter.warnings) {

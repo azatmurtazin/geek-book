@@ -1,7 +1,13 @@
 // Generic markdown helpers shared by the renderers and the linter. They live in
 // a neutral module so neither side depends on the other.
 
-import type { Token } from "marked";
+import { Marked } from "marked";
+import type { Token, Tokens, RendererThis } from "marked";
+
+import type { BookConfig } from "./book-config.js";
+import { escapeHtml } from "./html.js";
+import { codeLabel } from "./code-meta.js";
+import { highlightComments } from "../md-to-html/render.js";
 
 /** Split on newlines the way Python's `splitlines()` did (no trailing empty). */
 export function splitLines(text: string): string[] {
@@ -31,4 +37,25 @@ export function plainText(tokens: Token[]): string {
     else if (anyToken.text) out += anyToken.text;
   }
   return out;
+}
+
+export function markedInstance(cfg: BookConfig): Marked {
+  return new Marked({
+    gfm: true,
+    renderer: {
+      heading(this: RendererThis, { tokens, depth }: Tokens.Heading): string {
+        const id = slugify(plainText(tokens));
+        const inner = this.parser.parseInline(tokens);
+        return `<h${depth} id="${id}">${inner}</h${depth}>`;
+      },
+      code(this: RendererThis, token: Tokens.Code): string {
+        const lang = token.lang ?? "";
+        const highlighted = token.escaped ? token.text : highlightComments(cfg, token.text, lang.toLowerCase());
+        const langAttr = lang ? ` class="language-${escapeHtml(lang)}"` : "";
+        const inner = `<pre><code${langAttr}>${highlighted}</code></pre>`;
+        const label = codeLabel(cfg, lang);
+        return label ? `<div class="code-block"><span class="code-label">${escapeHtml(label)}</span>${inner}</div>` : inner;
+      },
+    }
+  });
 }

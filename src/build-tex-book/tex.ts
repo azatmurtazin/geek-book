@@ -8,7 +8,7 @@
 import { imagePixels } from "../lib/image-size.js";
 import { tokenizeCode } from "../lib/code-tokens.js";
 import { codeLabel } from "../lib/code-meta.js";
-import { CONFIG } from "../lib/book-config.js";
+import type { BookConfig } from "../lib/book-config.js";
 import type {
   Block,
   Chapter,
@@ -28,11 +28,18 @@ import type {
  * margins (see book-config.ts), the same geometry preamble.tex sets. A book
  * that changes its page changes what "fits" means with it.
  */
-const TEXT_WIDTH_MM = CONFIG.tex.geometry.textWidthMm;
-const TEXT_HEIGHT_MM = CONFIG.tex.geometry.textHeightMm;
+function textWidthMm(cfg: BookConfig) {
+  return cfg.tex.geometry.textWidthMm;
+}
+
+function textHeightMm(cfg: BookConfig) {
+  return cfg.tex.geometry.textHeightMm;
+}
 
 /** What a drawing with no viewBox is taken to measure, in the text block's terms. */
-const UNMEASURED_FIGURE_MM = { widthMm: TEXT_WIDTH_MM, heightMm: 100 };
+function unmeasuredFigureMm(cfg: BookConfig) {
+  return { widthMm: textWidthMm(cfg), heightMm: 100 };
+}
 
 const pxToMm = (px: number): number => (px * 25.4) / 96;
 
@@ -45,8 +52,8 @@ export interface TexOptions {
 }
 
 /** One chapter's LaTeX body. */
-export function chapterTex(chapter: Chapter, options: TexOptions = {}): string {
-  return blocksTex(chapter.blocks, options, 0);
+export function chapterTex(cfg: BookConfig, chapter: Chapter, options: TexOptions = {}): string {
+  return blocksTex(cfg, chapter.blocks, options, 0);
 }
 
 /**
@@ -99,31 +106,31 @@ function texEscapeCode(code: string): string {
 }
 
 /** The whole chapter as one LaTeX run, its blocks spaced as the web edition spaces them. */
-function blocksTex(nodes: Block[], options: TexOptions, listDepth: number): string {
-  return nodes.map((node) => blockTex(node, options, listDepth)).join("\n\n");
+function blocksTex(cfg: BookConfig, nodes: Block[], options: TexOptions, listDepth: number): string {
+  return nodes.map((node) => blockTex(cfg, node, options, listDepth)).join("\n\n");
 }
 
 /** `listDepth` counts the lists an item sits inside, which numbers their counters. */
-function blockTex(node: Block, options: TexOptions, listDepth: number): string {
+function blockTex(cfg: BookConfig, node: Block, options: TexOptions, listDepth: number): string {
   switch (node.kind) {
     case "rule":
       return "\\par\\medskip\\noindent{\\color{rule}\\rule{\\linewidth}{0.5pt}}\\par\\medskip";
     case "heading":
-      return headingTex(node, options);
+      return headingTex(cfg, node, options);
     case "paragraph":
-      return inlineTex(node.content, "body");
+      return inlineTex(cfg, node.content, "body");
     case "code":
-      return codePanel(node.lang, node.code);
+      return codePanel(cfg, node.lang, node.code);
     case "callout":
-      return `\\begin{callout}\n${blocksTex(node.blocks, options, listDepth)}\n\\end{callout}`;
+      return `\\begin{callout}\n${blocksTex(cfg, node.blocks, options, listDepth)}\n\\end{callout}`;
     case "list":
-      return listTex(node, options, listDepth);
+      return listTex(cfg, node, options, listDepth);
     case "table":
-      return tableTex(node);
+      return tableTex(cfg, node);
     case "figure":
-      return figureTex(node.figure);
+      return figureTex(cfg, node.figure);
     case "image":
-      return imageTex(node, true);
+      return imageTex(cfg, node, true);
   }
 }
 
@@ -135,8 +142,8 @@ function blockTex(node: Block, options: TexOptions, listDepth: number): string {
  * entries (sections of a part) get TOC indentation, and the running head carries
  * the plain SUMMARY label.
  */
-function headingTex(node: HeadingBlock, options: TexOptions): string {
-  const title = inlineTex(node.text, "heading");
+function headingTex(cfg: BookConfig, node: HeadingBlock, options: TexOptions): string {
+  const title = inlineTex(cfg, node.text, "heading");
   const labels = node.anchors.map((anchor) => `\\label{${anchor}}`).join("");
   if (node.depth !== 1) {
     return `\\${headingCommand(node.depth)}{${title}}${labels}`;
@@ -167,7 +174,7 @@ function headingCommand(depth: number): string {
  * `listDepth` picks the counter to set — `enumi` at the top level, `enumii`
  * within it — which is LaTeX's business, not the tree's.
  */
-function listTex(node: ListBlock, options: TexOptions, listDepth: number): string {
+function listTex(cfg: BookConfig, node: ListBlock, options: TexOptions, listDepth: number): string {
   const open = node.ordered ? "\\begin{enumerate}" : "\\begin{itemize}";
   const close = node.ordered ? "\\end{enumerate}" : "\\end{itemize}";
   let head = open;
@@ -176,7 +183,7 @@ function listTex(node: ListBlock, options: TexOptions, listDepth: number): strin
     head += `\n\\setcounter{enum${counter}}{${node.start - 1}}`;
   }
   const items = node.items.map(
-    (blocks) => `\\item ${blocksTex(blocks, options, listDepth + 1)}`,
+    (blocks) => `\\item ${blocksTex(cfg, blocks, options, listDepth + 1)}`,
   );
   return `${head}\n${items.join("\n")}\n${close}`;
 }
@@ -186,7 +193,7 @@ function listTex(node: ListBlock, options: TexOptions, listDepth: number): strin
  * muted header, and a thin grey rule under every body row (including the last).
  * colortbl's `\hline` honours `\arrayrulecolor`, unlike booktabs' rules.
  */
-function tableTex(node: TableBlock): string {
+function tableTex(cfg: BookConfig, node: TableBlock): string {
   const specs = node.align.map((align) => {
     if (align === "center") return ">{\\centering\\arraybackslash}X";
     if (align === "right") return ">{\\raggedleft\\arraybackslash}X";
@@ -194,7 +201,7 @@ function tableTex(node: TableBlock): string {
     return "X";
   });
   const header = node.header.map(
-    (cell) => `{\\fontsize{7.5}{9}\\selectfont\\color{muted}${inlineTex(cell, "body")}}`,
+    (cell) => `{\\fontsize{7.5}{9}\\selectfont\\color{muted}${inlineTex(cfg, cell, "body")}}`,
   );
   return [
     "{\\fontsize{9.5}{11.5}\\selectfont\\arrayrulecolor{rule}",
@@ -203,27 +210,27 @@ function tableTex(node: TableBlock): string {
     `\\begin{tabularx}{\\linewidth}{${specs.join(" ")}}`,
     `${header.join(" & ")} \\\\`,
     "\\noalign{\\arrayrulewidth=1.2pt}\\hline\\noalign{\\arrayrulewidth=0.5pt}",
-    ...node.rows.map((row) => bodyRowTex(row)),
+    ...node.rows.map((row) => bodyRowTex(cfg, row)),
     "\\end{tabularx}",
     "\\par}",
   ].join("\n");
 }
 
 /** One body row, cells joined and the thin rule every one of them wears. */
-function bodyRowTex(row: TableRow): string {
-  return `${row.map((cell) => inlineTex(cell, "body")).join(" & ")} \\\\ \\hline`;
+function bodyRowTex(cfg: BookConfig, row: TableRow): string {
+  return `${row.map((cell) => inlineTex(cfg, cell, "body")).join(" & ")} \\\\ \\hline`;
 }
 
 /**
  * A code panel: tinted, hairline border, language label on top, comments in the
  * muted color the web edition gives them.
  */
-function codePanel(lang: string, code: string): string {
-  const label = codeLabel(lang);
+function codePanel(cfg: BookConfig, lang: string, code: string): string {
+  const label = codeLabel(cfg, lang);
   const labelLine = label
     ? `{\\hfill\\fontsize{6}{7}\\selectfont\\ttfamily\\color{codecomment}${texEscape(label)}}\\vspace{0pt}\n`
     : "";
-  const body = tokenizeCode(code, lang)
+  const body = tokenizeCode(cfg, code, lang)
     .map(({ kind, text }) => (kind === "comment" ? `\\cc{${texEscapeCode(text)}}` : texEscapeCode(text)))
     .join("");
   const trimmed = body.endsWith("\n") ? body.slice(0, -1) : body;
@@ -237,11 +244,11 @@ function codePanel(lang: string, code: string): string {
  * drawing with no viewBox to measure is placed as a full-width figure, which is
  * what this builder assumed before it could measure one.
  */
-function figureTex(figure: Figure): string {
+function figureTex(cfg: BookConfig, figure: Figure): string {
   const size = figure.size;
-  const widthMm = size ? pxToMm(size.width) : UNMEASURED_FIGURE_MM.widthMm;
-  const heightMm = size ? pxToMm(size.height) : UNMEASURED_FIGURE_MM.heightMm;
-  const axis = shrinkAxis(widthMm, heightMm);
+  const widthMm = size ? pxToMm(size.width) : unmeasuredFigureMm(cfg).widthMm;
+  const heightMm = size ? pxToMm(size.height) : unmeasuredFigureMm(cfg).heightMm;
+  const axis = shrinkAxis(cfg, widthMm, heightMm);
   const opts = axis === null ? "" : axis === "width" ? "[width=\\linewidth]" : "[height=\\textheight]";
   return `\\begin{center}\n\\includegraphics${opts}{figures/${figure.name}}\n\\end{center}`;
 }
@@ -257,12 +264,12 @@ function figureTex(figure: Figure): string {
  * on how large a picture is. A picture whose source has no file at all is its
  * alt text, which is also what the book's Markdown says.
  */
-function imageTex(node: ImageNode, centered: boolean): string {
+function imageTex(cfg: BookConfig, node: ImageNode, centered: boolean): string {
   const ref = node.ref;
   if (ref === null) {
     return `\\textit{${texEscape(node.alt)}}`;
   }
-  const body = `\\includegraphics${imageOptions(ref)}{figures/${ref.name}}`;
+  const body = `\\includegraphics${imageOptions(cfg, ref)}{figures/${ref.name}}`;
   return centered ? `\\begin{center}\n${body}\n\\end{center}` : body;
 }
 
@@ -274,13 +281,13 @@ function imageTex(node: ImageNode, centered: boolean): string {
  * falls back to filling the block, which is how the builder placed every picture
  * before measurements existed.
  */
-function imageOptions(ref: ImageRef): string {
+function imageOptions(cfg: BookConfig, ref: ImageRef): string {
   const pixels = imagePixels(ref.file);
   if (pixels === null) {
     return "[width=\\linewidth,height=\\textheight,keepaspectratio]";
   }
   const widthMm = pxToMm(pixels.width);
-  const axis = shrinkAxis(widthMm, pxToMm(pixels.height));
+  const axis = shrinkAxis(cfg, widthMm, pxToMm(pixels.height));
   if (axis === null) {
     return `[width=${widthMm.toFixed(2)}mm]`;
   }
@@ -291,11 +298,11 @@ function imageOptions(ref: ImageRef): string {
  * Which way a picture has to shrink to fit the text block, or `null` when it
  * already fits. Width wins a tie, as this builder has always decided.
  */
-function shrinkAxis(widthMm: number, heightMm: number): "width" | "height" | null {
-  if (widthMm <= TEXT_WIDTH_MM && heightMm <= TEXT_HEIGHT_MM) {
+function shrinkAxis(cfg: BookConfig, widthMm: number, heightMm: number): "width" | "height" | null {
+  if (widthMm <= textWidthMm(cfg) && heightMm <= textHeightMm(cfg)) {
     return null;
   }
-  return widthMm / TEXT_WIDTH_MM >= heightMm / TEXT_HEIGHT_MM ? "width" : "height";
+  return widthMm / textWidthMm(cfg) >= heightMm / textHeightMm(cfg) ? "width" : "height";
 }
 
 type InlineMode = "body" | "heading";
@@ -308,7 +315,7 @@ type InlineMode = "body" | "heading";
  * code wears in the web edition. It follows the inline content down, so emphasis
  * inside a heading is title code too.
  */
-function inlineTex(nodes: Inline[], mode: InlineMode): string {
+function inlineTex(cfg: BookConfig, nodes: Inline[], mode: InlineMode): string {
   let out = "";
   for (const node of nodes) {
     switch (node.kind) {
@@ -319,22 +326,22 @@ function inlineTex(nodes: Inline[], mode: InlineMode): string {
         out += mode === "heading" ? `\\texttt{${texEscape(node.text)}}` : `\\incode{${texEscape(node.text)}}`;
         break;
       case "strong":
-        out += `\\textbf{${inlineTex(node.content, mode)}}`;
+        out += `\\textbf{${inlineTex(cfg, node.content, mode)}}`;
         break;
       case "em":
-        out += `\\emph{${inlineTex(node.content, mode)}}`;
+        out += `\\emph{${inlineTex(cfg, node.content, mode)}}`;
         break;
       case "del":
-        out += inlineTex(node.content, mode);
+        out += inlineTex(cfg, node.content, mode);
         break;
       case "break":
         out += "\\newline";
         break;
       case "link":
-        out += linkTex(node, mode);
+        out += linkTex(cfg, node, mode);
         break;
       case "image":
-        out += imageTex(node, false);
+        out += imageTex(cfg, node, false);
         break;
     }
   }
@@ -354,8 +361,8 @@ function inlineTex(nodes: Inline[], mode: InlineMode): string {
  * reads the anchor out of the previous pass's `.aux`, which resolves links in
  * either direction.
  */
-function linkTex(node: LinkNode, mode: InlineMode): string {
-  const inner = `\\uplink{${inlineTex(node.content, mode)}}`;
+function linkTex(cfg: BookConfig, node: LinkNode, mode: InlineMode): string {
+  const inner = `\\uplink{${inlineTex(cfg, node.content, mode)}}`;
   if (node.target !== null) {
     return `\\hyperref[${node.target}]{${inner}}`;
   }

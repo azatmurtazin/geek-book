@@ -15,9 +15,10 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { marked } from "marked";
 import type { Tokens } from "marked";
 import { isRemoteImage } from "./images.js";
+import { markedInstance } from "./markdown.js";
+import type { BookConfig } from "./book-config.js";
 
 /** Where remote images land inside a web build, relative to its root. */
 export const REMOTE_IMAGE_DIR = "images/remote";
@@ -63,6 +64,7 @@ export interface RemoteImageOptions {
  * by the time a renderer asks `nameFor` the file is already on disk.
  */
 export class RemoteImages {
+  private readonly cfg: BookConfig;
   private readonly dir: string;
   private readonly print: boolean;
   private readonly timeoutMs: number;
@@ -71,7 +73,8 @@ export class RemoteImages {
   private readonly files = new Map<string, string>();
   private downloads = 0;
 
-  constructor(dir: string, options: RemoteImageOptions = {}) {
+  constructor(cfg: BookConfig, dir: string, options: RemoteImageOptions = {}) {
+    this.cfg = cfg;
     this.dir = dir;
     this.print = options.print === true;
     this.timeoutMs = (options.timeout ?? 0) > 0 ? (options.timeout as number) * 1000 : 30_000;
@@ -100,7 +103,8 @@ export class RemoteImages {
   /** Fetch every remote image `markdown` references, ignoring code samples. */
   async collect(markdown: string): Promise<void> {
     const urls: string[] = [];
-    marked.walkTokens(marked.lexer(markdown, { gfm: true }), (token) => {
+    const md = markedInstance(this.cfg);
+    md.walkTokens(md.lexer(markdown), (token) => {
       if (token.type !== "image") {
         return;
       }

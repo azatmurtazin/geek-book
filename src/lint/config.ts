@@ -10,7 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CONFIG } from "../lib/book-config.js";
+import type { BookConfig } from "../lib/book-config.js";
 import type { Reporter } from "./errors.js";
 
 /** The subset of JSON Schema the config file uses. */
@@ -33,8 +33,8 @@ const SCHEMA_FILE = path.resolve(
   "book.schema.json",
 );
 
-export function checkConfig(reporter: Reporter): void {
-  const file = CONFIG.configFile;
+export function checkConfig(cfg: BookConfig, reporter: Reporter): void {
+  const file = cfg.configFile;
   if (!fs.existsSync(file)) {
     return; // No config at all is valid: the defaults are the book.
   }

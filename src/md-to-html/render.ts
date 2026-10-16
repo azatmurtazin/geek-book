@@ -15,97 +15,76 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { marked } from "marked";
-import type { Tokens, RendererThis } from "marked";
-import { slugify, plainText } from "../lib/markdown.js";
+import { markedInstance } from "../lib/markdown.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
 import { escapeHtml, brandHtml } from "../lib/html.js";
-import { CONFIG } from "../lib/book-config.js";
+import type { BookConfig } from "../lib/book-config.js";
 import { ui } from "../lib/ui-strings.js";
 import { tokenizeCode } from "../lib/code-tokens.js";
-import { codeLabel } from "../lib/code-meta.js";
 import { readCss } from "../lib/css.js";
-import { CODE_STACK, FONT_LINKS, TEXT_STACK } from "../lib/fonts.js";
-import { WEB_PALETTE_VARS } from "../lib/web-palette.js";
+import { codeStack, fontLinks, textStack } from "../lib/fonts.js";
+import { webPaletteVars } from "../lib/web-palette.js";
 import { basePath, metaTags } from "../lib/site-meta.js";
 import { preprocessMermaidMd, renderMermaid, substituteDiagrams } from "../diagrams/render.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const LAYOUT = path.join(ROOT, "_layouts", "default.html");
 
-marked.use({
-  gfm: true,
-  renderer: {
-    heading(this: RendererThis, { tokens, depth }: Tokens.Heading): string {
-      const id = slugify(plainText(tokens));
-      const inner = this.parser.parseInline(tokens);
-      return `<h${depth} id="${id}">${inner}</h${depth}>`;
-    },
-    code(this: RendererThis, token: Tokens.Code): string {
-      const lang = token.lang ?? "";
-      const highlighted = token.escaped ? token.text : highlightComments(token.text, lang.toLowerCase());
-      const langAttr = lang ? ` class="language-${escapeHtml(lang)}"` : "";
-      const inner = `<pre><code${langAttr}>${highlighted}</code></pre>`;
-      const label = codeLabel(lang);
-      return label ? `<div class="code-block"><span class="code-label">${escapeHtml(label)}</span>${inner}</div>` : inner;
-    },
-  },
-});
-
 /**
  * Wrap comment runs of a code block in `<span class="code-comment">`, leaving
  * the rest byte-for-byte as the plain escaped code block. The runs come from
  * {@link tokenizeCode}, which keeps strings out of them.
  */
-function highlightComments(code: string, lang: string): string {
+export function highlightComments(cfg: BookConfig, code: string, lang: string): string {
   let out = "";
-  for (const { kind, text } of tokenizeCode(code, lang)) {
+  for (const { kind, text } of tokenizeCode(cfg, code, lang)) {
     const escaped = escapeHtml(text);
     out += kind === "comment" ? `<span class="code-comment">${escaped}</span>` : escaped;
   }
   return out;
 }
 
-function pageTitle(source: string): string {
+function pageTitle(cfg: BookConfig, source: string): string {
   const match = /^#\s+(.+)$/m.exec(source);
-  if (!match) return CONFIG.title;
+  if (!match) return cfg.title;
   let title = match[1]
     .trim()
     .replace(/`([^`]*)`/g, "$1")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/[*_]{1,2}/g, "");
   title = title.replace(/\s+/g, " ").trim();
-  return title ? `${title} — ${CONFIG.title}` : CONFIG.title;
+  return title ? `${title} — ${cfg.title}` : cfg.title;
 }
 
 /** The chapter body as HTML: headings carry slug ids, GFM is on. */
-export function renderBody(source: string): string {
-  return marked.parse(substituteContentPlaceholders(source), { gfm: true }) as string;
+export function renderBody(cfg: BookConfig, source: string): string {
+  const md = markedInstance(cfg);
+  return md.parse(substituteContentPlaceholders(cfg, source)) as string;
 }
 
-export function wrapInLayout(title: string, bodyHtml: string): string {
+export function wrapInLayout(cfg: BookConfig, title: string, bodyHtml: string): string {
   // Replace with functions, not replacement strings: the CSS and the body HTML
   // can contain `$` sequences (PHP samples, say) that String.replace would
   // otherwise read as substitution patterns.
   return requireLayout()
     .replace("{{ title }}", () => title)
-    .replace("{{ meta }}", () => metaTags({ title, url: "" }))
-    .replace("{{ lang }}", () => escapeHtml(CONFIG.language))
-    .replace("{{ brand }}", () => brandHtml(CONFIG.title))
-    .replace("{{ book-title }}", () => escapeHtml(CONFIG.title))
-    .replace("{{ tagline }}", () => escapeHtml(CONFIG.tagline))
-    .replaceAll("{{ base-path }}", () => escapeHtml(basePath()))
-    .replace("{{ home }}", () => escapeHtml(ui("home")))
-    .replace("{{ font-links }}", () => FONT_LINKS)
-    .replace("{{ font-text }}", () => TEXT_STACK)
-    .replace("{{ font-code }}", () => CODE_STACK)
-    .replace("{{ palette }}", () => WEB_PALETTE_VARS)
+    .replace("{{ meta }}", () => metaTags(cfg, { title, url: "" }))
+    .replace("{{ lang }}", () => escapeHtml(cfg.language))
+    .replace("{{ brand }}", () => brandHtml(cfg.title))
+    .replace("{{ book-title }}", () => escapeHtml(cfg.title))
+    .replace("{{ tagline }}", () => escapeHtml(cfg.tagline))
+    .replaceAll("{{ base-path }}", () => escapeHtml(basePath(cfg)))
+    .replace("{{ home }}", () => escapeHtml(ui(cfg, "home")))
+    .replace("{{ font-links }}", () => fontLinks(cfg))
+    .replace("{{ font-text }}", () => textStack(cfg))
+    .replace("{{ font-code }}", () => codeStack(cfg))
+    .replace("{{ palette }}", () => webPaletteVars(cfg))
     .replace("{{ content-css }}", () => readCss(import.meta.url, "../lib/content.css"))
     .replace("{{ content }}", () => bodyHtml);
 }
 
-export function renderStandaloneHtml(source: string): string {
-  return wrapInLayout(pageTitle(source), renderBody(source));
+export function renderStandaloneHtml(cfg: BookConfig, source: string): string {
+  return wrapInLayout(cfg, pageTitle(cfg, source), renderBody(cfg, source));
 }
 
 /**
@@ -113,19 +92,19 @@ export function renderStandaloneHtml(source: string): string {
  * SVG. Shared by the web-book build, the single-file PDF build, and the
  * per-page HTML previews, so a diagram looks identical in the site and the PDF.
  */
-export async function renderSourceToHtml(source: string): Promise<string> {
+export async function renderSourceToHtml(cfg: BookConfig, source: string): Promise<string> {
   const { markdown, diagrams } = await preprocessMermaidMd(source);
-  const placeholder = renderBody(markdown);
+  const placeholder = renderBody(cfg, markdown);
   const rendered = new Map<number, string>();
   for (const [index, diagramSource] of diagrams) {
-    rendered.set(index, await renderMermaid(diagramSource, `diagram-${index}`));
+    rendered.set(index, await renderMermaid(cfg, diagramSource, `diagram-${index}`));
   }
   return substituteDiagrams(placeholder, rendered);
 }
 
 /** {@link renderStandaloneHtml} with mermaid fences rendered to SVG. */
-export async function renderStandaloneHtmlFromSource(source: string): Promise<string> {
-  return wrapInLayout(pageTitle(source), await renderSourceToHtml(source));
+export async function renderStandaloneHtmlFromSource(cfg: BookConfig, source: string): Promise<string> {
+  return wrapInLayout(cfg, pageTitle(cfg, source), await renderSourceToHtml(cfg, source));
 }
 
 let cachedLayout: string | null = null;

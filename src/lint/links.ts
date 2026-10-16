@@ -10,7 +10,7 @@ import {
   stripCodeSpans,
 } from "./markdown.js";
 import { isRemoteImage, resolveImagePath } from "../lib/images.js";
-import { BOOK } from "./paths.js";
+import type { BookConfig } from "../lib/book-config.js";
 
 /** Resolve every internal link in `file`, checking targets and anchors.
  *
@@ -19,13 +19,14 @@ import { BOOK } from "./paths.js";
  * its chapter paths are always written from there, wherever the file itself
  * lives. */
 export function checkLinks(
+  cfg: BookConfig,
   reporter: Reporter,
   file: string,
   allFiles: string[],
   planned: Set<string>,
   linkBase: string = path.dirname(file),
 ): void {
-  const fromRelBook = path.relative(BOOK, file).split(path.sep).join("/");
+  const fromRelBook = path.relative(cfg.bookDir, file).split(path.sep).join("/");
   // The root docs (README.md, CHANGELOG.md) carry images no edition builds, so
   // only files inside the book directory are checked for them.
   const insideBook = fromRelBook !== "" && !fromRelBook.startsWith("..") && !path.isAbsolute(fromRelBook);
@@ -114,7 +115,7 @@ export function checkLinks(
           reporter.error(file, i, `image is outside the book: ${src}`);
           continue;
         }
-        if (!fs.existsSync(path.join(BOOK, relBook))) {
+        if (!fs.existsSync(path.join(cfg.bookDir, relBook))) {
           reporter.error(file, i, `image does not exist: ${src}`);
         }
       }

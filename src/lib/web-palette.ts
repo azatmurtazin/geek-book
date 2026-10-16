@@ -5,7 +5,7 @@
 // the page and sidebar backgrounds, the zebra stripe — stay in their
 // stylesheets, and the reader's night palette is the engine's own, in site.css.
 
-import { CONFIG, type ColorKey } from "./book-config.js";
+import type { BookConfig, ColorKey } from "./book-config.js";
 
 /** The web custom property each configured colour feeds. */
 const WEB_VARS: ReadonlyArray<[ColorKey, string]> = [
@@ -25,8 +25,10 @@ const WEB_VARS: ReadonlyArray<[ColorKey, string]> = [
  * printed edition's, so a book that names `tex.colors` repaints the website
  * too; the site-only properties around it stay in the stylesheets.
  */
-export const WEB_PALETTE_VARS = [
-  ":root {",
-  ...WEB_VARS.map(([key, name]) => `  ${name}: ${CONFIG.tex.colors[key]};`),
-  "}",
-].join("\n");
+export function webPaletteVars(cfg: BookConfig) {
+  return [
+    ":root {",
+    ...WEB_VARS.map(([key, name]) => `  ${name}: ${cfg.tex.colors[key]};`),
+    "}",
+  ].join("\n");
+}

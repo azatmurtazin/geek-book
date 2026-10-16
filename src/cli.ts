@@ -20,7 +20,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { CONFIG, takeConfigOption } from "./lib/book-config.js";
+import { load as loadConfig, takeConfigOption, type BookConfig } from "./lib/book-config.js";
 
 interface Command {
   /** One-liner for the help text. */
@@ -28,26 +28,28 @@ interface Command {
   run: (args: string[]) => Promise<number> | number;
 }
 
+const cfg: BookConfig = loadConfig();
+
 const COMMANDS: Record<string, Command> = {
   web: {
     summary: "build the website (default: build/html)",
-    run: async (args) => (await import("./build-web-book/cli.js")).main(args),
+    run: async (args) => (await import("./build-web-book/cli.js")).main(cfg, args),
   },
   pdf: {
     summary: "build the PDF (default: build/book.pdf)",
-    run: async (args) => (await import("./build-tex-book/cli.js")).main(args),
+    run: async (args) => (await import("./build-tex-book/cli.js")).main(cfg, args),
   },
   serve: {
     summary: "preview the built website",
-    run: async (args) => (await import("./serve/cli.js")).main(args),
+    run: async (args) => (await import("./serve/cli.js")).main(cfg, args),
   },
   lint: {
     summary: "check the sources (summary, chapters, links, config)",
-    run: async (args) => (await import("./lint/cli.js")).main(args),
+    run: async (args) => (await import("./lint/cli.js")).main(cfg, args),
   },
   md: {
     summary: "render one Markdown file to a standalone HTML page",
-    run: async (args) => (await import("./md-to-html/cli.js")).main(args),
+    run: async (args) => (await import("./md-to-html/cli.js")).main(cfg, args),
   },
   "pdf-info": {
     summary: "print info about a PDF",
@@ -56,71 +58,71 @@ const COMMANDS: Record<string, Command> = {
   config: {
     summary: "print the resolved book configuration",
     run: () => {
-      printConfig();
+      printConfig(cfg);
       return 0;
     },
   },
 };
 
 /** Paths relative to the book root, so the output reads the same everywhere. */
-function rel(target: string): string {
-  return path.relative(CONFIG.root, target) || ".";
+function rel(root: string, target: string): string {
+  return path.relative(root, target) || ".";
 }
 
-function printConfig(): void {
+function printConfig(cfg: BookConfig): void {
   console.log(JSON.stringify(
     {
       root: ".",
-      configFile: rel(CONFIG.configFile),
-      title: CONFIG.title,
-      tagline: CONFIG.tagline,
-      author: CONFIG.author,
-      version: CONFIG.version,
-      placeholders: CONFIG.placeholders,
-      language: CONFIG.language,
-      strings: CONFIG.strings,
-      bookDir: rel(CONFIG.bookDir),
-      summary: rel(CONFIG.summary),
-      chapters: rel(CONFIG.chapters),
-      readme: rel(CONFIG.readme),
-      cover: rel(CONFIG.cover),
-      outputWeb: rel(CONFIG.outputWeb),
-      outputPdf: rel(CONFIG.outputPdf),
-      outputClean: CONFIG.outputClean,
-      docs: CONFIG.docs.map(rel),
-      fonts: CONFIG.fonts,
+      configFile: rel(cfg.root, cfg.configFile),
+      title: cfg.title,
+      tagline: cfg.tagline,
+      author: cfg.author,
+      version: cfg.version,
+      placeholders: cfg.placeholders,
+      language: cfg.language,
+      strings: cfg.strings,
+      bookDir: rel(cfg.root, cfg.bookDir),
+      summary: rel(cfg.root, cfg.summary),
+      chapters: rel(cfg.root, cfg.chapters),
+      readme: rel(cfg.root, cfg.readme),
+      cover: rel(cfg.root, cfg.cover),
+      outputWeb: rel(cfg.root, cfg.outputWeb),
+      outputPdf: rel(cfg.root, cfg.outputPdf),
+      outputClean: cfg.outputClean,
+      docs: cfg.docs.map((path) => rel(cfg.root, path)),
+      fonts: cfg.fonts,
       web: {
-        css: CONFIG.web.css ? rel(CONFIG.web.css) : "",
-        head: CONFIG.web.head ? rel(CONFIG.web.head) : "",
-        baseUrl: CONFIG.web.baseUrl,
-        description: CONFIG.web.description,
-        favicon: CONFIG.web.favicon ? rel(CONFIG.web.favicon) : "",
-        links: CONFIG.web.links,
+        css: cfg.web.css ? rel(cfg.root, cfg.web.css) : "",
+        head: cfg.web.head ? rel(cfg.root, cfg.web.head) : "",
+        baseUrl: cfg.web.baseUrl,
+        description: cfg.web.description,
+        favicon: cfg.web.favicon ? rel(cfg.root, cfg.web.favicon) : "",
+        links: cfg.web.links,
       },
       tex: {
-        geometry: CONFIG.tex.geometry,
-        colors: CONFIG.tex.colors,
-        type: CONFIG.tex.type,
-        class: CONFIG.tex.class,
-        side: CONFIG.tex.side,
-        tocDepth: CONFIG.tex.tocDepth,
-        preamble: CONFIG.tex.preamble ? rel(CONFIG.tex.preamble) : "",
+        geometry: cfg.tex.geometry,
+        colors: cfg.tex.colors,
+        type: cfg.tex.type,
+        class: cfg.tex.class,
+        side: cfg.tex.side,
+        tocDepth: cfg.tex.tocDepth,
+        preamble: cfg.tex.preamble ? rel(cfg.root, cfg.tex.preamble) : "",
       },
-      languages: [...CONFIG.languages],
-      code: CONFIG.code,
-      images: CONFIG.images,
-      lint: CONFIG.lint,
-      serve: CONFIG.serve,
+      languages: [...cfg.languages],
+      code: cfg.code,
+      images: cfg.images,
+      lint: cfg.lint,
+      serve: cfg.serve,
     },
     null,
     2,
   ));
 }
 
-function usage(): void {
+function usage(cfg: BookConfig): void {
   const width = Math.max(...Object.keys(COMMANDS).map((name) => name.length));
   const lines = [
-    `geek-book — build "${CONFIG.title}" (${CONFIG.root})`,
+    `geek-book — build "${cfg.title}" (${cfg.root})`,
     "",
     "usage: geek-book <command> [args]",
     "",
@@ -134,11 +136,11 @@ function usage(): void {
   process.stderr.write(`${lines.join("\n")}\n`);
 }
 
-async function main(argv: string[]): Promise<number> {
+async function main(cfg: BookConfig, argv: string[]): Promise<number> {
   const option = takeConfigOption(argv);
   if (option.missingValue) {
     process.stderr.write("geek-book: --config needs a file\n\n");
-    usage();
+    usage(cfg);
     return 2;
   }
   if (option.file) {
@@ -150,16 +152,16 @@ async function main(argv: string[]): Promise<number> {
   }
   const [command, ...args] = option.argv;
   if (!command || command === "help" || command === "--help" || command === "-h") {
-    usage();
+    usage(cfg);
     return command ? 0 : 2;
   }
   const chosen = COMMANDS[command];
   if (!chosen) {
     process.stderr.write(`geek-book: unknown command '${command}'\n\n`);
-    usage();
+    usage(cfg);
     return 2;
   }
   return chosen.run(args);
 }
 
-process.exitCode = await main(process.argv.slice(2));
+process.exitCode = await main(cfg, process.argv.slice(2));
