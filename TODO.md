@@ -209,9 +209,15 @@ points and their exports stay put so the CLIs do not change. Line counts as of
       `book-config/validators.ts` (the `as*` family) and `book-config/load.ts`
       (`load`, `takeConfigOption`, `CONFIG_FILE`). `book-config.ts` stays as the
       public face that re-exports them, so no importer changes
-- [ ] `src/build-tex-book/tex.ts` (372) → `escape.ts` (`texEscape`,
-      `texEscapeCode`), `blocks.ts`, `inline.ts`, `figures.ts` (picture
-      measuring), `tables.ts`
+- [x] `src/build-tex-book/tex.ts` (372) → `escape.ts` (`texEscape`,
+      `texEscapeCode`) and `figures.ts` (picture measuring and sizing). The
+      block, inline and table serializers stay in `tex.ts`: this directory
+      already has the parse split's `blocks.ts` and `inlines.ts`, so a tex-side
+      `blocks.ts` is taken and `inline.ts` would sit confusingly beside
+      `inlines.ts`; and the three call one another (a heading, a table cell and
+      a paragraph all render inline content), so pulling them apart would only
+      trade names for an import cycle. The `.tex` output (1620 lines) and the
+      built site are byte-identical across the split
 - [x] `src/diagrams/render.ts` (356) → `theme.ts` (the `tex.colors` mapping),
       `shims.ts` (the jsdom DOM and measurement shims), `fixup.ts` (viewBox/text
       rewriting), `render.ts` (loader + entry points, unchanged surface — the
