@@ -5,6 +5,7 @@
 #   just docker-book  build/html/ + build/book.pdf inside Docker
 #   just serve        preview build/html/ on http://localhost:4000
 #   just lint         type-check the engine, then lint the guide
+#   just test         run the unit tests
 #   just clean        remove build/
 #   just install-tools  report the toolchain
 #
@@ -82,6 +83,13 @@ lint:
     set -euo pipefail
     [[ -d node_modules ]] || "{{npm}}" install
     "{{npm}}" run lint
+
+# run the unit tests (the two Markdown pipelines and the shared helpers).
+test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [[ -d node_modules ]] || "{{npm}}" install
+    "{{npm}}" run test
 
 # --- housekeeping -----------------------------------------------------------
 

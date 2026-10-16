@@ -165,13 +165,13 @@ devDependency.
 
 ### Harness
 
-- [ ] `test/` beside `src/`, mirroring its layout (`test/md-to-html/`,
-      `test/build-tex-book/`, `test/lib/`)
-- [ ] add `vitest` as a devDependency with a `test` script (`vitest run`), a
+- [x] `test/` beside `src/`, mirroring its layout (`test/lib/` so far; the
+      pipeline dirs arrive with their suites)
+- [x] add `vitest` as a devDependency with a `test` script (`vitest run`), a
       `just test` recipe and a `pre-commit` hook after `lint`
-- [ ] widen `tsconfig.json`'s `include` to cover `test/`, so `npm run
+- [x] widen `tsconfig.json`'s `include` to cover `test/`, so `npm run
       typecheck` checks the tests too
-- [ ] tests assert on strings and structures, never on `build/`; no LuaLaTeX or
+- [x] tests assert on strings and structures, never on `build/`; no LuaLaTeX or
       jsdom in the unit tier
 
 ### What is left before the pipelines are testable

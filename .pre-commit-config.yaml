@@ -42,6 +42,15 @@ repos:
         pass_filenames: false
         always_run: true
 
+      # `npm test` — the unit tests for the shared helpers and the two
+      # Markdown pipelines.
+      - id: test
+        name: run the unit tests
+        entry: just test
+        language: system
+        pass_filenames: false
+        always_run: true
+
       # The two editions of the book: build/html/ and build/book.pdf.
       - id: build-book
         name: build the book (website + PDF)

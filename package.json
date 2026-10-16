@@ -30,7 +30,8 @@
     "lint-chapters": "node bin/geek-book.mjs lint chapters",
     "lint-links": "node bin/geek-book.mjs lint links",
     "lint-config": "node bin/geek-book.mjs lint config",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "jsdom": "^26.1.0",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
   }
 }
