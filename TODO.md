@@ -179,17 +179,21 @@ devDependency.
 
 ### What is left before the pipelines are testable
 
-Two of the three blockers are already cleared by the CONFIG refactor
+Two of the three blockers were cleared by the CONFIG refactor
 (`a76f217`), which threads a `BookConfig` argument through every entry point
 and replaces the global `marked.use` with the `markedInstance(cfg)` factory. A
 differential build confirms it: pre- and post-refactor output is byte-identical.
+The third fell to `tokensToIr`, which lifts the token walk out of
+`parseChapter` and leaves the fetching and the mermaid drawing in the async
+wrapper — both paths sharing the same walk, with a test asserting they agree
+chapter for chapter.
 
 - [x] the module-scope `CONFIG` singleton and its frozen constants
       (`TEXT_WIDTH_MM`, `colors`, `TEXT_STACK`, `ROOT`/`BOOK`) — `load()` is
       explicit now, so a test can build a fixture config and pass it in
 - [x] `marked.use({…})` at module scope in `md-to-html/render.ts` — each
       pipeline now builds its own `Marked` instance in `src/lib/markdown.ts`
-- [ ] `parseChapter` interleaves four jobs: placeholder substitution, remote image fetching,
+- [x] `parseChapter` interleaves four jobs: placeholder substitution, remote image fetching,
       mermaid drawing, and the token walk. Split it so the walk
       is a pure `tokensToIr(markdown, ctx)` that a test can call with a stub
       context; leave fetching and mermaid in the async wrapper.
@@ -258,8 +262,8 @@ source. Test it directly:
 
 ### Order
 
-- [ ] harness first (Vitest, `test/`, tsconfig include), then the parity and
+- [x] harness first (Vitest, `test/`, tsconfig include), then the parity and
       pure-function tests, which pass against today's code and pin the current
       output
-- [ ] then blocker 3 — the pure token walk — with those tests green throughout
+- [x] then blocker 3 — the pure token walk — with those tests green throughout
 - [ ] then the file splits, one commit each, no behaviour change

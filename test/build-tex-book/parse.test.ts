@@ -6,7 +6,7 @@
 
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseChapter } from "../../src/build-tex-book/parse.js";
+import { parseChapter, tokensToIr } from "../../src/build-tex-book/parse.js";
 import type {
   Block,
   ChapterContext,
@@ -27,8 +27,7 @@ async function blocks(source: string, ctx?: ChapterContext): Promise<Block[]> {
 }
 
 describe("parseChapter — headings and their anchors", () => {
-  it("a chapter title wears the chapter id and its own slug", async () => {
-    expect((await blocks("# Hello, World!"))[0]).toEqual({
+  it("a chapter title wears the chapter id and its own slug", async () => {    expect((await blocks("# Hello, World!"))[0]).toEqual({
       kind: "heading",
       depth: 1,
       text: [{ kind: "text", text: "Hello, World!" }],
@@ -206,5 +205,20 @@ describe("parseChapter — where a link points", () => {
   it("keeps the href verbatim beside the resolved target", async () => {
     const block = (await blocks("[t](03_next.md#part)"))[0] as { content: Inline[] };
     expect(block.content[0]).toMatchObject({ kind: "link", href: "03_next.md#part", target: "c4--part" });
+  });
+});
+
+describe("tokensToIr — the pure walk", () => {
+  it("is synchronous: a chapter's tree, with no I/O", () => {
+    const chapter = tokensToIr(cfg, "# Hello\n\nA paragraph.", chapterContext());
+    expect(chapter).not.toBeInstanceOf(Promise);
+    expect(chapter.blocks[0]).toMatchObject({ kind: "heading", depth: 1, anchors: ["c3", "c3--hello"] });
+  });
+
+  it("agrees with parseChapter on a chapter with nothing to fetch or draw", async () => {
+    const md = "# Title\n\n## Sec\n\nA paragraph with ![alt](images/bird.png).\n\n- one\n\n```js\nx;\n```";
+    const pure = tokensToIr(cfg, md, chapterContext());
+    const wrapped = await parseChapter(cfg, md, chapterContext());
+    expect(pure).toEqual(wrapped);
   });
 });

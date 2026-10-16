@@ -43,27 +43,53 @@ interface ParseState {
   byIndex: Map<number, Figure>;
 }
 
-/** One chapter as a tree, with the files its build has to prepare. */
-export async function parseChapter(cfg: BookConfig, source: string, ctx: ChapterContext): Promise<Chapter> {
-  const substituted = substituteContentPlaceholders(cfg, source);
-  // Remote images have to be on disk before the walk reaches them.
-  await ctx.remote?.collect(substituted);
-  const { markdown, diagrams } = await preprocessMermaidMd(substituted);
-  const state: ParseState = {
+/** The walk's scratch space: where it is, and what it has registered. */
+function freshState(ctx: ChapterContext): ParseState {
+  return {
     ctx,
     copies: new Map(),
     images: [],
     figures: [],
     byIndex: new Map(),
   };
+}
+
+/** The walk itself: prepared Markdown → blocks. No fetching, drawing or reading. */
+function walk(cfg: BookConfig, markdown: string, state: ParseState): Block[] {
+  return blocksOf(cfg, markedInstance(cfg).lexer(markdown), state);
+}
+
+/**
+ * The pure middle of {@link parseChapter}: a chapter's tree, with no I/O.
+ *
+ * The Markdown is what a walk sees — placeholders filled, mermaid fences already
+ * swapped for their placeholder paragraphs. A chapter carrying mermaid fences
+ * therefore goes through `parseChapter`, which draws them first so the walk can
+ * resolve them; without that the placeholder would pass through as prose.
+ */
+export function tokensToIr(cfg: BookConfig, markdown: string, ctx: ChapterContext): Chapter {
+  const state = freshState(ctx);
+  return {
+    blocks: walk(cfg, substituteContentPlaceholders(cfg, markdown), state),
+    figures: state.figures,
+    images: state.images,
+  };
+}
+
+/** One chapter as a tree, with the files its build has to prepare. */
+export async function parseChapter(cfg: BookConfig, source: string, ctx: ChapterContext): Promise<Chapter> {
+  const substituted = substituteContentPlaceholders(cfg, source);
+  // Remote images have to be on disk before the walk reaches them.
+  await ctx.remote?.collect(substituted);
+  const { markdown, diagrams } = await preprocessMermaidMd(substituted);
+  const state = freshState(ctx);
   for (const [index, diagram] of diagrams) {
     const figure = await mermaidFigure(cfg, diagram, ctx.chapterId, index);
     state.figures.push(figure);
     state.byIndex.set(index, figure);
   }
-  const md = markedInstance(cfg);
   return {
-    blocks: blocksOf(cfg, md.lexer(markdown), state),
+    blocks: walk(cfg, markdown, state),
     figures: state.figures,
     images: state.images,
   };
