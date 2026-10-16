@@ -216,9 +216,11 @@ points and their exports stay put so the CLIs do not change. Line counts as of
       `shims.ts` (the jsdom DOM and measurement shims), `fixup.ts` (viewBox/text
       rewriting), `render.ts` (loader + entry points, unchanged surface — the
       whole web build is byte-identical across the split)
-- [ ] `src/build-web-book/site.ts` (348) → `links.ts` (`rewriteLinks`,
+- [x] `src/build-web-book/site.ts` (348) → `links.ts` (`rewriteLinks`,
       `rewriteImages`), `nav.ts` (sidebar + footer), `page.ts` (`assemblePage`,
-      `headHtml`, `stylesheet`)
+      `headHtml`, `stylesheet`, the page template and its head script).
+      `site.ts` stays as the public face that re-exports them, so no importer
+      changes; the built site — pages and `assets/style.css` — is byte-identical
 - [x] `src/build-tex-book/parse.ts` (334) → `blocks.ts` (`walk`, `blocksOf`,
       `diagramFigure`, `standaloneImage`), `inlines.ts`, `links.ts`
       (`linkTarget`), `images.ts` (`placeImage`), `entities.ts`. A seventh,
