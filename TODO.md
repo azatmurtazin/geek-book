@@ -153,6 +153,8 @@ LaTeX), the refactor that makes them testable, and the file splits that fall
 out of it. No new dependencies: Node's built-in `node:test` runs TypeScript
 through `tsx`, which the engine already ships.
 
+**Note**: I think we should use Vitest, because it's popular and BDD.
+
 ## Harness
 
 - [ ] `test/` beside `src/`, mirroring its layout (`test/md-to-html/`,
