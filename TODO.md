@@ -230,18 +230,18 @@ points and their exports stay put so the CLIs do not change. Line counts as of
 
 ### md → tex (`src/build-tex-book/`)
 
-- [ ] IR shape for each block kind: heading anchors (`c<id>` + slug),
+- [x] IR shape for each block kind: heading anchors (`c<id>` + slug),
       paragraphs, callouts, ordered lists and their `start`, aligned tables,
       rules, standalone images
-- [ ] `linkTarget`: external URL → `null`, `.md` → `c<id>`, bare `#anchor`,
+- [x] `linkTarget`: external URL → `null`, `.md` → `c<id>`, bare `#anchor`,
       unknown file → `null`
-- [ ] `texEscape` / `texEscapeCode` over every special character
-- [ ] serialization: heading commands by depth, `\\label` per anchor, list
+- [x] `texEscape` / `texEscapeCode` over every special character
+- [x] serialization: heading commands by depth, `\\label` per anchor, list
       counters at depth > 0, table rules, `codebox` + `\\cc{}` comments,
       `\\hyperref` vs `\\href`
-- [ ] picture fitting: `shrinkAxis` and the mm conversion, with and without a
+- [x] picture fitting: `shrinkAxis` and the mm conversion, with and without a
       measurable header
-- [ ] `preambleTex` expands `<<doc-class>>`, `<<side>>`, `<<toc-depth>>`,
+- [x] `preambleTex` expands `<<doc-class>>`, `<<side>>`, `<<toc-depth>>`,
       geometry and the nine colours
 
 ### Cross-pipeline parity
