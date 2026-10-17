@@ -23,3 +23,6 @@ erl_crash.dump
 hs_err_pid*.log
 reactor_summary.txt
 *.hprof
+
+# Vitest coverage reports
+/coverage/
