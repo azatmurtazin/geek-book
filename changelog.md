@@ -1,0 +1,143 @@
+# Changelog
+
+Notable changes to **geek-book**, most recent first. Versions follow the git
+tags (`v0.1.0`, `v0.1.1`, `v0.1.2`); the section at the top collects everything
+on `main` since `v0.1.2` and is the upcoming **0.1.3** release. Short commit
+hashes are given in parentheses for traceability.
+
+| Version             | Date       |
+| ------------------- | ---------- |
+| 0.1.3 (unreleased)  | 2026-10-17 |
+| 0.1.2               | 2026-10-15 |
+| 0.1.1               | 2026-10-15 |
+| 0.1.0               | 2026-10-14 |
+
+## [0.1.3] — unreleased
+
+This release is mostly configuration: almost everything a book might want to
+change — its language and labels, the website's chrome, the printed edition's
+class and front matter, the code-fence labels, and the palettes — can now be
+set in `book.config.json`, and `book.schema.json` plus a `config` lint family
+check it. Alongside the features, the engine grew a Vitest suite, a cross-
+pipeline parity test with golden fixtures, and a round of module splits.
+
+### Added
+
+- A `book.schema.json` and a `config` lint family, so a book's configuration is
+  validated with useful messages (`a9ea62d`).
+- The book's language and its interface labels are configurable, so the guide's
+  wording can be localised (`538fc92`).
+- Title, author and tagline tokens with a placeholders map: prose, the preamble
+  and the layout can interpolate the book's metadata, and a book can name its
+  own tokens (`f0b68bc`).
+- `markdown.smartTypography` for curly quotes and dashes (`7ea0547`).
+- A code-fence language's label and comment style are declared in the config
+  (`60cc6c9`).
+- Linter line budgets are configurable (`e416b03`).
+- Printed-edition controls: `tex.class`, `tex.side` and `tex.tocDepth`
+  (`5fb70e9`, `833746a`), and front-matter controls that print a title page
+  and/or an imprint page plus colophon before the contents (`1f61b39`).
+- Mermaid diagram theme and font size are configurable (`7950d12`).
+- Website shape and chrome are configurable: the website metadata keys
+  (`c210c08`), the `readme` key for the home page (`97ef47a`), the `chapters`
+  key for the prose directory (`43924a1`), and `web.css`/`web.head` to add
+  styles and `<head>` markup (`26c61ed`).
+- The `summary` key names the table-of-contents source file (`0707b76`).
+- Build and serve behaviour is configurable: output cleaning
+  (`output.clean`), remote-image limits (`images.timeout`, `images.types`) and
+  the serve port (`serve.port`) (`0a76769`).
+
+### Changed
+
+- The website palette and the Mermaid palette are derived from `tex.colors`, so
+  both editions share one palette (`5e4ff9d`, `a1e53d1`).
+- The global `CONFIG` singleton became a value threaded through function
+  arguments (`a76f217`), and `load()` takes its root and config file explicitly
+  (`250e173`).
+
+### Fixed
+
+- A hard line break (`<br>` or a trailing double space) is terminated and can no
+  longer swallow the next word (`23ce21a`, `b47108f`); the HTML renderer adds
+  breaks while the TeX and remote-image parsers stay GFM-only (`e4eb407`).
+- The page title is escaped in the layout's `<title>` (`f42f0f7`).
+
+### Documentation
+
+- Added `docs/CURRENT_ARCHITECTURE.md`, `docs/CLEAN_CODE_ARCHITECTURE.md` and
+  `docs/ARCHITECTURE_REFACTORING_PLAN.md` describing the engine as it is, the
+  proposed clean architecture, and how to migrate (`d7cd2ae`).
+- Documented the image and cover formats each edition reads (`7d5a4d6`),
+  updated the README and `SUMMARY` (`6827bd1`), and reorganised `TODO.md` with a
+  plan for refactoring, tests and splitting large files, settling on Vitest
+  (`e7dd1b0`, `c33235a`, `773b1ed`, `4894107`, `b57cf46`, `f9a7285`).
+
+### Under the hood
+
+- Adopted **Vitest** and added suites for the shared helpers (`13bcb87`), for
+  `md → html` behind a fixture book (`95e29d2`), for `md → tex` and the preamble
+  (`164e723`), and a cross-pipeline parity suite with golden fixtures
+  (`6d13a33`). Goldens are compared, not rewritten (`375ed99`).
+- Split several large modules: `parse.ts` gained a pure `tokensToIr` walk
+  (`97b4095`, `6b88293`), and `book-config.ts` (`9d42fab`),
+  `diagrams/render.ts` (`d5b92b9`), `build-web-book/site.ts` (`c1f88ff`) and
+  `build-tex-book/tex.ts` (`f025696`) were broken into focused files.
+
+## [0.1.2] — 2026-10-15
+
+### Added
+
+- `--config <file>` to point any command at another configuration file
+  (`bc59008`).
+
+### Documentation
+
+- Kept the README brief and pointed it at the guide (`2fc8f21`).
+
+## [0.1.1] — 2026-10-15
+
+### Added
+
+- A release workflow that builds both editions of the guide with the engine's
+  Docker image and publishes them — the PDF, the website zip and the engine
+  package — as assets on a version tag (`0b35a0e`).
+
+### Changed
+
+- Replaced the lorem ipsum sample with the user's guide, so the project
+  documents itself with the engine it describes (`0432e64`).
+- Bumped the version to 0.1.1 (`8b8104a`).
+
+## [0.1.0] — 2026-10-14
+
+The first release: a Markdown-in, website-and-PDF-out build engine.
+
+### Added
+
+- Initialised the repository (`9870002`), then added the engine, its Docker
+  build image (Node + LuaLaTeX + fonts), the CI and lint scaffolding, and a
+  lorem ipsum sample book (`5b048a1`).
+- Book-side templates under `templates/` — config, Justfile, compose service,
+  pre-commit and CI workflows — and the engine installed into the image
+  (`c2dbefc`).
+- Images are rendered and copied in both editions (`d487f8d`), small pictures
+  print at their own size (`81c749c`), and remote images are fetched at build
+  time (`afce6c9`).
+- A day/night theme switch and a foldable navigation panel (`08fb7b6`,
+  `3657f2c`).
+- Configurable font families (`71aced8`) and a configurable look for the printed
+  edition (`a832817`).
+- An external link in the sample book (`fdcfafe`).
+
+### Changed
+
+- Internal PDF links land on the right page (`572cac4`), the running head was
+  simplified and the folio centered (`df402c2`).
+- The PDF builder was split into a Markdown → IR → TeX pipeline (`3822662`).
+- Stylesheets became plain CSS files beside the code (`73db5e3`), and the
+  preamble moved out of TypeScript into a `.tex` file using angle-bracket
+  placeholders (`58e6b3e`, `0f8d915`).
+- The linter checks only the docs a new book is sure to have (`2db71f7`), and an
+  unbreakable line may exceed the column budget (`1ac66ab`).
+- Link checking runs through lychee, resolving root-relative image links
+  (`cd17f8d`).
