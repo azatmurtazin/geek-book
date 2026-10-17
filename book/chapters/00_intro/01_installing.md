@@ -9,17 +9,19 @@ machine can build the PDF with no host setup at all.
 
 ## Install the engine
 
-A book depends on geek-book by path, so the two repositories sit next to each
-other:
-
-```json
-{ "devDependencies": { "geek-book": "file:../geek-book" } }
+```sh
+npm add azatmurtazin:geek-book
 ```
 
-`npm install` in the book repo then links the engine in, and `npx geek-book` is
-available to the book's scripts and recipes. A book needs nothing else of its
-own: the renderers, the linter, the preview server and the build image all live
-in the engine.
+Or add into your `package.json`:
+
+```json
+{
+  "dependencies": {
+    "geek-book": "github:azatmurtazin/geek-book"
+  }
+}
+```
 
 ## The print toolchain
 

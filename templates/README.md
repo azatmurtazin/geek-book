@@ -41,7 +41,11 @@ The engine must be checked out **next to** the book, because `package.json`
 declares it by path:
 
 ```json
-{ "devDependencies": { "geek-book": "file:../geek-book" } }
+{
+  "dependencies": {
+    "geek-book": "github:azatmurtazin/geek-book"
+  }
+}
 ```
 
 The `book.config.json` example in this directory is the smallest useful one; the
