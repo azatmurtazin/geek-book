@@ -152,7 +152,7 @@ plan, is none of them. A diff means a bug.
 
 ## 6. Phase overview
 
-```
+```code
 P0 Baseline ──► P1 Diagnostics ──► P2 Domain ──► P3 Markdown port
                                                       │
                                                       ▼
@@ -375,6 +375,7 @@ perspective it may still show `lib/` edges; that is expected until Phase 8).
 atomic.
 
 **Risks.**
+
 - *Branded-path friction* (highest): mitigated by the split described in step 1.
 - *Type-only import churn* under `verbatimModuleSyntax`: use `import type` for
   moved types and keep `export type` in shims where needed.
@@ -451,6 +452,7 @@ now returns `lib/markdown.ts` and the new adapter only.
 `build-web-book` is untouched.
 
 **Risks.**
+
 - *Highest-fidelity phase.* Watch specifically: `token.escaped` for code blocks;
   hard breaks (`br`); GFM tables (alignment `null`); raw HTML pass-through;
   entity decoding; soft-break handling; list `start`.
@@ -519,6 +521,7 @@ pipeline test passes with fakes.
 **Rollback.** Revert; both builders restore their inline steps.
 
 **Risks.**
+
 - *Ordering drift* (e.g. fetching after lexing) could change links or figures.
   Mitigation: the pipeline's step order is asserted in tests and the output
   baseline catches any escape.
@@ -596,6 +599,7 @@ identical.
 **Rollback.** Revert; the web build returns to `marked`'s renderer + regex.
 
 **Risks.**
+
 - *HTML byte fidelity* (highest). Watch: attribute order, whitespace between
   block elements, how `marked` emitted `<p>` and trailing newlines, the exact
   `<pre><code class="language-x">` shape, the code-label wrapper, heading id
@@ -665,6 +669,7 @@ none exists).
 **Rollback.** Revert to `src/lint/*`.
 
 **Risks.**
+
 - *Message drift*: line numbers, wording, ordering. Mitigation: the baseline
   diff; keep the raw-line pass so column-level checks are unchanged.
 - *Anchor parity*: the linter must accept exactly the anchors the renderers
@@ -738,6 +743,7 @@ returns only `adapters/process/*`.
 **Rollback.** Revert; command modules restore their own orchestration.
 
 **Risks.**
+
 - *Wiring mistakes* (a port handed the wrong context). Mitigation: the new
   application tests and `just verify`.
 - *Config refactor breadth.* Mitigation: keep the `BookConfig` structural shape

@@ -65,21 +65,21 @@ enforced by tooling it is marked **[auto]** (see §13).
 
 ## 3. The dependency rule, visualised
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
+```text
+┌───────────────────────────────────────────────────────────────────────────┐
 │ cli/                         composition root · commands · static server  │
 │   main.ts  commands/*  serve/*                                            │
-├──────────────────────────────────────────────────────────────────────────┤
+├───────────────────────────────────────────────────────────────────────────┤
 │ adapters/                    marked · mermaid+jsdom · fs · http · process │
 │   markdown/ diagrams/ render-html/ render-tex/ config/ fs/ http/ process/ │
 │   web/ pdf/ lint/ reporting/ templates/                                   │
-├──────────────────────────────────────────────────────────────────────────┤
+├───────────────────────────────────────────────────────────────────────────┤
 │ application/                 use cases + ports                            │
 │   usecases/  ports/  pipelines/                                           │
-├──────────────────────────────────────────────────────────────────────────┤
-│ domain/                      the book itself — pure, dependency-free       │
+├───────────────────────────────────────────────────────────────────────────┤
+│ domain/                      the book itself — pure, dependency-free      │
 │   model/  values/  services/  diagnostics.ts                              │
-└──────────────────────────────────────────────────────────────────────────┘
+└───────────────────────────────────────────────────────────────────────────┘
 
   allowed imports:  cli → {adapters, application, domain}
                     adapters → {application, domain, node_modules, node:*}
@@ -96,7 +96,7 @@ layer up and injected.
 
 ## 4. Target directory layout
 
-```
+```code
 src/
 ├── domain/                         # pure core; imports only from domain/
 │   ├── model/
@@ -990,7 +990,7 @@ rule); 5–7 deliver the testability and the enforcement.
 
 A `grep` of the current tree (see `CURRENT_ARCHITECTURE.md` for context):
 
-```
+```code
 importers of "marked":  build-tex-book/blocks.ts · build-tex-book/images.ts ·
                         build-tex-book/inlines.ts · lib/markdown.ts ·
                         lib/remote-images.ts · lib/smart-typography.ts
@@ -1001,7 +1001,7 @@ importers of "node:child_process": build-tex-book/cli.ts · pdf-info/*, serve us
 
 Target:
 
-```
+```code
 importers of "marked":            1  (adapters/markdown/marked-parser.ts)
 importers of "mermaid"/"jsdom":   2  (adapters/diagrams/*)
 importers of "node:*":            only src/adapters/** and src/cli/**
