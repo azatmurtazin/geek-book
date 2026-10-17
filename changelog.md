@@ -1,18 +1,18 @@
 # Changelog
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
-tags (`v0.1.0`, `v0.1.1`, `v0.1.2`); the section at the top collects everything
-on `main` since `v0.1.2` and is the upcoming **0.1.3** release. Short commit
-hashes are given in parentheses for traceability.
+tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`); the section at the top collects
+everything released as **0.1.3**. Short commit hashes are given in parentheses
+for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
-| 0.1.3 (unreleased)  | 2026-10-17 |
+| 0.1.3               | 2026-10-17 |
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
 
-## [0.1.3] — unreleased
+## [0.1.3] — 2026-10-17
 
 This release is mostly configuration: almost everything a book might want to
 change — its language and labels, the website's chrome, the printed edition's

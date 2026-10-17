@@ -1,6 +1,6 @@
 {
   "name": "geek-book",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A build engine for books: Markdown in, static website and print-ready PDF out.",
   "license": "MIT",
   "type": "module",
