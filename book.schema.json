@@ -371,6 +371,18 @@
           "type": "number",
           "minimum": 0
         },
+        "titlePage": {
+          "description": "Print a typographic title page — the title, the tagline and the author — before the table of contents (default: false).",
+          "type": "boolean"
+        },
+        "copyright": {
+          "description": "A copyright line for the front matter's imprint page (default: none).",
+          "type": "string"
+        },
+        "isbn": {
+          "description": "An ISBN for the front matter's imprint page (default: none).",
+          "type": "string"
+        },
         "preamble": {
           "description": "A file of extra LaTeX, relative to the book root, appended after the built-in preamble.",
           "type": "string"

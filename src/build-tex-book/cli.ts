@@ -20,6 +20,7 @@ import { RemoteImages } from "../lib/remote-images.js";
 import { parseChapter } from "./parse.js";
 import { chapterTex, texEscape } from "./tex.js";
 import { preambleTex } from "./preamble.js";
+import { frontMatterTex } from "./front-matter.js";
 import type { Chapter, ChapterContext } from "./ir.js";
 
 /** Absolute locations for tools that macOS may not put on a non-login PATH. */
@@ -60,15 +61,7 @@ function tailOf(file: string): string {
   return lines.slice(-25).join("\n");
 }
 
-function coverInclude(cfg: BookConfig, buildDir: string): string {
-  if (!fs.existsSync(cfg.cover)) return "";
-  const relative = path.relative(buildDir, cfg.cover).split(path.sep).join("/");
-  const target = relative.startsWith("..") || path.isAbsolute(relative) ? relative : `./${relative}`;
-  return [
-    "\\noindent\\includegraphics[width=\\linewidth,height=\\textheight,keepaspectratio]{" + target + "}",
-    "\\clearpage",
-  ].join("\n");
-}
+
 
 export async function main(cfg: BookConfig, args: string[]): Promise<number> {
   if (args.length > 1) {
@@ -174,13 +167,7 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
   const document = [
     preamble,
     "\\begin{document}",
-    // Front matter (cover, contents) is bare; \pecnumberedplain restores the
-    // chapter-opener page style once the contents are past.
-    "\\pagestyle{empty}",
-    coverInclude(cfg, buildDir),
-    "\\tableofcontents",
-    "\\clearpage",
-    "\\pecnumberedplain",
+    frontMatterTex(cfg, buildDir),
     "\\pagestyle{fancy}",
     ...body,
     "\\end{document}",

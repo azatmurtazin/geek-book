@@ -50,6 +50,9 @@ export const DEFAULTS = {
     class: "book",
     side: "oneside" as const,
     tocDepth: 0,
+    titlePage: false,
+    copyright: "",
+    isbn: "",
     preamble: "",
   },
 };

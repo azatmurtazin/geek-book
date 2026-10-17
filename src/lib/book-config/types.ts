@@ -104,6 +104,13 @@ export interface TexConfig {
   side: "oneside" | "twoside";
   /** `tocdepth` for the table of contents (default 0: chapters only). */
   tocDepth: number;
+  /** Print a typographic title page — the title, the tagline and the author —
+   *  before the table of contents (default false). */
+  titlePage: boolean;
+  /** A copyright line for the front matter's imprint page (default: none). */
+  copyright: string;
+  /** An ISBN for the front matter's imprint page (default: none). */
+  isbn: string;
   /** Absolute path of extra LaTeX appended after the built-in preamble, or "". */
   preamble: string;
 }

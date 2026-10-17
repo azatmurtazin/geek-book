@@ -199,6 +199,9 @@ export function load(cwd: string = process.cwd(), named: string | null = null): 
       class: asString(tex.class, DEFAULTS.tex.class),
       side: tex.side === "twoside" ? "twoside" : DEFAULTS.tex.side,
       tocDepth: asWidth(tex.tocDepth, DEFAULTS.tex.tocDepth),
+      titlePage: asBool(tex.titlePage, DEFAULTS.tex.titlePage),
+      copyright: asString(tex.copyright, DEFAULTS.tex.copyright),
+      isbn: asString(tex.isbn, DEFAULTS.tex.isbn),
       preamble: extraPreamble ? path.resolve(root, extraPreamble) : "",
     },
     web: {
