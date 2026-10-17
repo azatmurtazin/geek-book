@@ -114,7 +114,7 @@ a tag named there is also accepted by the linter.
 - [x] smart typography (curly quotes, en/em dashes) — marked v18 ships no
       option, so a small custom token walk (`src/lib/smart-typography.ts`),
       off by default under `markdown.smartTypography`
-- [ ] heading anchor style — shared with the linter, so riskier than it looks
+- [x] heading anchor style — shared with the linter, so riskier than it looks
 
 ### Diagrams
 
@@ -129,7 +129,7 @@ a tag named there is also accepted by the linter.
 - [x] `tex.class` and one- vs two-sided (`preamble.tex` is `book`, `oneside`; the
       running-head design assumes one-sided)
 - [x] `tex.tocDepth` (`preamble.tex` sets `tocdepth` to chapters only)
-- [ ] richer front matter (title page, colophon, copyright, ISBN) — `tex.preamble`
+- [x] richer front matter (title page, colophon, copyright, ISBN) — `tex.preamble`
       covers it for now
 
 ### Layout
