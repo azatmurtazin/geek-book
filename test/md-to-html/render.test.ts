@@ -155,5 +155,8 @@ describe("renderStandaloneHtml — the page", () => {
     expect(html).toContain("<span>A &amp; B</span>");
   });
 
-  it.todo("escapes the page title in <title> — it is interpolated raw today");
+  it("escapes the page title in <title>", () => {
+    const html = renderStandaloneHtml(cfg, "# A & B <script>");
+    expect(html).toContain("<title>A &amp; B &lt;script&gt; — Fixture Book</title>");
+  });
 });

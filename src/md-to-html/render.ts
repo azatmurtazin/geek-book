@@ -67,7 +67,7 @@ export function wrapInLayout(cfg: BookConfig, title: string, bodyHtml: string): 
   // can contain `$` sequences (PHP samples, say) that String.replace would
   // otherwise read as substitution patterns.
   return requireLayout()
-    .replace("{{ title }}", () => title)
+    .replace("{{ title }}", () => escapeHtml(title))
     .replace("{{ meta }}", () => metaTags(cfg, { title, url: "" }))
     .replace("{{ lang }}", () => escapeHtml(cfg.language))
     .replace("{{ brand }}", () => brandHtml(cfg.title))

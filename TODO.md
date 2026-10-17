@@ -244,9 +244,9 @@ points and their exports stay put so the CLIs do not change. Line counts as of
       regression) — and GFM tables/lists/strikethrough round-trip
 - [x] placeholders substituted in prose, left alone inside fences
 - [x] `pageTitle` from the first `#`, and the layout's `{{ … }}` slots all filled
-- [ ] `escapeHtml` on every interpolated value (title, tagline, code, links) —
-      the suite found the page title goes into `<title>` raw (`wrapInLayout`);
-      an `it.todo` in the suite pins it
+- [x] `escapeHtml` on every interpolated value (title, tagline, code, links) —
+      the suite found the page title went into `<title>` raw (`wrapInLayout`);
+      now escaped, and the suite's `it.todo` became a test
 
 ### md → tex (`src/build-tex-book/`)
 
