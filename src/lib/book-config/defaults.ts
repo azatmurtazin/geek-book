@@ -19,7 +19,7 @@ export const DEFAULTS = {
   lint: { proseWidth: 100, tableWidth: 240, diagramWidth: 80 },
   markdown: { smartTypography: false, breaks: false },
   diagrams: { theme: "auto" as const, fontSize: 13 },
-  web: { css: "", head: "", baseUrl: "", favicon: "", links: [] },
+  web: { css: "", head: "", baseUrl: "", favicon: "", prettyUrls: false, links: [] },
   fonts: {
     text: "Literata",
     bold: "Literata:mode=harf;wght=700",

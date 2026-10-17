@@ -1,0 +1,7 @@
+{
+  "title": "Fixture Site",
+  "tagline": "a site for tests",
+  "author": "Test Author",
+  "version": "1.0.0",
+  "languages": ["text"]
+}

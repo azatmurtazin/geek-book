@@ -3,9 +3,9 @@
 // Both are assembled here rather than in the page template, so what a page has
 // around its body reads in one place.
 
-import path from "node:path";
 import { escapeHtml, brandHtml } from "../lib/html.js";
 import type { BookConfig } from "../lib/book-config.js";
+import { pageHref } from "./paths.js";
 
 /** A footer link's target: `{path}` becomes the page's source path from the
  *  book root, `{url}` its absolute URL (empty when none is known). */
@@ -37,7 +37,7 @@ export function sidebarHtml(
   activeOutputRel: string | null,
   homeHref: string,
 ): string {
-  const fromDir = path.posix.dirname(activeOutputRel ?? "index.html");
+  const from = activeOutputRel ?? "index.html";
 
   interface Part {
     label: string;
@@ -58,7 +58,7 @@ export function sidebarHtml(
     const outputRel = pages.get(item.relBook ?? "");
     if (!outputRel) continue;
     const active = outputRel === activeOutputRel;
-    const href = path.posix.relative(fromDir, outputRel) || path.posix.basename(outputRel);
+    const href = pageHref(from, outputRel, cfg.web.prettyUrls);
     const row = `<li class="sidebar-chapter depth-${Math.min(item.indent ?? 0, 2)}"><a href="${href}"${active ? ' class="active"' : ""}>${escapeHtml(item.label)}</a></li>`;
     if (part) {
       part.rows.push(row);

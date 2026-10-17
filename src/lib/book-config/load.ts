@@ -210,6 +210,7 @@ export function load(cwd: string = process.cwd(), named: string | null = null): 
       baseUrl: webBaseUrl,
       description: asString(web.description, asString(raw.tagline, "")),
       favicon: webFavicon ? path.resolve(root, webFavicon) : "",
+      prettyUrls: asBool(web.prettyUrls, DEFAULTS.web.prettyUrls),
       links: asWebLinks(web.links),
     },
     serve: {

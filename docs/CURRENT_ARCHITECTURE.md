@@ -157,8 +157,9 @@ Key behaviours in `load()`:
 Overrides available from `book.config.json` include: title/tagline/author/version,
 `placeholders` and `strings` (interface translation), `language`, the source
 paths, `output`, `docs`, `languages`, the `code` language map, `images` (remote
-fetching), `lint` budgets, `markdown.smartTypography`, `diagrams`, `fonts`, `web`
-(css/head/baseUrl/description/favicon/links), `tex` (geometry/colors/type/class/
+fetching), `lint` budgets, `markdown.smartTypography` and `markdown.breaks`,
+`diagrams`, `fonts`, `web`
+(css/head/baseUrl/description/favicon/prettyUrls/links), `tex` (geometry/colors/type/class/
 side/tocDepth/titlePage/copyright/isbn/preamble) and `serve.port`.
 
 `book.schema.json` mirrors this for editors (via the config's `$schema`) and is
@@ -226,13 +227,16 @@ both.
 
 ## 8. The website builder (`src/build-web-book/`)
 
-Entry: `cli.ts` → `main(cfg, args)`. The site is a directory of `.html` pages:
+Entry: `cli.ts` → `main(cfg, args)`. The site is a directory of pages — by
+default one `.html` file per chapter, or one directory per chapter holding its
+own `index.html` under `web.prettyUrls`:
 
 1. **Validate inputs** — check the book's own `web.css`/`web.head`/`web.favicon`
    exist, and that `SUMMARY.md` exists.
 2. **Plan the pages.** `parseSummary` → for each entry with a written `.md` file,
-   map `relBook → outputRel` (`.md` → `.html`). Sidebar groups with no written
-   chapter are dropped.
+   map `relBook → outputRel` with `paths.ts`' `outputRelFor` (`.md` → `.html`, or
+   `<name>/index.html` when the book turns on `web.prettyUrls`). Sidebar groups
+   with no written chapter are dropped.
 3. **Build the reading order** — a linear `readers` array with `prev`/`next`.
 4. **Clean output** unless `output.clean: false`.
 5. **Emit shared assets** — `assets/style.css` (assembled by `site.ts`:
@@ -245,7 +249,7 @@ Entry: `cli.ts` → `main(cfg, args)`. The site is a directory of `.html` pages:
    image rewriting/copying, then page assembly. Each page is written under its
    `outputRel`.
 
-The site is split across four modules:
+The site is split across five modules:
 
 - **`page.ts`** — `assemblePage` (the whole page), `pageDocument` (the HTML
   template), the single inline `SITE_SCRIPT` (theme + folding nav, run
@@ -254,12 +258,16 @@ The site is split across four modules:
 - **`nav.ts`** — `sidebarHtml` (the SUMMARY tree as foldable `<details>` parts,
   the current part opened) and `footerHtml` (book name/version + `web.links`,
   with `{path}`/`{url}` substitution).
-- **`links.ts`** — `rewriteLinks` (`.md`/`.md#anchor` → relative `.html`) and
-  `rewriteImages` (each `<img src>` → output-relative path; collects the
-  book-relative source paths to copy, and points remote sources at the fetched
-  copies).
+- **`links.ts`** — `rewriteLinks` (`.md`/`.md#anchor` → a relative link to the
+  built page, measured from that page's own output path) and `rewriteImages`
+  (each `<img src>` → output-relative path; collects the book-relative source
+  paths to copy, and points remote sources at the fetched copies).
+- **`paths.ts`** — `outputRelFor`, where a page lands in the output tree, and the
+  two href builders beside it: `pageHref` for a built page (dropping a target's
+  `index.html` when `web.prettyUrls` is on) and `assetHref` for a plain file.
 - **`site.ts`** — re-export facade (`assemblePage`, `headHtml`, `stylesheet`,
-  `rewriteLinks`, `rewriteImages`, nav types).
+  `rewriteLinks`, `rewriteImages`, `outputRelFor`, `pageHref`, `assetHref`, nav
+  types).
 
 Styling: `site.css` is the layout (sidebar, header, reading column, prev/next,
 day/night palette); `lib/content.css` is the markup shared with the standalone
@@ -371,8 +379,9 @@ it with no client-side JS and the print build embeds the identical drawing.
 ## 11. Static preview and PDF info
 
 - **`serve/cli.ts`** — a minimal `http` server over the built site (default port
-  from `serve.port`, default `build/html`). Serves with a MIME table, redirects
-  directories to `index.html`, and refuses paths that escape the root.
+  from `serve.port`, default `build/html`). Serves with a MIME table, serves a
+  directory's `index.html` (redirecting a request without a trailing slash, so a
+  page's own relative links resolve), and refuses paths that escape the root.
 - **`pdf-info/cli.ts`** — `pdfinfo` passthrough for a finished PDF.
 - **`pdf-info/pdf.ts`** — `pdfPages(file)`, the page-count reader the print
   builder calls at the end of its run.

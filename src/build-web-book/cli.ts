@@ -18,6 +18,7 @@ import { escapeHtml } from "../lib/html.js";
 import { parseSummary } from "../lib/summary.js";
 import { renderSourceToHtml } from "../md-to-html/render.js";
 import { assemblePage, rewriteImages, rewriteLinks, stylesheet, headHtml, type NavSlot } from "./site.js";
+import { outputRelFor, pageHref } from "./paths.js";
 import { REMOTE_IMAGE_DIR, RemoteImages } from "../lib/remote-images.js";
 
 function usage(): void {
@@ -57,7 +58,7 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
     if (!fs.existsSync(mdPath)) {
       continue;
     }
-    const outputRel = item.relBook.replace(/\.md$/i, ".html");
+    const outputRel = outputRelFor(item.relBook, cfg.web.prettyUrls);
     pages.set(item.relBook, outputRel);
     written.push({ relBook: item.relBook, label: item.label ?? item.relBook, indent: item.indent ?? 0, outputRel });
   }
@@ -173,7 +174,7 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
       process.stderr.write(`geek-book: ${(error as Error).message}\n`);
       return null;
     }
-    const linked = rewriteLinks(await renderSourceToHtml(cfg, markdown), relBook, pages);
+    const linked = rewriteLinks(await renderSourceToHtml(cfg, markdown), relBook, outputRel, pages, cfg.web.prettyUrls);
     const { body, assets } = rewriteImages(linked, relBook, outputRel, remote);
     for (const asset of assets) {
       if (!copyAsset(asset)) {
@@ -194,7 +195,8 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
     writePage(homeOutputRel, cfg.title, body, readers[0] ?? null, sourcePath(relBook));
   } else {
     const first = written[0];
-    const body = `<!DOCTYPE html>\n<html lang="${escapeHtml(cfg.language)}"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${path.posix.relative(path.posix.dirname(homeOutputRel), first.outputRel) || first.outputRel}"><title>${escapeHtml(cfg.title)}</title></head><body></body></html>`;
+    const target = pageHref(homeOutputRel, first.outputRel, cfg.web.prettyUrls);
+    const body = `<!DOCTYPE html>\n<html lang="${escapeHtml(cfg.language)}"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${target}"><title>${escapeHtml(cfg.title)}</title></head><body></body></html>`;
     fs.writeFileSync(path.join(outputDir, homeOutputRel), body);
   }
 

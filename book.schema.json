@@ -418,6 +418,10 @@
           "description": "The site's favicon, relative to the book root, copied into the output.",
           "type": "string"
         },
+        "prettyUrls": {
+          "description": "Write a page as <name>/index.html instead of <name>.html, so its URL carries no extension (default: false). The home page is the root's index.html either way; assets are plain files in both schemes.",
+          "type": "boolean"
+        },
         "links": {
           "description": "Labelled links the site's footer carries, in order. In an href, {path} becomes the page's source path from the book root and {url} its absolute URL.",
           "type": "array",

@@ -2,7 +2,6 @@
 // pieces that go into it (sidebar, footer, meta tags, prev/next links), and the
 // site's shared assets — the head HTML and the stylesheet.
 
-import path from "node:path";
 import fs from "node:fs";
 import { escapeHtml } from "../lib/html.js";
 import type { BookConfig } from "../lib/book-config.js";
@@ -12,6 +11,7 @@ import { webPaletteVars } from "../lib/web-palette.js";
 import { metaTags, pageUrl } from "../lib/site-meta.js";
 import { ui } from "../lib/ui-strings.js";
 import { footerHtml, sidebarHtml } from "./nav.js";
+import { assetHref, pageHref } from "./paths.js";
 
 export interface MappedChapter {
   /** Path relative to book/, e.g. "chapters/01_data_types/numbers.md". */
@@ -138,11 +138,6 @@ ${opts.sidebar}
 </html>`;
 }
 
-function hrefFrom(fromOutputRel: string, toOutputRel: string): string {
-  const rel = path.posix.relative(path.posix.dirname(fromOutputRel), toOutputRel);
-  return rel || path.posix.basename(toOutputRel);
-}
-
 export function assemblePage(cfg: BookConfig, opts: {
   title: string;
   content: string;
@@ -160,20 +155,20 @@ export function assemblePage(cfg: BookConfig, opts: {
   head: string;
 }): string {
   const from = opts.activeOutputRel ?? "index.html";
-  const homeHref = hrefFrom(from, opts.homeOutputRel);
-  const styleHref = hrefFrom(from, "assets/style.css");
-  const url = pageUrl(cfg, from);
+  const homeHref = pageHref(from, opts.homeOutputRel, cfg.web.prettyUrls);
+  const styleHref = assetHref(from, "assets/style.css");
+  const url = pageUrl(cfg, from, cfg.web.prettyUrls);
   const sidebar = sidebarHtml(cfg, opts.items, opts.pages, opts.activeOutputRel, homeHref);
   return pageDocument(cfg, {
     title: opts.title,
     content: opts.content,
     sidebar,
     headerTitle: opts.title === cfg.title ? cfg.title : `${cfg.title} — ${opts.title}`,
-    prev: opts.prev ? { label: opts.prev.label, href: hrefFrom(from, opts.prev.outputRel) } : null,
-    next: opts.next ? { label: opts.next.label, href: hrefFrom(from, opts.next.outputRel) } : null,
+    prev: opts.prev ? { label: opts.prev.label, href: pageHref(from, opts.prev.outputRel, cfg.web.prettyUrls) } : null,
+    next: opts.next ? { label: opts.next.label, href: pageHref(from, opts.next.outputRel, cfg.web.prettyUrls) } : null,
     styleHref,
     meta: metaTags(cfg, { title: opts.title, url }),
-    faviconHref: opts.faviconOutput ? hrefFrom(from, opts.faviconOutput) : null,
+    faviconHref: opts.faviconOutput ? assetHref(from, opts.faviconOutput) : null,
     footer: footerHtml(cfg, opts.sourcePath, url),
     head: opts.head,
   });

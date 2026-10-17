@@ -33,6 +33,40 @@ base path keeps the site's root links on the site rather than on the host's root
 — the standalone page's brand and Home links, in particular. With no base URL
 both are `/`, which is the common case.
 
+## Pretty URLs
+
+By default each chapter is one file per page — `chapters/01_writing/01_tree.md`
+is written as `chapters/01_writing/01_tree.html` — so its address ends in
+`.html`. A book that would rather have extensionless addresses turns on
+`web.prettyUrls`:
+
+```json
+{
+  "web": { "prettyUrls": true }
+}
+```
+
+Every page is then written as a directory holding its own `index.html`
+(`chapters/01_writing/01_tree/index.html`), which a static host serves for the
+directory it names. The address above becomes:
+
+```text
+https://example.com/book/chapters/01_writing/01_tree/
+```
+
+Every link the build emits follows the new shape — the sidebar, the
+previous/next links, the chapter-to-chapter links and their `#anchors`, all
+measured against the page's own directory. The home page is the site root's
+`index.html` under either scheme, and the assets (the stylesheet, the favicon,
+the pictures) stay plain files; only the chapter pages move into directories.
+The printed edition is untouched.
+
+Two things to keep in mind. The scheme moves every page, so a site already
+published at `.html` addresses needs its host to redirect those, or their
+readers get a 404. And the preview server serves both schemes — it asks a
+browser that names a directory without a trailing slash to add one, so a page's
+own relative links resolve from the right place.
+
 ## Description and cards
 
 `web.description` is the one line search engines and social cards show. It

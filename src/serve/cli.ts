@@ -52,7 +52,18 @@ export function main(cfg: BookConfig, args: string[]): number {
       return;
     }
     if (fs.existsSync(file) && fs.statSync(file).isDirectory()) {
-      file = path.join(file, "index.html");
+      const index = path.join(file, "index.html");
+      // A directory served as its index: a request without the trailing slash
+      // is moved there first, so the page's relative links resolve from the
+      // directory rather than from its parent.
+      if (fs.existsSync(index)) {
+        if (!url.pathname.endsWith("/")) {
+          res.writeHead(301, { location: `${url.pathname}/${url.search}` });
+          res.end();
+          return;
+        }
+        file = index;
+      }
     }
     if (!fs.existsSync(file)) {
       res.writeHead(404, { "content-type": "text/plain; charset=utf-8" }).end("404 Not Found");

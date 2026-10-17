@@ -51,3 +51,17 @@ describe("load — markdown", () => {
     expect(load(book({ markdown: { breaks: "yes" } })).markdown.breaks).toBe(false);
   });
 });
+
+describe("load — web", () => {
+  it("defaults pretty URLs off", () => {
+    expect(load(book({})).web.prettyUrls).toBe(false);
+  });
+
+  it("reads the switch", () => {
+    expect(load(book({ web: { prettyUrls: true } })).web.prettyUrls).toBe(true);
+  });
+
+  it("falls back to the default on a non-boolean", () => {
+    expect(load(book({ web: { prettyUrls: "yes" } })).web.prettyUrls).toBe(false);
+  });
+});

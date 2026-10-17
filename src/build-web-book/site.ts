@@ -10,3 +10,4 @@
 export type { MappedChapter, NavSlot } from "./page.js";
 export { assemblePage, headHtml, stylesheet } from "./page.js";
 export { rewriteImages, rewriteLinks } from "./links.js";
+export { assetHref, outputRelFor, pageHref } from "./paths.js";

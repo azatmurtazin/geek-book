@@ -25,11 +25,17 @@ export function basePath(cfg: BookConfig): string {
 /**
  * The absolute URL of a page, or "" when `web.baseUrl` is empty or a bare path.
  * The home page is the base itself, so its canonical does not name index.html.
+ * With `prettyUrls` a page's output path ends in `/index.html`, and the
+ * canonical is the directory it names.
  */
-export function pageUrl(cfg: BookConfig, outputRel: string): string {
+export function pageUrl(cfg: BookConfig, outputRel: string, prettyUrls: boolean): string {
   const base = cfg.web.baseUrl;
   if (!base || base.startsWith("/")) return "";
-  return outputRel === "index.html" ? base : `${base}${outputRel}`;
+  if (outputRel === "index.html") return base;
+  const urlPath = prettyUrls && outputRel.endsWith("/index.html")
+    ? outputRel.slice(0, -"index.html".length)
+    : outputRel;
+  return `${base}${urlPath}`;
 }
 
 /**

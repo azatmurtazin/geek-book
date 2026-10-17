@@ -558,7 +558,7 @@ export interface BookSettings {
   readonly sources: SourceLayout;        // bookDir, summary, chapters, readme, cover, docs
   readonly outputs: OutputLayout;        // web, pdf, clean
   readonly printing: PrintingSettings;   // geometry, palette, type, class, side, tocDepth, titlePage, …
-  readonly website: WebsiteSettings;     // css, head, baseUrl, description, favicon, links
+  readonly website: WebsiteSettings;     // css, head, baseUrl, description, favicon, prettyUrls, links
   readonly fonts: FontFamilies;
   readonly diagrams: DiagramSettings;    // theme, fontSize
   readonly code: CodeLanguageTable;      // the book's own languages

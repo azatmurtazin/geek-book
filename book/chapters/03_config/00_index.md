@@ -62,6 +62,7 @@ checks the file against it — the same schema, so the two can never disagree.
 | `web.baseUrl` | none | The site's base URL, for root links and canonical tags. |
 | `web.description` | the tagline | What search engines and social cards show. |
 | `web.favicon` | none | The site's favicon. |
+| `web.prettyUrls` | off | Write each page as a directory (`<name>/index.html`) so URLs carry no extension. See [The website](03_web.md). |
 | `web.links` | none | Labelled links the site's footer carries. |
 
 The version is read from the book's own `package.json` unless the config names

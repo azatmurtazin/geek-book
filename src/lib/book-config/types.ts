@@ -144,6 +144,11 @@ export interface WebConfig {
   description: string;
   /** Absolute path of the site's favicon, copied into the output, or "". */
   favicon: string;
+  /** Write a page as `<name>/index.html` instead of `<name>.html` (default
+   * false), so its URL carries no extension. The home page is the root's
+   * `index.html` either way, and assets — the stylesheet, the favicon, the
+   * images — are plain files in both schemes. */
+  prettyUrls: boolean;
   /** Labelled links the footer carries, in order. */
   links: WebLinkConfig[];
 }

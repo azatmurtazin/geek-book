@@ -21,6 +21,11 @@ parentheses for traceability.
   (`<br>`) on the website. Off by default, because the linter's `lint.proseWidth`
   encourages hard-wrapping. The printed edition always keeps a single newline
   soft, so the PDF is unaffected.
+- `web.prettyUrls`: write each page as a directory with its own `index.html`
+  (`chapters/01_tree/`) instead of a `.html` file, so URLs carry no extension.
+  Off by default; with it off the built site is unchanged. Every internal link
+  follows the new shape, and the preview server redirects a directory request
+  that lacks its trailing slash.
 
 ## [0.1.3] — 2026-10-17
 

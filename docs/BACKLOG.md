@@ -2,5 +2,7 @@
 
 Uncompleted items that remained after TODO.md was retired.
 
-## Build and preview
-- [ ] Output naming / pretty URLs — risky change to the web build's output layout. No configuration key yet.
+Nothing is open right now. The larger architectural work — the phased refactor
+that would give the two editions a shared domain model and confine `marked` to a
+single adapter — is tracked in
+[ARCHITECTURE_REFACTORING_PLAN.md](ARCHITECTURE_REFACTORING_PLAN.md), not here.
