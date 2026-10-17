@@ -36,3 +36,18 @@ describe("load — diagrams", () => {
     expect(load(book({ diagrams: { fontSize: 0 } })).diagrams.fontSize).toBe(13);
   });
 });
+
+describe("load — markdown", () => {
+  it("defaults both switches off", () => {
+    expect(load(book({})).markdown).toEqual({ smartTypography: false, breaks: false });
+  });
+
+  it("reads the two switches", () => {
+    const cfg = load(book({ markdown: { smartTypography: true, breaks: true } }));
+    expect(cfg.markdown).toEqual({ smartTypography: true, breaks: true });
+  });
+
+  it("falls back to the default on a non-boolean", () => {
+    expect(load(book({ markdown: { breaks: "yes" } })).markdown.breaks).toBe(false);
+  });
+});

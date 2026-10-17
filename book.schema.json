@@ -150,6 +150,10 @@
         "smartTypography": {
           "description": "Turn straight quotes into curly ones, and -- / --- into en and em dashes, in the prose (default: false). Code, link targets and raw HTML are left alone.",
           "type": "boolean"
+        },
+        "breaks": {
+          "description": "Turn a single newline inside a paragraph into a line break on the website (default: false). GFM hard breaks (two trailing spaces) still break either way. The printed edition always keeps a single newline soft.",
+          "type": "boolean"
         }
       }
     },

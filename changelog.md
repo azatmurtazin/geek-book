@@ -1,16 +1,26 @@
 # Changelog
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
-tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`); the section at the top collects
-everything released as **0.1.3**. Short commit hashes are given in parentheses
-for traceability.
+tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`); the top section is the unreleased
+work on `main`, then each released version. Short commit hashes are given in
+parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| Unreleased          | —          |
 | 0.1.3               | 2026-10-17 |
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [Unreleased]
+
+### Added
+
+- `markdown.breaks`: a single newline in a paragraph becomes a line break
+  (`<br>`) on the website. Off by default, because the linter's `lint.proseWidth`
+  encourages hard-wrapping. The printed edition always keeps a single newline
+  soft, so the PDF is unaffected.
 
 ## [0.1.3] — 2026-10-17
 

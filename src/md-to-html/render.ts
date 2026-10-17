@@ -56,10 +56,12 @@ function pageTitle(cfg: BookConfig, source: string): string {
   return title ? `${title} — ${cfg.title}` : cfg.title;
 }
 
-/** The chapter body as HTML: headings carry slug ids, GFM is on. */
+/** The chapter body as HTML: headings carry slug ids, GFM is on. `breaks` is
+ *  passed here, not to `markedInstance`, so it reaches the website's renderer
+ *  and not the printed edition's lexer or the remote-image walker. */
 export function renderBody(cfg: BookConfig, source: string): string {
   const md = markedInstance(cfg);
-  return md.parse(substituteContentPlaceholders(cfg, source)) as string;
+  return md.parse(substituteContentPlaceholders(cfg, source), { breaks: cfg.markdown.breaks }) as string;
 }
 
 export function wrapInLayout(cfg: BookConfig, title: string, bodyHtml: string): string {

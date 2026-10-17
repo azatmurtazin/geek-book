@@ -168,6 +168,11 @@ export interface MarkdownConfig {
    *  in the prose (default false). Code, link targets and raw HTML are left
    *  alone. */
   smartTypography: boolean;
+  /** Turn a single newline inside a paragraph into a line break on the website
+   *  (default false). GFM hard breaks — two trailing spaces — still break either
+   *  way. The printed edition always keeps a single newline soft, so
+   *  hard-wrapped prose stays one paragraph on the page. */
+  breaks: boolean;
 }
 
 /**

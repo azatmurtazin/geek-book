@@ -181,6 +181,7 @@ export function readLint(raw: Record<string, unknown>): LintConfig {
 export function readMarkdown(raw: Record<string, unknown>): MarkdownConfig {
   return {
     smartTypography: asBool(raw.smartTypography, DEFAULTS.markdown.smartTypography),
+    breaks: asBool(raw.breaks, DEFAULTS.markdown.breaks),
   };
 }
 

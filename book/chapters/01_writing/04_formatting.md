@@ -67,3 +67,24 @@ an en dash and an em dash. The change reaches the prose of both editions, and
 nothing else — code, link addresses and raw HTML are left as written. The
 identifiers headings get follow the same text, so an anchor written against a
 smartened heading still resolves.
+
+## Line breaks
+
+A paragraph is one paragraph however its source is wrapped. A single newline
+between two lines of prose is a *soft* break: the website joins the lines back
+into one run of text, so a book can hard-wrap its Markdown at a comfortable
+width without changing what the reader sees. A *hard* break — two trailing
+spaces at the end of a line — always breaks, in both editions.
+
+A book that would rather have each single newline show up on the website — verse,
+an address, a caption — turns that on with `markdown.breaks`:
+
+```json
+{ "markdown": { "breaks": true } }
+```
+
+Then a single newline becomes a `<br>` on the website. Because the linter's
+`lint.proseWidth` encourages hard-wrapping, the key is off by default: left on
+in a hard-wrapped book, every source line would become a break. The printed
+edition ignores the key either way and always keeps a single newline soft, so
+the PDF is unaffected.

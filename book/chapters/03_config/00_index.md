@@ -55,6 +55,7 @@ checks the file against it — the same schema, so the two can never disagree.
 | `code` | none | Labels and comment styles for a book's own languages. See [Code](../01_writing/05_code.md). |
 | `lint` | 100 / 240 / 80 | Line budgets the chapter check enforces. |
 | `markdown.smartTypography` | off | Curly quotes and en/em dashes in the prose. See [Formatting](../01_writing/04_formatting.md). |
+| `markdown.breaks` | off | A single newline in a paragraph becomes a line break on the website. See [Formatting](../01_writing/04_formatting.md). |
 | `fonts` | Literata, JetBrains Mono | See [Fonts](01_fonts.md). |
 | `tex` | the engine's page | See [The printed page](02_print.md). |
 | `web` | none | The site's metadata, stylesheet and `<head>` HTML. See [The website](03_web.md). |

@@ -34,6 +34,16 @@ describe("renderBody — line breaks", () => {
     expect(renderBody(cfg, "one line  \nforced")).toContain("<br>");
   });
 
+  it("breaks a single newline when the book asks for it", () => {
+    const broken: BookConfig = { ...cfg, markdown: { ...cfg.markdown, breaks: true } };
+    expect(renderBody(broken, "one line\nwrapped here")).toBe("<p>one line<br>wrapped here</p>\n");
+  });
+
+  it("still honours a GFM hard break with the key on", () => {
+    const broken: BookConfig = { ...cfg, markdown: { ...cfg.markdown, breaks: true } };
+    expect(renderBody(broken, "one line  \nforced")).toContain("<br>");
+  });
+
   it("renders GFM tables, lists and strikethrough", () => {
     expect(renderBody(cfg, "| a | b |\n| --- | --- |\n| 1 | 2 |")).toContain("<table>");
     expect(renderBody(cfg, "- one\n- two")).toContain("<ul>");
