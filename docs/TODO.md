@@ -23,11 +23,12 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
   - [x] Isolated, structural jsdom/Mermaid integration test (no SVG bytes frozen)
   - [ ] Moves to `test/adapters/diagrams/` in P8
 
-- [ ] **P0 — Baseline + guardrails** (S/Low)
-  - [ ] `tools/baseline/` + `just baseline`/`just verify`; capture `test/baseline/*` in Docker
-  - [ ] `dependency-cruiser` at `warn` + `just boundaries`
-  - [ ] `test/architecture.test.ts` (report-only)
-  - [ ] Wire `boundaries` + `verify` into CI
+- [ ] **P0 — Baseline + guardrails** (S/Low) — harness landed; PDF reference pending
+  - [x] `tools/baseline/` + `just baseline`/`just verify`; `test/baseline/*` (web, lint, config, md)
+  - [ ] Capture `book.txt`/`book.info` in the pinned image (`just docker-baseline`) — needs a running Docker daemon
+  - [x] `dependency-cruiser` at `warn` + `just boundaries` (SWC parser, since the repo tracks TypeScript 7)
+  - [x] `test/architecture.test.ts` (report-only; `marked` importer allowlist)
+  - [x] Wire `boundaries` (non-failing) + `verify` (failing) into CI
 
 - [ ] **P1 — Diagnostics kernel** (S/Low)
   - [ ] `domain/diagnostics.ts` (`Severity`, `Diagnostic`, `Result`, `ok`/`fail`)

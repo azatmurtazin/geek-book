@@ -1,0 +1,139 @@
+{
+  "root": ".",
+  "configFile": "book.config.json",
+  "title": "geek-book",
+  "tagline": "the user's guide",
+  "author": "geek-book",
+  "version": "0.1.3",
+  "placeholders": {},
+  "language": "en",
+  "strings": {},
+  "bookDir": "book",
+  "summary": "book/SUMMARY.md",
+  "chapters": "book/chapters",
+  "readme": "book/README.md",
+  "cover": "book/images/cover.jpg",
+  "outputWeb": "build/html",
+  "outputPdf": "build/book.pdf",
+  "outputClean": true,
+  "docs": [
+    "README.md"
+  ],
+  "diagrams": {
+    "theme": "auto",
+    "fontSize": 13
+  },
+  "fonts": {
+    "text": "Literata",
+    "bold": "Literata:mode=harf;wght=700",
+    "code": "JetBrains Mono",
+    "web": "https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..700&family=JetBrains+Mono:wght@400;500&display=swap"
+  },
+  "web": {
+    "css": "",
+    "head": "",
+    "baseUrl": "",
+    "description": "the user's guide",
+    "favicon": "",
+    "links": []
+  },
+  "tex": {
+    "geometry": {
+      "paper": "a4",
+      "top": 19,
+      "bottom": 19,
+      "left": 18,
+      "right": 18,
+      "textWidthMm": 174,
+      "textHeightMm": 259
+    },
+    "colors": {
+      "fg": "#242a37",
+      "muted": "#667085",
+      "rule": "#e4e7ec",
+      "codeBackground": "#f6f7f9",
+      "codeForeground": "#20304c",
+      "codeComment": "#6b7280",
+      "calloutBackground": "#f8fafc",
+      "calloutBorder": "#cbd5e1",
+      "calloutForeground": "#3b4252"
+    },
+    "type": {
+      "base": 11,
+      "chapter": 20,
+      "section": 15,
+      "subsection": 12.5,
+      "subsubsection": 11.5,
+      "paragraph": 9.5
+    },
+    "class": "book",
+    "side": "oneside",
+    "tocDepth": 0,
+    "titlePage": false,
+    "copyright": "",
+    "isbn": "",
+    "preamble": ""
+  },
+  "languages": [
+    "text",
+    "plaintext",
+    "ascii",
+    "mermaid",
+    "markdown",
+    "md",
+    "bash",
+    "sh",
+    "shell",
+    "console",
+    "java",
+    "cpp",
+    "c++",
+    "c",
+    "go",
+    "rust",
+    "typescript",
+    "ts",
+    "javascript",
+    "js",
+    "jsx",
+    "tsx",
+    "php",
+    "python",
+    "elixir",
+    "sql",
+    "json",
+    "yaml",
+    "toml",
+    "xml",
+    "html",
+    "css",
+    "diff",
+    "make",
+    "makefile",
+    "ini",
+    "hcl",
+    "protobuf",
+    "kotlin",
+    "swift",
+    "csharp",
+    "cs",
+    "dart"
+  ],
+  "code": {},
+  "images": {
+    "timeout": 30,
+    "types": {}
+  },
+  "lint": {
+    "proseWidth": 100,
+    "tableWidth": 240,
+    "diagramWidth": 80
+  },
+  "markdown": {
+    "smartTypography": false,
+    "breaks": false
+  },
+  "serve": {
+    "port": 4000
+  }
+}

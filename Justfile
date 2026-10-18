@@ -6,6 +6,8 @@
 #   just serve        preview build/html/ on http://localhost:4000
 #   just lint         type-check the engine, then lint the guide
 #   just test         run the unit tests
+#   just boundaries   report the architectural boundary rules
+#   just verify       rebuild and diff against the reference baseline
 #   just clean        remove build/
 #   just install-tools  report the toolchain
 #
@@ -74,6 +76,44 @@ pdf:
 # with no host setup). Builds the image first when needed.
 docker-book:
     docker compose run --rm --build book
+
+# --- baseline ----------------------------------------------------------------
+
+# capture the reference baseline under test/baseline/ (canonical: in the book
+# image, via `just docker-baseline`, so poppler and fonts do not drift).
+baseline:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [[ -d node_modules ]] || "{{npm}}" install
+    just html
+    just pdf
+    "{{node}}" tools/baseline/baseline.mjs capture test/baseline
+
+# capture the baseline inside the pinned book image — the reproducible reference
+docker-baseline:
+    docker compose run --rm --build book /bin/sh -c \
+        'just html && just pdf && node tools/baseline/baseline.mjs capture test/baseline'
+
+# rebuild both editions and diff them against the committed baseline. The two
+# PDF artifacts are compared only inside the book image (poppler/font drift).
+verify:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [[ -d node_modules ]] || "{{npm}}" install
+    just html
+    just pdf
+    scratch="{{build-dir}}/baseline-check"
+    rm -rf "$scratch"
+    "{{node}}" tools/baseline/baseline.mjs capture "$scratch"
+    "{{node}}" tools/baseline/baseline.mjs compare test/baseline "$scratch"
+
+# report the architectural boundary rules (report-only until the refactor's
+# final phase turns them into errors; see .dependency-cruiser.cjs).
+boundaries:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [[ -d node_modules ]] || "{{npm}}" install
+    npx --no-install depcruise src
 
 # --- checks -----------------------------------------------------------------
 

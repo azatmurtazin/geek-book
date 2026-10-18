@@ -218,7 +218,9 @@ the commit the phase starts from.
    `Justfile` recipes (`baseline`, `verify`). Generate artifacts under
    `test/baseline/`:
    - `web.sha256` — sorted `sha256` of every file under the built `build/html/`,
-     path-relative, so nav/asset drift is caught.
+     path-relative, so nav/asset drift is caught. Files under `images/remote/`
+     are excluded: they are fetched from a third party, not produced by the
+     engine, and the HTML hash already freezes every reference to them.
    - `book.txt` — `pdftotext -layout build/book.pdf -`, whitespace-normalised.
    - `book.info` — `Pages:` and `Page size:` lines from `pdfinfo`.
    - `lint.txt` — stdout+stderr of `geek-book lint` on the guide.
@@ -230,7 +232,10 @@ the commit the phase starts from.
 3. **Add `dependency-cruiser`** as a devDependency and a `.dependency-cruiser.cjs`
    whose rules mirror `CLEAN_CODE_ARCHITECTURE.md` §13, with every rule set to
    `severity: "warn"` (report-only). Add a `just boundaries` recipe running
-   `depcruise src`.
+   `depcruise src`. The repo tracks TypeScript 7, which dependency-cruiser's
+   `typescript` transpiler does not support yet (`>=2 <7`); set
+   `options.parser: "swc"` and add `@swc/core` as a devDependency, or the cruise
+   silently finds no modules.
 4. **Add `test/architecture.test.ts`** that invokes `dependency-cruiser`
    programmatically and, for now, asserts only the rules that already hold
    (`marked` importers ⊆ a known allowlist that shrinks each phase). It is the
@@ -817,7 +822,8 @@ both fail on a dangling import; the compiler is the safety net.
 re-runs them into a scratch directory and diffs:
 
 ```text
-web.sha256   ← sorted sha256 of every file under build/html/ (path-relative)
+web.sha256   ← sorted sha256 of every file under build/html/ (path-relative;
+               fetched `images/remote/` excluded — upstream bytes, not our output)
 book.txt     ← pdftotext -layout, whitespace-normalised
 book.info    ← Pages: / Page size: from pdfinfo
 lint.txt     ← geek-book lint (stdout+stderr)
