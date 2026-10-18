@@ -18,6 +18,16 @@
 import type { Figure, ImageAsset } from "./assets.js";
 import type { ImageNode, Inline } from "./inline.js";
 
+/** Where a chapter sits in the book, and what its links resolve against. */
+export interface ChapterContext {
+  /** Numeric chapter id (`c0`, `c1`, …) — the ids the web build's links use. */
+  readonly chapterId: number;
+  /** SUMMARY-relative path, e.g. `chapters/01_data_types/02_strings.md`. */
+  readonly relBook: string;
+  /** Every written chapter's id, keyed by its SUMMARY-relative path. */
+  readonly idOf: ReadonlyMap<string, number>;
+}
+
 /** One chapter: its blocks, and the files the build has to prepare for them. */
 export interface Chapter {
   blocks: Block[];

@@ -498,6 +498,38 @@ now returns `lib/markdown.ts` and the new adapter only.
 - *Smart-typography walk rewrite* must reach the same ids/punctuation; the
   linter's raw-heading path (Phase 6) and the parity test both guard it.
 
+**Outcome (landed).**
+
+- The neutral tree lives in `domain/model/markdown.ts`, and
+  `application/ports/markdown-parser.ts` re-exports it. A domain service may not
+  import the application layer, so the vocabulary lives where `assemble` can
+  reach it; the port is the application's name for the same types.
+- Two fidelity flags beyond `CLEAN_CODE_ARCHITECTURE.md` §7.1, both needed to
+  reproduce `marked` exactly: `code.escaped` (as step 2 asks) and
+  `text.verbatim`, set for a backslash-escaped character so the typographer
+  leaves it as written — `marked`'s `escape` token is not prose. A third
+  deviation is structural: a tight list item is `{ type: "text" }`, a run with
+  no block of its own, which the walk keeps as prose instead of promoting to a
+  figure (as the old `blocksOf` did).
+- `ChapterContext` moved to `domain/model/chapter.ts` without `remote`; the
+  `ir.ts` shim extends it with `remote?: RemoteImages`, and `parse.ts` hands
+  `assemble` a `remoteFile` look-up instead of the cache itself.
+- Smart typography's neutral-tree walk is in `domain/values/smart-typography.ts`;
+  the `marked`-typed walk stays in `lib/smart-typography.ts` for the web hook
+  until Phase 5. `lib/images.ts` is now a shim over
+  `domain/services/resolve-images.ts` (`resolveImagePath` kept for
+  `build-web-book/links.ts` until Phase 5).
+- `resolveLink`/`resolveImage` return today's `string | null` (anchor / book
+  path); the `LinkTarget`/`ImageSource` sum types wait for the model to adopt
+  them. The domain got pure POSIX path helpers (`domain/values/posix-path.ts`)
+  because it may not import `node:path`.
+- `marked` importers: the adapter is the only new one; the allowlist shrank to
+  `lib/markdown.ts` and `lib/smart-typography.ts` (the web path).
+  `lib/remote-images.ts` dropped its `marked` type import.
+- Verified beyond the goldens: the real guide's `book.tex`, `book.toc`,
+  `figures/` and the PDF's text and page count are byte-identical to the
+  pre-phase build.
+
 **Size.** L. **Risk.** High.
 
 ---

@@ -3,7 +3,7 @@
 Execution checklist for [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md).
 Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline: [`CURRENT_ARCHITECTURE.md`](./CURRENT_ARCHITECTURE.md).
 
-**Status:** in progress — P0 harness landed (PDF reference pending), P1–P2 done · one phase = one PR = one green baseline.
+**Status:** in progress — P0 harness landed (PDF reference pending), P1–P3 done · one phase = one PR = one green baseline.
 
 ## Invariants (every commit)
 
@@ -43,13 +43,13 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
   - [x] Re-export shims at old paths; narrowed `commentStyle`/`codeLabel`/`tokenizeCode` to a code table
   - [x] Tests: `test/domain/values/*` (7 files)
 
-- [ ] **P3 — Markdown port + one walk** (L/High) ⚠ highest fidelity
-  - [ ] `application/ports/markdown-parser.ts` (neutral `MdNode`/`MdInline`)
-  - [ ] `adapters/markdown/marked-parser.ts` (sole `marked` consumer)
-  - [ ] `domain/services/{assemble,resolve-links,resolve-images}.ts`; `domain/values/entities.ts`
-  - [ ] Flip `build-tex-book/parse.ts`; delete `blocks/inlines/entities/links/images/state`
-  - [ ] Watch: `token.escaped`, hard breaks, GFM table align, raw HTML, soft breaks, list `start`
-  - [ ] Tests: `marked-parser`, `assemble`; TeX golden unchanged
+- [x] **P3 — Markdown port + one walk** (L/High) ⚠ highest fidelity
+  - [x] `application/ports/markdown-parser.ts` (neutral `MdNode`/`MdInline`, defined in `domain/model/markdown.ts`)
+  - [x] `adapters/markdown/marked-parser.ts` (sole new `marked` consumer)
+  - [x] `domain/services/{assemble,resolve-links,resolve-images}.ts`; `domain/values/{entities,posix-path}.ts`
+  - [x] Flip `build-tex-book/parse.ts`; delete `blocks/inlines/entities/links/images/state`
+  - [x] Watch: `token.escaped` (kept), hard breaks, GFM table align, raw HTML, soft breaks, list `start` (all verified)
+  - [x] Tests: `marked-parser`, `assemble`; TeX golden + parity unchanged; real `book.tex`/PDF byte-identical
 
 - [ ] **P4 — One source pipeline** (M/Med)
   - [ ] Ports: `diagram-renderer`, `image-store`, `image-measurer`

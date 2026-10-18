@@ -1,5 +1,7 @@
 // The HTML entities the walk decodes, so the tree holds the characters the
 // source meant and the LaTeX serializer escapes them afresh of its own accord.
+//
+// Pure: part of `domain/`, imports nothing outside `domain/`.
 
 const ENTITIES: Record<string, string> = {
   "&amp;": "&",

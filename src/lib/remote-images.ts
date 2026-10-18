@@ -15,7 +15,6 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import type { Tokens } from "marked";
 import { isRemoteImage } from "./images.js";
 import { markedInstance } from "./markdown.js";
 import type { BookConfig } from "./book-config.js";
@@ -108,7 +107,7 @@ export class RemoteImages {
       if (token.type !== "image") {
         return;
       }
-      const src = ((token as Tokens.Image).href ?? "").trim();
+      const src = ((token as { href?: string }).href ?? "").trim();
       if (isRemoteImage(src) && !urls.includes(src)) {
         urls.push(src);
       }

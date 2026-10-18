@@ -2,25 +2,23 @@
 //
 // These are the two ways in: `tokensToIr` is the pure walk — Markdown in, a
 // chapter out, no I/O — and `parseChapter` is the full build path around it. The
-// walk covers the same marked tokens the HTML renderer walks, and the anchors it
-// gives headings are the web build's ids, so a link names the same heading on the
-// site and on the page. Three things happen in the build path that belong to no
-// page in particular: `{{ … }}` placeholders are filled in, mermaid fences become
-// drawings (drawn before the Markdown is lexed, so the SVG never goes through a
-// Markdown parser), and remote pictures are fetched, because a printed book
-// cannot hotlink.
-//
-// The walk itself lives in blocks.ts, its pieces in inlines.ts, links.ts,
-// images.ts, entities.ts and state.ts. What comes back is the book itself:
-// decoded text, resolved links, registered pictures. Nothing here knows how any
-// of it looks.
+// Markdown is lexed into the neutral tree by the `MarkedParser` adapter, and the
+// walk that gives it the book's meaning lives in `domain/services/assemble.ts`;
+// the anchors it gives headings are the web build's ids, so a link names the
+// same heading on the site and on the page. Two things happen in the build path
+// that belong to no page in particular: `{{ … }}` placeholders are filled in,
+// and mermaid fences become drawings (drawn before the Markdown is lexed, so the
+// SVG never goes through a Markdown parser); remote pictures are fetched by the
+// caller, because a printed book cannot hotlink.
 
 import type { BookConfig } from "../lib/book-config.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
 import { preprocessMermaidMd, renderMermaid } from "../diagrams/render.js";
+import { MarkedParser } from "../adapters/markdown/marked-parser.js";
+import { assemble } from "../domain/services/assemble.js";
 import type { Chapter, ChapterContext, Figure } from "./ir.js";
-import { freshState } from "./state.js";
-import { walk } from "./blocks.js";
+
+const parser = new MarkedParser();
 
 /**
  * The pure middle of {@link parseChapter}: a chapter's tree, with no I/O.
@@ -31,12 +29,12 @@ import { walk } from "./blocks.js";
  * resolve them; without that the placeholder would pass through as prose.
  */
 export function tokensToIr(cfg: BookConfig, markdown: string, ctx: ChapterContext): Chapter {
-  const state = freshState(ctx);
-  return {
-    blocks: walk(cfg, substituteContentPlaceholders(cfg, markdown), state),
-    figures: state.figures,
-    images: state.images,
-  };
+  const nodes = parser.lex(substituteContentPlaceholders(cfg, markdown));
+  return assemble(nodes, ctx, {
+    bookDir: cfg.bookDir,
+    remoteFile: remoteFileFor(ctx),
+    smartTypography: cfg.markdown.smartTypography,
+  });
 }
 
 /** One chapter as a tree, with the files its build has to prepare. */
@@ -45,17 +43,23 @@ export async function parseChapter(cfg: BookConfig, source: string, ctx: Chapter
   // Remote images have to be on disk before the walk reaches them.
   await ctx.remote?.collect(substituted);
   const { markdown, diagrams } = await preprocessMermaidMd(substituted);
-  const state = freshState(ctx);
+  const figures = new Map<number, Figure>();
   for (const [index, diagram] of diagrams) {
-    const figure = await mermaidFigure(cfg, diagram, ctx.chapterId, index);
-    state.figures.push(figure);
-    state.byIndex.set(index, figure);
+    figures.set(index, await mermaidFigure(cfg, diagram, ctx.chapterId, index));
   }
-  return {
-    blocks: walk(cfg, markdown, state),
-    figures: state.figures,
-    images: state.images,
-  };
+  const nodes = parser.lex(markdown);
+  return assemble(nodes, ctx, {
+    bookDir: cfg.bookDir,
+    remoteFile: remoteFileFor(ctx),
+    diagrams: figures,
+    smartTypography: cfg.markdown.smartTypography,
+  });
+}
+
+/** The look-up the walk asks for a fetched remote picture's file, if any. */
+function remoteFileFor(ctx: ChapterContext): ((url: string) => string | null) | undefined {
+  const remote = ctx.remote;
+  return remote === undefined ? undefined : (url) => remote.fileFor(url);
 }
 
 /**

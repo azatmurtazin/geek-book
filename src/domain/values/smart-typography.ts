@@ -1,14 +1,17 @@
 // Smart typography: straight quotes to curly ones, and `--`/`---` to dashes.
 //
 // The string form here is what a reader that holds raw source uses — the
-// linter's headings, most of all — and what the token walk in
-// `lib/smart-typography.ts` calls for each run of prose. The walk itself stays
-// there until the print and web editions share a neutral tree; only the pure
-// quote/dash engine lives here.
+// linter's headings, most of all — and the neutral-tree walk at the bottom is
+// what the printed edition calls for each run of prose. The web edition walks
+// `marked`'s own tokens (`lib/smart-typography.ts`) until it shares the neutral
+// tree; both call the one quote/dash engine here, so the two editions cannot
+// disagree.
 //
 // The string form steps over an inline code span, so a heading that names a flag
 // in backticks still slugs the same on both sides. Pure: no imports outside
 // `domain/`.
+
+import type { MdInline, MdNode } from "../model/markdown.js";
 
 const OPEN_DOUBLE = "\u201c";
 const CLOSE_DOUBLE = "\u201d";
@@ -88,4 +91,76 @@ export function run(text: string, prev: string): { text: string; next: string } 
  *  the linter's headings, rather than marked's tokens. */
 export function smartTypography(text: string): string {
   return run(text, "").text;
+}
+
+/**
+ * Smartpunctuate the inline text of a neutral document, in place. Code, link
+ * targets, image alt text and raw HTML are left as written; each paragraph,
+ * heading and table cell starts a fresh run. Text a backslash escaped is the
+ * reader's own punctuation, so it is stepped over as the code spans are.
+ */
+export function applySmartTypography(nodes: readonly MdNode[]): void {
+  for (const node of nodes) {
+    smartenNode(node);
+  }
+}
+
+function smartenNode(node: MdNode): void {
+  switch (node.type) {
+    case "paragraph":
+    case "heading":
+    case "text":
+      runOf(node.inline, "");
+      break;
+    case "table":
+      for (const cell of node.header) runOf(cell, "");
+      for (const row of node.rows) {
+        for (const cell of row) runOf(cell, "");
+      }
+      break;
+    case "blockquote":
+      applySmartTypography(node.children);
+      break;
+    case "list":
+      for (const item of node.items) applySmartTypography(item);
+      break;
+    default:
+      break;
+  }
+}
+
+/** Smartpunctuate one inline run, carrying the last character from node to
+ *  node so a quote that wraps emphasis closes where it should. */
+function runOf(nodes: readonly MdInline[], prev: string): string {
+  for (const node of nodes) prev = smartenInline(node, prev);
+  return prev;
+}
+
+function smartenInline(node: MdInline, prev: string): string {
+  switch (node.type) {
+    case "text": {
+      if (node.verbatim) {
+        return lastChar(node.text);
+      }
+      const smart = run(node.text, prev);
+      node.text = smart.text;
+      return smart.next;
+    }
+    // Code and raw HTML are the reader's characters, not the typographer's; a
+    // run continues past them as it would past any glyph.
+    case "code":
+    case "html":
+      return lastChar(node.text);
+    case "break":
+      return " ";
+    // Emphasis and links are transparent: their text belongs to the same run.
+    case "link":
+    case "strong":
+    case "em":
+    case "del":
+      return runOf(node.children, prev);
+    // Image alt text is not prose the reader reads here.
+    case "image":
+      return prev;
+  }
 }

@@ -29,13 +29,9 @@ const ENFORCED_NOW = [
   "no-node-builtins-in-domain-or-application",
 ];
 
-/** The legacy pipeline's `marked` importers. Shrinks each phase; empty by Phase 8. */
+/** The legacy `marked` importers the web path still needs. Shrinks each phase; empty by Phase 8. */
 const MARKED_ALLOWLIST = new Set([
-  "src/build-tex-book/blocks.ts",
-  "src/build-tex-book/images.ts",
-  "src/build-tex-book/inlines.ts",
   "src/lib/markdown.ts",
-  "src/lib/remote-images.ts",
   "src/lib/smart-typography.ts",
 ]);
 
