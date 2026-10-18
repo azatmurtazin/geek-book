@@ -153,11 +153,11 @@ function bodyRowTex(cfg: BookConfig, row: TableRow): string {
  * muted color the web edition gives them.
  */
 function codePanel(cfg: BookConfig, lang: string, code: string): string {
-  const label = codeLabel(cfg, lang);
+  const label = codeLabel(cfg.code, lang);
   const labelLine = label
     ? `{\\hfill\\fontsize{6}{7}\\selectfont\\ttfamily\\color{codecomment}${texEscape(label)}}\\vspace{0pt}\n`
     : "";
-  const body = tokenizeCode(cfg, code, lang)
+  const body = tokenizeCode(cfg.code, code, lang)
     .map(({ kind, text }) => (kind === "comment" ? `\\cc{${texEscapeCode(text)}}` : texEscapeCode(text)))
     .join("");
   const trimmed = body.endsWith("\n") ? body.slice(0, -1) : body;

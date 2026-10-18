@@ -5,7 +5,9 @@
 // check each section against the shape it fills without widening the literal
 // types the rest of the engine relies on.
 
-import type { ColorsConfig, PaperName, TypeConfig } from "./types.js";
+import type { PaperName, TypeConfig } from "./types.js";
+import { DEFAULT_COLORS } from "../../domain/values/palette.js";
+import { DEFAULT_FONTS } from "../../domain/values/fonts.js";
 
 export const DEFAULTS = {
   language: "en",
@@ -21,24 +23,14 @@ export const DEFAULTS = {
   diagrams: { theme: "auto" as const, fontSize: 13 },
   web: { css: "", head: "", baseUrl: "", favicon: "", prettyUrls: false, links: [] },
   fonts: {
-    text: "Literata",
-    bold: "Literata:mode=harf;wght=700",
-    code: "JetBrains Mono",
-    web: "https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..700&family=JetBrains+Mono:wght@400;500&display=swap",
+    text: DEFAULT_FONTS.text,
+    bold: DEFAULT_FONTS.bold,
+    code: DEFAULT_FONTS.code,
+    web: DEFAULT_FONTS.web,
   },
   tex: {
     geometry: { paper: "a4" as PaperName, top: 19, bottom: 19, left: 18, right: 18 },
-    colors: {
-      fg: "#242a37",
-      muted: "#667085",
-      rule: "#e4e7ec",
-      codeBackground: "#f6f7f9",
-      codeForeground: "#20304c",
-      codeComment: "#6b7280",
-      calloutBackground: "#f8fafc",
-      calloutBorder: "#cbd5e1",
-      calloutForeground: "#3b4252",
-    } satisfies ColorsConfig,
+    colors: DEFAULT_COLORS,
     type: {
       base: 11,
       chapter: 20,

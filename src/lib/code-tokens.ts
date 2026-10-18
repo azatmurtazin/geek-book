@@ -4,7 +4,7 @@
 // same runs. Strings are kept inside the code runs so `//` and `#` inside them
 // are not mistaken for comments.
 
-import type { BookConfig } from "./book-config.js";
+import type { CodeTable } from "../domain/values/code-language.js";
 import { commentStyle } from "./code-meta.js";
 
 export interface CodeSegment {
@@ -43,8 +43,8 @@ function stringEnd(code: string, start: number): number {
  * characters — including strings — stay in one run; comment runs keep the
  * exact boundaries the HTML renderer has always highlighted.
  */
-export function tokenizeCode(cfg: BookConfig, code: string, lang: string): CodeSegment[] {
-  const style = commentStyle(cfg, lang);
+export function tokenizeCode(languages: CodeTable, code: string, lang: string): CodeSegment[] {
+  const style = commentStyle(languages, lang);
   if (style === null) return [{ kind: "code", text: code }];
   const key = lang.toLowerCase();
   const slash = style === "slash";

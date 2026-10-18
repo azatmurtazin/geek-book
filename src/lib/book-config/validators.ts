@@ -129,11 +129,6 @@ export function asContentTypes(value: unknown): Record<string, string> {
   return out;
 }
 
-/** Round to hundredths, so derived lengths read cleanly in the config dump. */
-export function round2(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
 /** A `#rrggbb` colour, normalized to lower case, else the default. */
 function asColor(value: unknown, fallback: string): string {
   if (typeof value !== "string") return fallback;

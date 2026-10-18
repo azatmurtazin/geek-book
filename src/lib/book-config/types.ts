@@ -3,44 +3,29 @@
 // `BookConfig` is the one the rest of the engine sees; the others describe the
 // sections it is assembled from. Nothing here reads or defaults anything — that
 // is `validators.ts` and `defaults.ts`.
+//
+// The pure values — the paper table, the palette, the code-language rules and
+// the font families — live in `domain/values/` and are re-exported here, so
+// importers keep naming `book-config.js`.
+
+import type { CodeLanguage } from "../../domain/values/code-language.js";
+import type { ColorsConfig } from "../../domain/values/palette.js";
+import type { PaperName } from "../../domain/values/geometry.js";
+import type { FontFamilies } from "../../domain/values/fonts.js";
+
+export type { ColorKey, ColorsConfig } from "../../domain/values/palette.js";
+export type { CommentStyle } from "../../domain/values/code-language.js";
+export { PAPERS } from "../../domain/values/geometry.js";
+export type { PaperName } from "../../domain/values/geometry.js";
 
 /**
- * The typefaces the book is set in. A book names families, never files: the
- * website loads the families from the webfont stylesheet, and the printed
- * edition asks the system (fontconfig, via LuaLaTeX) for a family by name, so
- * the fonts have to be installed where the build runs. The engine's Docker
- * image carries the defaults.
+ * The typefaces the book is set in (see `domain/values/fonts.ts`). A book names
+ * families, never files: the website loads the families from the webfont
+ * stylesheet, and the printed edition asks the system (fontconfig, via LuaLaTeX)
+ * for a family by name, so the fonts have to be installed where the build runs.
+ * The engine's Docker image carries the defaults.
  */
-export interface FontsConfig {
-  /** Family the body text, the headings and the diagrams are set in. */
-  text: string;
-  /**
-   * The text font's bold face, as a fontspec declaration (`Family:options`).
-   * Only needed when bold is a weight instance of a variable font rather than a
-   * face of its own, since fontconfig then reports no bold for the family —
-   * which is the case for the default, Literata. Empty leaves the family's own
-   * bold, which is what a book that names its own family starts out with.
-   */
-  bold: string;
-  /** Family code blocks are set in. */
-  code: string;
-  /**
-   * Webfont stylesheet the website and previews load. Empty loads none. The
-   * default is the engine's own stylesheet while the families are the engine's;
-   * a book with families of its own starts with no webfont.
-   */
-  web: string;
-}
-
-/** The papers a book may set, with their dimensions in millimetres. */
-export const PAPERS = {
-  a4: { option: "a4paper", widthMm: 210, heightMm: 297 },
-  a5: { option: "a5paper", widthMm: 148, heightMm: 210 },
-  letter: { option: "letterpaper", widthMm: 215.9, heightMm: 279.4 },
-  legal: { option: "legalpaper", widthMm: 215.9, heightMm: 355.6 },
-} as const;
-
-export type PaperName = keyof typeof PAPERS;
+export type FontsConfig = FontFamilies;
 
 /**
  * The printed edition's page: a paper and its margins, all in millimetres. The
@@ -61,19 +46,8 @@ export interface GeometryConfig {
   textHeightMm: number;
 }
 
-/** The printed edition's palette, each value `#rrggbb`. */
-export type ColorKey =
-  | "fg"
-  | "muted"
-  | "rule"
-  | "codeBackground"
-  | "codeForeground"
-  | "codeComment"
-  | "calloutBackground"
-  | "calloutBorder"
-  | "calloutForeground";
-
-export type ColorsConfig = Record<ColorKey, string>;
+// The printed edition's palette lives in `domain/values/palette.ts` and is
+// re-exported above.
 
 /**
  * The printed edition's type scale, in points. Heading leading is 1.2× the
@@ -212,17 +186,12 @@ export interface DiagramsConfig {
   fontSize: number;
 }
 
-/** How comments are introduced in a code fence. */
-export type CommentStyle = "slash" | "hash";
+// `CommentStyle` is re-exported above; the language shape lives in
+// `domain/values/code-language.ts`.
 
 /** A book's own code-fence language: the chip a block shows and how its
  *  comments are marked, for a language the built-in table does not know. */
-export interface CodeLangConfig {
-  /** The label the block shows; a language with none shows no chip. */
-  label: string;
-  /** Its comment syntax, or "" to keep the built-in choice (usually none). */
-  comment: CommentStyle | "";
-}
+export type CodeLangConfig = CodeLanguage;
 
 /** Remote images the build fetches into the output, so neither edition sends
  *  the reader to the origin (see `lib/remote-images.ts`). */

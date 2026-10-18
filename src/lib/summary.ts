@@ -1,17 +1,13 @@
 // The chapter tree from book/SUMMARY.md — the single source of truth for what
 // the book contains and in what order. Shared by the web-book build, the LaTeX
 // book build and the linter, so they all number and group chapters identically.
+//
+// The types live in `domain/model/toc.ts`; this is the legacy path and the
+// parser that reads SUMMARY.md into them.
 
-export interface TocItem {
-  kind: "group" | "entry";
-  title?: string;
-  /** entry only */
-  label?: string;
-  relBook?: string;
-  indent?: number;
-  /** 1-based line in SUMMARY.md; the linter uses it to point at problems. */
-  line?: number;
-}
+import type { TocItem } from "../domain/model/toc.js";
+
+export type { Toc, TocItem } from "../domain/model/toc.js";
 
 /** Every group heading and chapter entry in SUMMARY.md, in order. */
 export function parseSummary(source: string): TocItem[] {

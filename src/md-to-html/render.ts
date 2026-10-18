@@ -37,7 +37,7 @@ const LAYOUT = path.join(ROOT, "_layouts", "default.html");
  */
 export function highlightComments(cfg: BookConfig, code: string, lang: string): string {
   let out = "";
-  for (const { kind, text } of tokenizeCode(cfg, code, lang)) {
+  for (const { kind, text } of tokenizeCode(cfg.code, code, lang)) {
     const escaped = escapeHtml(text);
     out += kind === "comment" ? `<span class="code-comment">${escaped}</span>` : escaped;
   }

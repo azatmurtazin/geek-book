@@ -16,7 +16,7 @@
 
 | Field | Value |
 | --- | --- |
-| State | In progress: P0 harness landed (PDF reference pending), P1 landed |
+| State | In progress: P0 harness landed (PDF reference pending), P1–P2 landed |
 | Target | `docs/CLEAN_CODE_ARCHITECTURE.md` |
 | Baseline | `docs/CURRENT_ARCHITECTURE.md` |
 | Phases | 9 (0–8), each an independently shippable PR |
@@ -397,6 +397,25 @@ atomic.
 - *Type-only import churn* under `verbatimModuleSyntax`: use `import type` for
   moved types and keep `export type` in shims where needed.
 - *Narrow-signature regressions*: covered by the existing golden/parity tests.
+
+**Outcome (landed).**
+
+- `domain/values/paths.ts` has the four brands and their constructors; only
+  `slugify` returns an `Anchor` so far. Wider branding (`Chapter.path`,
+  `FileName`, `ImageAsset.path`) is deferred to Phase 8, as step 1 allows — the
+  model extraction did not wait on it.
+- The model moved with today's shapes: `inline.ts` carries `LinkNode`/`ImageRef`,
+  not the Phase 3 `LinkTarget`/`ImageSource` sum types; `assets.ts` adds
+  `PixelSize`, `chapter.ts` adds `HeadingDepth`. `ChapterContext` stays in the
+  `ir.ts` shim until Phase 4.
+- `plainText` (marked tokens) stays in `lib/markdown.ts` until Phase 3; only
+  `slugify` and `splitLines` moved. The token walk stays in
+  `lib/smart-typography.ts`; the pure engine (`run`, `smartTypography`) is in
+  `domain/values/smart-typography.ts`.
+- Shims keep today's signatures for `substituteContentPlaceholders` and `ui`
+  (each needs a slice of the config to build its input map), so their call sites
+  are untouched. `commentStyle`, `codeLabel` and `tokenizeCode` did narrow to a
+  code table, and their call sites pass `cfg.code`.
 
 **Size.** M. **Risk.** Med.
 

@@ -3,7 +3,7 @@
 Execution checklist for [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md).
 Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline: [`CURRENT_ARCHITECTURE.md`](./CURRENT_ARCHITECTURE.md).
 
-**Status:** in progress — P0 harness landed (PDF reference pending), P1 done · one phase = one PR = one green baseline.
+**Status:** in progress — P0 harness landed (PDF reference pending), P1–P2 done · one phase = one PR = one green baseline.
 
 ## Invariants (every commit)
 
@@ -35,14 +35,13 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
   - [x] ports `reporter` / `logger` + `adapters/reporting/{console-reporter,console-logger}.ts`
   - [x] Route `cli.ts`'s own messages through the reporter; usage text and exit codes unchanged
   - [x] Tests: `test/domain/diagnostics.test.ts`, `test/adapters/reporting/*`
-  - [ ] Tests: `diagnostics`, `console-reporter`
 
-- [ ] **P2 — Domain model + values (behind shims)** (M/Med)
-  - [ ] `domain/values/paths.ts` (branded paths; split if friction)
-  - [ ] `domain/model/{toc,chapter,inline,assets}.ts`; `ir.ts` → shim
-  - [ ] Move pure values (placeholders, ui-strings, geometry, palette, code-language, fonts, anchor/text, smart-typography engine)
-  - [ ] Re-export shims at old paths; update narrow-signature call sites
-  - [ ] Tests: `test/domain/*`
+- [x] **P2 — Domain model + values (behind shims)** (M/Med)
+  - [x] `domain/values/paths.ts` (branded `BookPath`/`OutputPath`/`SourcePath`/`Anchor`; `Anchor` adopted by `slugify`, wider branding deferred to P8)
+  - [x] `domain/model/{toc,inline,assets,chapter}.ts`; `ir.ts` → shim (`ChapterContext` stays for P4)
+  - [x] Moved pure values: `placeholders`, `ui-strings`, `geometry` (`PAPERS` + `textBlock`), `palette`, `code-language`, `fonts`, `anchor`/`text`, the smart-typography engine
+  - [x] Re-export shims at old paths; narrowed `commentStyle`/`codeLabel`/`tokenizeCode` to a code table
+  - [x] Tests: `test/domain/values/*` (7 files)
 
 - [ ] **P3 — Markdown port + one walk** (L/High) ⚠ highest fidelity
   - [ ] `application/ports/markdown-parser.ts` (neutral `MdNode`/`MdInline`)

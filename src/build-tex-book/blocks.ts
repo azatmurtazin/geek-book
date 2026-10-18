@@ -4,7 +4,7 @@ import type { Token, Tokens } from "marked";
 import { markedInstance, plainText, slugify } from "../lib/markdown.js";
 import { applySmartTypography } from "../lib/smart-typography.js";
 import type { BookConfig } from "../lib/book-config.js";
-import type { Align, Block, Figure } from "./ir.js";
+import type { Align, Block, Figure, HeadingDepth } from "./ir.js";
 import type { ParseState } from "./state.js";
 import { decodeEntities } from "./entities.js";
 import { imageNode } from "./images.js";
@@ -37,7 +37,7 @@ export function blocksOf(cfg: BookConfig, tokens: Token[], state: ParseState): B
         const slug = `c${state.ctx.chapterId}--${slugify(plainText(t.tokens))}`;
         out.push({
           kind: "heading",
-          depth: t.depth,
+          depth: t.depth as HeadingDepth,
           text: inlinesOf(cfg, t.tokens, state),
           anchors: t.depth === 1 ? [`c${state.ctx.chapterId}`, slug] : [slug],
         });

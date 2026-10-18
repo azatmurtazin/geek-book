@@ -9,8 +9,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_LANGS } from "../langs.js";
 import type { BookConfig } from "./types.js";
-import { PAPERS } from "./types.js";
 import { DEFAULTS } from "./defaults.js";
+import { textBlock } from "../../domain/values/geometry.js";
 import {
   asBaseUrl,
   asBool,
@@ -32,7 +32,6 @@ import {
   readLint,
   readMarkdown,
   readType,
-  round2,
 } from "./validators.js";
 
 /** The config file's conventional name, at the root the CLI runs from. */
@@ -132,7 +131,6 @@ export function load(cwd: string = process.cwd(), named: string | null = null): 
   const bottom = asMillimetres(geometryRaw.bottom, DEFAULTS.tex.geometry.bottom);
   const left = asMillimetres(geometryRaw.left, DEFAULTS.tex.geometry.left);
   const right = asMillimetres(geometryRaw.right, DEFAULTS.tex.geometry.right);
-  const paperSize = PAPERS[paper];
   const extraPreamble = asString(tex.preamble, "");
 
   // A language the book describes under `code` is one it teaches the renderers,
@@ -191,8 +189,7 @@ export function load(cwd: string = process.cwd(), named: string | null = null): 
         right,
         // A margin wider than the paper clamps to a hairline rather than a
         // non-positive block, which would break the picture scaling.
-        textWidthMm: round2(Math.max(1, paperSize.widthMm - left - right)),
-        textHeightMm: round2(Math.max(1, paperSize.heightMm - top - bottom)),
+        ...textBlock(paper, { top, bottom, left, right }),
       },
       colors: readColors((tex.colors ?? {}) as Record<string, unknown>),
       type: readType((tex.type ?? {}) as Record<string, unknown>),
