@@ -16,7 +16,7 @@
 
 | Field | Value |
 | --- | --- |
-| State | Proposed, not started |
+| State | Proposed; pre-P0 diagram guard landed (§9.4) |
 | Target | `docs/CLEAN_CODE_ARCHITECTURE.md` |
 | Baseline | `docs/CURRENT_ARCHITECTURE.md` |
 | Phases | 9 (0–8), each an independently shippable PR |
@@ -146,7 +146,9 @@ not the baseline.
 The committed goldens (`test/fixtures/golden/chapter.{md,html,tex}`) and the new
 baseline artifacts are **never** regenerated to make a phase pass. They are
 regenerated only when a phase is explicitly a behaviour change — which, in this
-plan, is none of them. A diff means a bug.
+plan, is none of them. A diff means a bug. The one edit made before Phase 0 —
+adding `test/fixtures/golden/diagram.md` (§9.4) — adds a *new* fixture for a
+construct the engine already supports; it regenerates no existing golden.
 
 ---
 
@@ -189,6 +191,9 @@ Sizes are relative (S ≈ a day, M ≈ a few days, L ≈ a week). Risks are abou
 - `git` and the ability to stack small PRs.
 - Agreement that no output may change; if any stakeholder expects an output
   change, it is a separate, later piece of work.
+- The pre-P0 diagram guard landed (`test/fixtures/golden/diagram.md` +
+  `test/diagrams/render.test.ts`, §9.4), so the diagram path has unit coverage
+  before the phases move it.
 
 ---
 
@@ -506,6 +511,8 @@ steps) and point **both** builders at it. Introduce the `DiagramRenderer`,
 5. **Tests.** Add `test/application/source-to-model.test.ts` with fake ports
    (a fake `DiagramRenderer` returning a canned `Figure`, a fake `ImageStore`,
    an in-memory `MarkdownParser`). Assert figures/images/anchors are as expected.
+   The fake pins the pipeline's wiring only; the real Mermaid path stays covered
+   by the isolated `test/diagrams/render.test.ts` (added before Phase 0, §9.4).
 
 **New/changed modules.** Three ports; three adapters;
 `application/pipelines/source-to-model.ts`, `domain/services/extract-diagrams.ts`;
@@ -772,6 +779,8 @@ the boundary rules from *report* to *error*.
    - `src/lib/content.css` → `adapters/render-html/content.css`.
    - `src/build-tex-book/preamble.tex` → `adapters/render-tex/preamble.tex`.
    Update `asset-template-store.ts` to read them relative to itself.
+   Also move the suites that follow a module: `test/diagrams/*` →
+   `test/adapters/diagrams/*` (`theme.test.ts` and `render.test.ts`).
 3. **Enforce.** Set every `.dependency-cruiser.cjs` rule to `severity: "error"`;
    make `just boundaries` part of `just lint`; add it to pre-commit and CI.
    Tighten `test/architecture.test.ts` to assert the final rules and the
@@ -851,6 +860,19 @@ fixture's *Markdown* only if a construct the engine already supports is missing
 from it, and regenerate the HTML/TeX goldens only when that construct's output is
 understood and unchanged.
 
+`test/fixtures/golden/diagram.md` (added **before** Phase 0, see §11) is the
+diagram counterpart. It is not wired into the sync `chapter.*` round-trip — that
+fixture's HTML is produced by `renderBody`, which does not preprocess Mermaid, so
+a fence there would golden a plain code block rather than the SVG the site emits.
+The diagram is instead guarded by `test/diagrams/render.test.ts`, an isolated
+**structural** suite: it asserts an `<svg>` with a recomputed viewBox, labels
+rewritten to native `<text>`, and one sized `Figure`, rather than the SVG bytes.
+This keeps the only jsdom/Mermaid boot in a file of its own (the risk register's
+"isolate its one integration test") and stays robust to a Mermaid upgrade, which
+must read as a version change and not a broken golden. Byte-exactness for the
+real diagram comes from `just verify` over the guide's own diagram chapter; the
+suite is not regenerated and never becomes a golden.
+
 ---
 
 ## 10. Risk register
@@ -864,7 +886,8 @@ understood and unchanged.
 | Lint message/line drift | 6 | Med | Med | `lint.txt` baseline; keep the raw-line style pass |
 | Branded-path adoption balloons | 2 | Med | Med | Split branding into a focused follow-up; land the model first |
 | `verbatimModuleSyntax` type-only churn | 2–7 | Med | Low | Use `import type`; keep `export type` in shims |
-| jsdom global mutation leaking across tests | 3, 4 | Low | Med | Keep the Mermaid renderer behind the port; isolate its one integration test |
+| jsdom global mutation leaking across tests | 3, 4 | Low | Med | Isolated in `test/diagrams/render.test.ts` (added before Phase 0); keep the Mermaid renderer behind the port |
+| Diagram suite brittle to a Mermaid upgrade | 3, 4 | Med | Low | Assert structure (viewBox, `<text>` labels, one sized `Figure`), never the SVG bytes; byte-exactness stays with `just verify` over the guide |
 | Two code paths alive during strangler | 3–7 | Med | Med | Each phase flips one consumer and deletes the old path or shims it; no path lives more than one phase |
 | Large PRs / review fatigue | all | Med | Med | One phase per PR; shims keep diffs local; verify gates the merge |
 | Wiring a port to the wrong context | 7 | Low | Med | New application tests with fakes; verify |
@@ -876,6 +899,7 @@ understood and unchanged.
 
 | Phase | Added tests |
 | --- | --- |
+| pre‑P0 | `test/diagrams/render.test.ts` + `test/fixtures/golden/diagram.md` — the isolated, structural jsdom/Mermaid integration guard (see §9.4); added before the baseline so it runs throughout the refactor |
 | 0 | `test/architecture.test.ts` (report mode); baseline harness |
 | 1 | `test/domain/diagnostics.test.ts`; `test/adapters/reporting/console-reporter.test.ts` |
 | 2 | `test/domain/{anchor,placeholders,code-language,smart-typography,geometry}.test.ts` |
@@ -888,7 +912,8 @@ understood and unchanged.
 
 Existing suites (`test/lib`, `test/build-tex-book`, `test/md-to-html`,
 `test/diagrams`, `test/parity`) are kept green throughout and moved/renamed only
-when their module moves.
+when their module moves. The `test/diagrams/*` suites follow `src/diagrams/` into
+`test/adapters/diagrams/` in Phase 8, when the assets and modules move.
 
 ---
 
@@ -1010,7 +1035,7 @@ Target (Phase 8): `marked` → 1 path; `jsdom`/`mermaid` → `adapters/diagrams/
 | 5 | `adapters/render-html/*`, `adapters/web/*`, `application/usecases/render-standalone.ts` | `build-web-book/cli.ts`; delete `build-web-book/{page,nav,links,site}.ts`; `lib/markdown.ts` hooks removed |
 | 6 | `domain/services/anchor-index.ts`, `application/usecases/lint-book.ts`, `adapters/lint/*` | delete `src/lint/{chapter,summary,links,markdown,paths,errors,cli}.ts` |
 | 7 | `application/ports/{file-system,http-client,process-runner,pdf-toolchain,template-store,config-source}.ts`, `adapters/{fs,http,process,templates,config}/*`, `application/{settings,usecases/*}`, `src/cli/{main,commands/*}` | delete `src/cli.ts`; `lib/book-config/*` → shims |
-| 8 | (moves) assets into `adapters/**` | delete all shims and `src/lib`, `src/build-*`, `src/md-to-html`, `src/lint`, `src/diagrams`; `.dependency-cruiser.cjs` → error |
+| 8 | (moves) assets into `adapters/**`; `test/diagrams/*` → `test/adapters/diagrams/*` | delete all shims and `src/lib`, `src/build-*`, `src/md-to-html`, `src/lint`, `src/diagrams`; `.dependency-cruiser.cjs` → error |
 
 ---
 
