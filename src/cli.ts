@@ -21,6 +21,8 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { load as loadConfig, takeConfigOption, type BookConfig } from "./lib/book-config.js";
+import { ConsoleReporter } from "./adapters/reporting/console-reporter.js";
+import { ConsoleLogger } from "./adapters/reporting/console-logger.js";
 
 interface Command {
   /** One-liner for the help text. */
@@ -29,6 +31,13 @@ interface Command {
 }
 
 const cfg: BookConfig = loadConfig(process.cwd(), takeConfigOption(process.argv.slice(2)).file);
+
+// The CLI is where diagnostics become text. Commands still return numbers in
+// this phase; later they return `Result` and this pair renders the failure.
+const reporter = new ConsoleReporter(process.stdout, process.stderr);
+// The CLI's own usage/help text is stderr (as it always has been), so the
+// logger writes there; progress lines from the build commands stay on stdout.
+const logger = new ConsoleLogger(process.stderr);
 
 const COMMANDS: Record<string, Command> = {
   web: {
@@ -138,20 +147,29 @@ function usage(cfg: BookConfig): void {
     "",
     "`--config <file>` builds the book beside another config file instead.",
   ];
-  process.stderr.write(`${lines.join("\n")}\n`);
+  for (const line of lines) logger.info(line);
 }
 
 async function main(cfg: BookConfig, argv: string[]): Promise<number> {
   const option = takeConfigOption(argv);
   if (option.missingValue) {
-    process.stderr.write("geek-book: --config needs a file\n\n");
+    reporter.report({
+      severity: "error",
+      code: "cli/config-missing-value",
+      message: "--config needs a file",
+    });
+    logger.info("");
     usage(cfg);
     return 2;
   }
   if (option.file) {
     const file = path.resolve(process.cwd(), option.file);
     if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
-      process.stderr.write(`geek-book: no such config file: ${option.file}\n`);
+      reporter.report({
+        severity: "error",
+        code: "cli/config-not-found",
+        message: `no such config file: ${option.file}`,
+      });
       return 2;
     }
   }
@@ -162,7 +180,12 @@ async function main(cfg: BookConfig, argv: string[]): Promise<number> {
   }
   const chosen = COMMANDS[command];
   if (!chosen) {
-    process.stderr.write(`geek-book: unknown command '${command}'\n\n`);
+    reporter.report({
+      severity: "error",
+      code: "cli/unknown-command",
+      message: `unknown command '${command}'`,
+    });
+    logger.info("");
     usage(cfg);
     return 2;
   }

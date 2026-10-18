@@ -16,7 +16,7 @@
 
 | Field | Value |
 | --- | --- |
-| State | Proposed; pre-P0 diagram guard landed (§9.4) |
+| State | In progress: P0 harness landed (PDF reference pending), P1 landed |
 | Target | `docs/CLEAN_CODE_ARCHITECTURE.md` |
 | Baseline | `docs/CURRENT_ARCHITECTURE.md` |
 | Phases | 9 (0–8), each an independently shippable PR |
@@ -280,22 +280,29 @@ run outside the image.
    `src/application/ports/logger.ts` (`Logger.info(string)`).
 3. Add `src/adapters/reporting/console-reporter.ts`: a `Reporter` that writes
    errors to one stream and warnings/notes to another, format-identical to
-   today's `error: {file}:{line}: {message}` lines.
+   today's `error: {file}:{line}: {message}` lines. Add
+   `src/adapters/reporting/console-logger.ts`: a `Logger` that writes one line
+   per `info` call to an injected stream.
 4. Refactor `src/cli.ts`:
    - build `const reporter = new ConsoleReporter(process.stdout, process.stderr)`
-     and a `ConsoleLogger`;
-   - route the CLI's own `process.stderr.write(...)` usage/usage-error messages
-     through a small local helper backed by the reporter;
+     and a `ConsoleLogger(process.stderr)` (the CLI's own text is stderr);
+   - route the usage/help block through the logger, byte-identically;
+   - route the usage *errors* (`--config needs a file`, `unknown command`, …)
+     through a small local helper backed by the reporter, so they render as
+     `error: …`;
    - keep `main` returning the same numeric codes.
 5. Add `test/domain/diagnostics.test.ts` (pure) and
-   `test/adapters/reporting/console-reporter.test.ts` (format).
+   `test/adapters/reporting/{console-reporter,console-logger}.test.ts` (format).
 
 **New/changed modules.** `src/domain/diagnostics.ts`,
 `src/application/ports/{reporter,logger}.ts`,
-`src/adapters/reporting/console-reporter.ts`, `src/cli.ts`, tests.
+`src/adapters/reporting/{console-reporter,console-logger}.ts`, `src/cli.ts`, tests.
 
 **Keeping it green.** No command module changes; only `cli.ts`'s own messaging.
-Baseline `just verify` unaffected (CLI usage text unchanged).
+The usage/help block is byte-identical; the three usage-error lines gain the
+`error: ` prefix (the reporter's format) and lose the `geek-book: ` prefix. That
+is the expected, accepted drift of this phase — the frozen baseline covers
+`config`/`lint`/`md`, not CLI error text.
 
 **Verification.** `just verify && just lint && just test` green. The two new
 tests pass.
@@ -907,7 +914,7 @@ suite is not regenerated and never becomes a golden.
 | --- | --- |
 | pre‑P0 | `test/diagrams/render.test.ts` + `test/fixtures/golden/diagram.md` — the isolated, structural jsdom/Mermaid integration guard (see §9.4); added before the baseline so it runs throughout the refactor |
 | 0 | `test/architecture.test.ts` (report mode); baseline harness |
-| 1 | `test/domain/diagnostics.test.ts`; `test/adapters/reporting/console-reporter.test.ts` |
+| 1 | `test/domain/diagnostics.test.ts`; `test/adapters/reporting/{console-reporter,console-logger}.test.ts` |
 | 2 | `test/domain/{anchor,placeholders,code-language,smart-typography,geometry}.test.ts` |
 | 3 | `test/adapters/markdown/marked-parser.test.ts`; `test/domain/assemble.test.ts` |
 | 4 | `test/application/source-to-model.test.ts` (fake ports) |
@@ -1034,7 +1041,7 @@ Target (Phase 8): `marked` → 1 path; `jsdom`/`mermaid` → `adapters/diagrams/
 | Phase | Primary files created | Primary files changed/removed |
 | --- | --- | --- |
 | 0 | `tools/baseline/*`, `.dependency-cruiser.cjs`, `test/architecture.test.ts`, `test/baseline/*` | `Justfile`, `package.json`, CI |
-| 1 | `domain/diagnostics.ts`, `application/ports/{reporter,logger}.ts`, `adapters/reporting/console-reporter.ts` | `src/cli.ts` |
+| 1 | `domain/diagnostics.ts`, `application/ports/{reporter,logger}.ts`, `adapters/reporting/{console-reporter,console-logger}.ts` | `src/cli.ts` |
 | 2 | `domain/model/*`, `domain/values/*` | `lib/{summary,markdown,smart-typography,code-meta,langs,content-placeholders,ui-strings}.ts`, `lib/book-config/types.ts`, `build-tex-book/ir.ts` → shims |
 | 3 | `application/ports/markdown-parser.ts`, `adapters/markdown/marked-parser.ts`, `domain/services/{assemble,resolve-links,resolve-images}.ts`, `domain/values/entities.ts` | `build-tex-book/parse.ts`; delete `build-tex-book/{blocks,inlines,entities,links,images,state}.ts` |
 | 4 | `application/ports/{diagram-renderer,image-store,image-measurer}.ts`, `adapters/diagrams/mermaid-renderer.ts`, `adapters/http/remote-image-store.ts`, `adapters/images/image-measurer.ts`, `application/pipelines/source-to-model.ts` | `build-tex-book/{parse,cli}.ts`, `build-web-book/cli.ts`, `diagrams/render.ts` (extract diagrams) |

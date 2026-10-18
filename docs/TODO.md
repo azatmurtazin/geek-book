@@ -3,7 +3,7 @@
 Execution checklist for [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md).
 Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline: [`CURRENT_ARCHITECTURE.md`](./CURRENT_ARCHITECTURE.md).
 
-**Status:** proposed; pre-P0 diagram guard landed · one phase = one PR = one green baseline.
+**Status:** in progress — P0 harness landed (PDF reference pending), P1 done · one phase = one PR = one green baseline.
 
 ## Invariants (every commit)
 
@@ -30,10 +30,11 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
   - [x] `test/architecture.test.ts` (report-only; `marked` importer allowlist)
   - [x] Wire `boundaries` (non-failing) + `verify` (failing) into CI
 
-- [ ] **P1 — Diagnostics kernel** (S/Low)
-  - [ ] `domain/diagnostics.ts` (`Severity`, `Diagnostic`, `Result`, `ok`/`fail`)
-  - [ ] ports `reporter` / `logger` + `adapters/reporting/console-reporter.ts`
-  - [ ] Route `cli.ts`'s own messages through reporter; same exit codes
+- [x] **P1 — Diagnostics kernel** (S/Low)
+  - [x] `domain/diagnostics.ts` (`Severity`, `Diagnostic`, `Result`, `ok`/`fail`, `combine`, `mapResult`)
+  - [x] ports `reporter` / `logger` + `adapters/reporting/{console-reporter,console-logger}.ts`
+  - [x] Route `cli.ts`'s own messages through the reporter; usage text and exit codes unchanged
+  - [x] Tests: `test/domain/diagnostics.test.ts`, `test/adapters/reporting/*`
   - [ ] Tests: `diagnostics`, `console-reporter`
 
 - [ ] **P2 — Domain model + values (behind shims)** (M/Med)
