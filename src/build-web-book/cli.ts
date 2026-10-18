@@ -16,7 +16,13 @@ import process from "node:process";
 import type { BookConfig } from "../lib/book-config.js";
 import { escapeHtml } from "../lib/html.js";
 import { parseSummary } from "../lib/summary.js";
-import { renderSourceToHtml } from "../md-to-html/render.js";
+import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
+import { renderPreparedBody } from "../md-to-html/render.js";
+import { substituteDiagrams } from "../diagrams/render.js";
+import { MarkedParser } from "../adapters/markdown/marked-parser.js";
+import { MermaidRenderer } from "../adapters/diagrams/mermaid-renderer.js";
+import { RemoteImageStore } from "../adapters/http/remote-image-store.js";
+import { sourceToModel, type SourceDeps } from "../application/pipelines/source-to-model.js";
 import { assemblePage, rewriteImages, rewriteLinks, stylesheet, headHtml, type NavSlot } from "./site.js";
 import { outputRelFor, pageHref } from "./paths.js";
 import { REMOTE_IMAGE_DIR, RemoteImages } from "../lib/remote-images.js";
@@ -67,6 +73,11 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
     process.stderr.write("geek-book: no written chapters in SUMMARY.md\n");
     return 1;
   }
+
+  // Every written chapter's id, the same `c<id>` numbering the print build uses,
+  // so a link resolves identically in both editions.
+  const idOf = new Map<string, number>();
+  written.forEach((chapter, index) => idOf.set(chapter.relBook, index));
 
   // Keep only sidebar groups that contain a written chapter.
   const navItems: { kind: "group" | "entry"; label: string; relBook?: string; indent?: number }[] = [];
@@ -120,6 +131,18 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
     types: cfg.images.types,
   });
 
+  // The one source pipeline, with this edition's ports: the website draws a
+  // fence under its own id and embeds the SVG, so the figure name is unused.
+  const deps: SourceDeps = {
+    markdown: new MarkedParser(),
+    diagrams: new MermaidRenderer(cfg),
+    images: new RemoteImageStore(remote),
+    substitute: (source) => substituteContentPlaceholders(cfg, source),
+    smartTypography: cfg.markdown.smartTypography,
+    bookDir: cfg.bookDir,
+    diagramName: (index) => ({ id: `diagram-${index}`, name: `diagram-${index}` }),
+  };
+
   const homeOutputRel = "index.html";
   const head = headHtml(cfg);
 
@@ -163,18 +186,19 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
     return true;
   };
 
-  /** A page body: marked + mermaid, links rewritten, images copied. */
+  /** A page body: the shared pipeline, then links rewritten and images copied. */
   const renderPage = async (mdPath: string, relBook: string, outputRel: string): Promise<string | null> => {
     const markdown = fs.readFileSync(mdPath, "utf8");
-    try {
-      // Remote images have to be in the output before the page points at them.
-      await remote.collect(markdown);
-    } catch (error) {
+    const ctx = { chapterId: idOf.get(relBook) ?? written.length, relBook, idOf };
+    // Remote images have to be in the output before the page points at them.
+    const model = await sourceToModel(markdown, ctx, deps);
+    if (!model.ok) {
       // A remote image the build could not fetch: the message says which URL.
-      process.stderr.write(`geek-book: ${(error as Error).message}\n`);
+      process.stderr.write(`geek-book: ${model.diagnostics[0].message}\n`);
       return null;
     }
-    const linked = rewriteLinks(await renderSourceToHtml(cfg, markdown), relBook, outputRel, pages, cfg.web.prettyUrls);
+    const html = substituteDiagrams(renderPreparedBody(cfg, model.value.markdown), model.value.diagrams);
+    const linked = rewriteLinks(html, relBook, outputRel, pages, cfg.web.prettyUrls);
     const { body, assets } = rewriteImages(linked, relBook, outputRel, remote);
     for (const asset of assets) {
       if (!copyAsset(asset)) {

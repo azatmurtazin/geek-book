@@ -3,7 +3,7 @@
 Execution checklist for [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md).
 Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline: [`CURRENT_ARCHITECTURE.md`](./CURRENT_ARCHITECTURE.md).
 
-**Status:** in progress — P0 harness landed (PDF reference pending), P1–P3 done · one phase = one PR = one green baseline.
+**Status:** in progress — P0 harness landed (PDF reference pending), P1–P4 done · one phase = one PR = one green baseline.
 
 ## Invariants (every commit)
 
@@ -51,12 +51,13 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
   - [x] Watch: `token.escaped` (kept), hard breaks, GFM table align, raw HTML, soft breaks, list `start` (all verified)
   - [x] Tests: `marked-parser`, `assemble`; TeX golden + parity unchanged; real `book.tex`/PDF byte-identical
 
-- [ ] **P4 — One source pipeline** (M/Med)
-  - [ ] Ports: `diagram-renderer`, `image-store`, `image-measurer`
-  - [ ] Adapters: `mermaid-renderer`, `remote-image-store`, `image-measurer`
-  - [ ] `application/pipelines/source-to-model.ts` (substitute → collect → extract → lex → render → assemble)
-  - [ ] Both builders feed the pipeline (HTML still old renderer)
-  - [ ] Tests: `source-to-model` with fake ports
+- [x] **P4 — One source pipeline** (M/Med)
+  - [x] Ports: `diagram-renderer`, `image-store`, `image-measurer`
+  - [x] Adapters: `mermaid-renderer`, `remote-image-store`, `image-measurer` (the measurer lands here, consumed in P7)
+  - [x] `application/pipelines/source-to-model.ts` (substitute → collect → extract → lex → render → assemble)
+  - [x] `domain/services/extract-diagrams.ts`; `diagrams/render.ts` keeps rendering only
+  - [x] Both builders feed the pipeline (HTML still old renderer, via `renderPreparedBody` + `substituteDiagrams`)
+  - [x] Tests: `source-to-model` with fake ports; `extract-diagrams`; `image-measurer`; real `book.tex`/diagram SVG byte-identical
 
 - [ ] **P5 — Pure HTML renderer** (L/High) ⚠ byte fidelity
   - [ ] `adapters/render-html/*` (`renderChapterBody`, escape, site-meta, stylesheets, content.css, hrefFor/srcFor)

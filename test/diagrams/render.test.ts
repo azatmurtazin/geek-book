@@ -14,7 +14,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { preprocessMermaidMd, renderMermaid } from "../../src/diagrams/render.js";
+import { renderMermaid } from "../../src/diagrams/render.js";
+import { extractDiagrams } from "../../src/domain/services/extract-diagrams.js";
 import { renderSourceToHtml } from "../../src/md-to-html/render.js";
 import { parseChapter } from "../../src/build-tex-book/parse.js";
 import { chapterTex } from "../../src/build-tex-book/tex.js";
@@ -43,9 +44,9 @@ describe("renderMermaid — one self-contained drawing", () => {
   });
 });
 
-describe("preprocessMermaidMd — the fence never reaches the Markdown parser", () => {
-  it("swaps a fence for a placeholder paragraph and keeps its source", async () => {
-    const { markdown, diagrams } = await preprocessMermaidMd(
+describe("extractDiagrams — the fence never reaches the Markdown parser", () => {
+  it("swaps a fence for a placeholder paragraph and keeps its source", () => {
+    const { markdown, diagrams } = extractDiagrams(
       "before\n\n```mermaid\nflowchart LR\n```\n\nafter",
     );
     expect(diagrams.get(1)).toBe("flowchart LR");

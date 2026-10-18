@@ -25,7 +25,8 @@ import { readCss } from "../lib/css.js";
 import { codeStack, fontLinks, textStack } from "../lib/fonts.js";
 import { webPaletteVars } from "../lib/web-palette.js";
 import { basePath, metaTags } from "../lib/site-meta.js";
-import { preprocessMermaidMd, renderMermaid, substituteDiagrams } from "../diagrams/render.js";
+import { extractDiagrams } from "../domain/services/extract-diagrams.js";
+import { renderMermaid, substituteDiagrams } from "../diagrams/render.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const LAYOUT = path.join(ROOT, "_layouts", "default.html");
@@ -56,12 +57,18 @@ function pageTitle(cfg: BookConfig, source: string): string {
   return title ? `${title} — ${cfg.title}` : cfg.title;
 }
 
-/** The chapter body as HTML: headings carry slug ids, GFM is on. `breaks` is
- *  passed here, not to `markedInstance`, so it reaches the website's renderer
- *  and not the printed edition's lexer or the remote-image walker. */
-export function renderBody(cfg: BookConfig, source: string): string {
+/** The body for a source whose placeholders are already filled and whose
+ *  mermaid fences are already placeholders. `breaks` is passed here, not to
+ *  `markedInstance`, so it reaches the website's renderer and not the printed
+ *  edition's lexer or the remote-image walker. */
+export function renderPreparedBody(cfg: BookConfig, prepared: string): string {
   const md = markedInstance(cfg);
-  return md.parse(substituteContentPlaceholders(cfg, source), { breaks: cfg.markdown.breaks }) as string;
+  return md.parse(prepared, { breaks: cfg.markdown.breaks }) as string;
+}
+
+/** The chapter body as HTML: headings carry slug ids, GFM is on. */
+export function renderBody(cfg: BookConfig, source: string): string {
+  return renderPreparedBody(cfg, substituteContentPlaceholders(cfg, source));
 }
 
 export function wrapInLayout(cfg: BookConfig, title: string, bodyHtml: string): string {
@@ -95,7 +102,7 @@ export function renderStandaloneHtml(cfg: BookConfig, source: string): string {
  * per-page HTML previews, so a diagram looks identical in the site and the PDF.
  */
 export async function renderSourceToHtml(cfg: BookConfig, source: string): Promise<string> {
-  const { markdown, diagrams } = await preprocessMermaidMd(source);
+  const { markdown, diagrams } = extractDiagrams(source);
   const placeholder = renderBody(cfg, markdown);
   const rendered = new Map<number, string>();
   for (const [index, diagramSource] of diagrams) {

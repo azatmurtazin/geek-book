@@ -9,7 +9,9 @@
 //
 // The pieces live beside this file: `shims.ts` (the jsdom DOM and measurement
 // stubs), `theme.ts` (the palette mapping) and `fixup.ts` (the viewBox and
-// label rewriting). This module is the loader and the entry points.
+// label rewriting). This module is the loader and the entry points. Taking the
+// fences out of the Markdown, and putting a drawing back where its placeholder
+// stood, are pure string work and live in `domain/services/extract-diagrams.ts`.
 //
 // The rendered <svg> is self-contained (geometry + labels), so website pages
 // embed it inline with no client-side JavaScript, and the book build gets the
@@ -51,47 +53,8 @@ export async function renderMermaid(cfg: BookConfig, source: string, id: string)
   return out;
 }
 
-/**
- * Extract fenced ```mermaid blocks from a chapter. The fences become
- * placeholder paragraphs keyed by index; the diagram source stays available
- * for rendering. Markdown therefore never has to digest the SVG, and the SVG
- * is injected after `marked` has parsed the (placeholder) document.
- */
-export async function preprocessMermaidMd(
-  source: string,
-): Promise<{ markdown: string; diagrams: Map<number, string> }> {
-  const lines = source.split("\n");
-  const out: string[] = [];
-  const diagrams = new Map<number, string>();
-  let index = 0;
-  let i = 0;
-  while (i < lines.length) {
-    if (!/^```mermaid\s*$/.test(lines[i])) {
-      out.push(lines[i]);
-      i += 1;
-      continue;
-    }
-    const body: string[] = [];
-    i += 1;
-    while (i < lines.length && !/^```\s*$/.test(lines[i])) {
-      body.push(lines[i]);
-      i += 1;
-    }
-    if (i >= lines.length) {
-      // Unterminated fence: leave it for the linter to call out.
-      out.push("```mermaid", ...body);
-      break;
-    }
-    i += 1;
-    index += 1;
-    diagrams.set(index, body.join("\n"));
-    out.push("", `::gb-diagram-${index}::`, "");
-  }
-  return { markdown: out.join("\n"), diagrams };
-}
-
 /** Swap the placeholder paragraphs for the rendered, inline <svg>. */
-export function substituteDiagrams(bodyHtml: string, rendered: Map<number, string>): string {
+export function substituteDiagrams(bodyHtml: string, rendered: ReadonlyMap<number, string>): string {
   let out = bodyHtml;
   for (const [index, svg] of rendered) {
     const block = `<div class="diagram">\n${svg}\n</div>`;

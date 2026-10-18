@@ -598,6 +598,51 @@ pipeline test passes with fakes.
 - *Async distance*: the pipeline is `async`; ensure the web builder still awaits
   it before link/image rewriting (until Phase 5).
 
+**Outcome (landed).**
+
+- `sourceToModel` returns `Result<SourceModel>`, not the plan's `Result<Chapter>`:
+  `SourceModel` carries the chapter, the prepared `markdown` (placeholders filled,
+  fences swapped for their placeholders) and the drawn `diagrams` (index → SVG).
+  The extra two faces are what the website's old renderer still needs; Phase 5
+  reads `chapter` alone and they go then. It is what lets the web call the
+  pipeline without drawing every diagram twice.
+- `DiagramRenderer.render(source, id, name)` takes a third argument beyond
+  `CLEAN_CODE_ARCHITECTURE.md` §7.1's two. The editions name the same drawing
+  differently inside the SVG (`tex-dgm-<chapter>-<index>` vs `diagram-<index>`),
+  and the printed one additionally names the figure file (`c<chapter>-d<index>.pdf`).
+  Passing both keeps the print figure bytes identical; the pipeline picks each
+  through `SourceDeps.diagramName(index)`.
+- `SourceDeps.substitute` is a closure, not the config: `application/` must not
+  reach into `lib/content-placeholders.ts`, so the builder passes
+  `(source) => substituteContentPlaceholders(cfg, source)`.
+- The pipeline applies `applySmartTypography` itself and leaves `assemble`'s
+  option off, so lex → smart → assemble happens once; the printed edition's
+  timing (before `blocksOf`) is unchanged.
+- `extractDiagrams` is pure string work in `domain/services/extract-diagrams.ts`
+  (sync, where `preprocessMermaidMd` was `async`); `diagrams/render.ts` keeps only
+  `renderMermaid` and `substituteDiagrams` (now over a `ReadonlyMap`).
+- `ImageMeasurer` and its `adapters/images/image-measurer.ts` are introduced but
+  not yet consumed: the printed edition's `figures.ts` still reads
+  `lib/image-size.ts` directly, and Phase 7's `buildPdf` wires the port in.
+- Print: `build-tex-book/parse.ts` builds the pipeline's deps (`printDeps`) and
+  `parseChapter` rethrows the diagnostic's message, so `build-tex-book/cli.ts` is
+  **unchanged** and its `geek-book: <message>` line is byte-identical. The plan
+  listed `cli.ts`; the deps stay in the print builder until Phase 7's composition
+  root.
+- Web: `renderPage` calls `sourceToModel`, then spells the page with the new
+  `renderPreparedBody` (no re-substitution) plus `substituteDiagrams`. Its order
+  moves from collect → extract → substitute to the pipeline's substitute →
+  collect → extract; byte-identical for the guide. `renderBody` is now
+  `renderPreparedBody` over the substituted source, unchanged in output.
+- `marked` importers are unchanged (still `lib/markdown.ts` and
+  `lib/smart-typography.ts`); the allowlist did not move this phase.
+- Verified beyond the harness: 282 tests / 28 files; `just verify` green
+  (`web.sha256`, `lint.txt`, `config.json`, `md.html`); the real guide's
+  `book.tex` and the diagram SVG are byte-identical to a Phase 3 build, and the
+  PDF's text, page count and page size match. The one figure PDF differs only in
+  rsvg-convert's non-deterministic metadata (the same SVG rendered twice differs
+  the same way).
+
 **Size.** M. **Risk.** Med.
 
 ---
