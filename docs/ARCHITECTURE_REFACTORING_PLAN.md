@@ -845,6 +845,48 @@ none exists).
 
 **Size.** M. **Risk.** Med.
 
+**Outcome (landed).**
+
+- The anchor index is the one authority. `domain/services/anchor-index.ts`
+  (`chapterAnchors`, `AnchorIndex`, `indexAnchors`) gathers the anchors the walk
+  hangs on a chapter's headings. `adapters/lint/link-checks.ts`'s
+  `anchorIndexOf` builds it by running each written chapter through the same
+  lex → assemble walk the builders use, and `checkLinks` asks it whether a
+  link's `#anchor` exists. The linter's second Markdown parse and its duplicated
+  `slugify(smartTypography(…))` are gone; a link the builder resolves is one
+  lint accepts.
+- The linter moved wholesale. `src/lint/*` → `adapters/lint/*`:
+  `reporter.ts`, `lines.ts` (the raw-line helpers), `paths.ts`,
+  `structural-checks.ts` (the `summary` and `chapters` families, merged),
+  `link-checks.ts`, `config-checks.ts`, `cli.ts`. `src/lint/` is deleted;
+  `src/cli.ts` imports `adapters/lint/cli.js`.
+- Deviations from the plan's letter.
+  - **`application/usecases/lint-book.ts` deferred to Phase 7.** A pure use case
+    can only see the text and file lists an adapter hands it, and `application/`
+    may not import `adapters/lint` (`.dependency-cruiser.cjs`); building it now
+    would invent the `FileSystem`/settings port Phase 7 introduces. The checks
+    keep writing to `Reporter` (strings), not `Diagnostic[]`, for the same
+    reason. Phase 7 gains "extract `lint-book`" alongside the other use cases.
+  - **Structural, fence and style checks stay on raw lines.** Their messages
+    carry line numbers and columns, and `Block[]` carries no line info, so
+    reading headings from the model would drift every message. The model is
+    consulted where it is the authority: anchors. Link and image *enumeration*
+    stays on raw lines for per-line reporting; only the anchor answer is
+    model-based.
+  - **`Inline.link.target` / `ImageNode.source`** (the plan's
+    `internal`/`external`, `book`/`remote`/`none` variants) do not exist as
+    distinct model fields — `LinkNode.target` is `null` for both an outside URL
+    and an unresolved one, `ImageNode.ref` for both a remote and a `data:`
+    source — so consuming them would mean model additions with no message
+    change.
+- Tests: `test/domain/services/anchor-index.test.ts` (gathering, slug and id
+  acceptance, unknown chapters) and `test/adapters/lint/link-checks.test.ts`
+  (anchor parity against the `site` fixture, plus accept/reject over a temp
+  book). 302 tests over 31 files.
+- Verified: `just verify` green on the host and in the pinned image (all six
+  artifacts, `book.txt`/`book.info` included); `just lint` byte-identical to
+  `test/baseline/lint.txt`; `just boundaries` clean; `tsc --noEmit` clean.
+
 ---
 
 ### Phase 7 — Use cases, environment ports, composition root
@@ -882,8 +924,11 @@ environment ports (`FileSystem`, `HttpClient`, `ProcessRunner`, `PdfToolchain`,
    Phase 8.
 4. **Use cases.** Move orchestration out of the command modules:
    `application/usecases/{plan-book,build-website,build-pdf,render-standalone,
-   serve-site,pdf-info,show-config}.ts`, each declaring the ports it needs and
-   returning `Result<...>`.
+   serve-site,pdf-info,show-config,lint-book}.ts`, each declaring the ports it
+   needs and returning `Result<...>`.
+   - `lint-book` is the linter's use case, deferred out of Phase 6 (it needs the
+     `FileSystem` port and the materialised settings): it returns `Diagnostic[]`
+     and the CLI formats them through `Reporter`.
    - `build-pdf` returns chapter count, page count and broken labels as data
      (the unresolved-reference check becomes a `Diagnostic[]`).
    - `serve-site` takes a `HttpServer` leaf adapter (its own small interface) and

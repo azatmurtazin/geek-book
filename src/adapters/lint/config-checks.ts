@@ -10,8 +10,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { BookConfig } from "../lib/book-config.js";
-import type { Reporter } from "./errors.js";
+import type { BookConfig } from "../../lib/book-config.js";
+import type { Reporter } from "./reporter.js";
 
 /** The subset of JSON Schema the config file uses. */
 interface Schema {
@@ -28,6 +28,7 @@ interface Schema {
 /** book.schema.json, beside the package root the linter runs from. */
 const SCHEMA_FILE = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
+  "..",
   "..",
   "..",
   "book.schema.json",

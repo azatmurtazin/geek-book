@@ -36,13 +36,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { Reporter } from "./errors.js";
-import { checkChapter } from "./chapter.js";
-import { checkConfig } from "./config.js";
-import { checkLinks } from "./links.js";
-import { checkTree, summaryLinks } from "./summary.js";
+import { Reporter } from "./reporter.js";
+import { checkChapter, checkTree, summaryLinks } from "./structural-checks.js";
+import { checkConfig } from "./config-checks.js";
+import { anchorIndexOf, checkLinks } from "./link-checks.js";
 import { markdownFilesUnder } from "./paths.js";
-import type { BookConfig } from "../lib/book-config.js";
+import type { BookConfig } from "../../lib/book-config.js";
 
 const CHECKS = ["summary", "chapters", "links", "config"] as const;
 type CheckName = (typeof CHECKS)[number];
@@ -82,19 +81,23 @@ export function main(cfg: BookConfig, args: string[]): number {
   }
 
   if (wanted.has("links")) {
+    // The anchors every chapter declares, built once from the same walk the
+    // builders use; each link is then checked against it.
+    const index = anchorIndexOf(cfg, written);
+
     for (const chapter of written) {
-      checkLinks(cfg, reporter, chapter, written, planned);
+      checkLinks(cfg, reporter, chapter, index, planned);
     }
 
     // The summary's chapter paths are written from the book directory, not from
     // the file, which a config may put elsewhere.
     if (fs.existsSync(cfg.summary)) {
-      checkLinks(cfg, reporter, cfg.summary, written, planned, cfg.bookDir);
+      checkLinks(cfg, reporter, cfg.summary, index, planned, cfg.bookDir);
     }
 
     for (const extra of [cfg.readme, ...cfg.docs]) {
       if (fs.existsSync(extra)) {
-        checkLinks(cfg, reporter, extra, written, planned);
+        checkLinks(cfg, reporter, extra, index, planned);
       }
     }
   }

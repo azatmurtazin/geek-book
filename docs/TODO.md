@@ -3,7 +3,7 @@
 Execution checklist for [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md).
 Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline: [`CURRENT_ARCHITECTURE.md`](./CURRENT_ARCHITECTURE.md).
 
-**Status:** in progress — P0 baseline complete, P1–P5 done · one phase = one PR = one green baseline.
+**Status:** in progress — P0 baseline complete, P1–P6 done · one phase = one PR = one green baseline.
 
 ## Invariants (every commit)
 
@@ -68,17 +68,17 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
   - [x] Watch: heading id (strip `c<id>--`), attribute order, whitespace/newlines, `<pre><code class>`, code-label wrapper — `web.sha256` byte-identical
   - [x] Tests: `html-renderer` (golden chapter + focused cases); `MARKED_ALLOWLIST` empty; `grep 'from "marked"' src` = 1 path
 
-- [ ] **P6 — Lint on the model** (M/Med)
-  - [ ] `domain/services/anchor-index.ts` (single anchor authority)
-  - [ ] `application/usecases/lint-book.ts` → `Diagnostic[]`
-  - [ ] `adapters/lint/{structural,link,style,config}-checks.ts`; keep raw-line style pass
-  - [ ] Delete `src/lint/*`
-  - [ ] Tests: `lint-book`; anchor parity; `lint.txt` identical
+- [x] **P6 — Lint on the model** (M/Med)
+  - [x] `domain/services/anchor-index.ts` (`chapterAnchors`/`AnchorIndex`/`indexAnchors` — the single anchor authority)
+  - [x] `adapters/lint/link-checks.ts` builds the index from the lex → assemble walk; `checkLinks` asks it, no second parse / `slugify` in lint
+  - [x] `src/lint/*` → `adapters/lint/*` (structural/link/config checks, raw-line style pass kept); `src/lint/` deleted
+  - [x] `application/usecases/lint-book.ts` → `Diagnostic[]`: **deferred to P7** (needs the `FileSystem` port; `application/` may not import adapters)
+  - [x] Tests: `anchor-index`; `link-checks` anchor parity; `lint.txt` byte-identical
 
 - [ ] **P7 — Use cases + composition root** (L/Med)
   - [ ] Ports: `file-system`, `http-client`, `process-runner`, `pdf-toolchain`, `template-store`, `config-source`
   - [ ] Adapters: `fs`, `http`, `process`, `templates`, `config`
-  - [ ] `application/usecases/*` returning `Result`; settings → `BookSettings`
+  - [ ] `application/usecases/*` returning `Result`; settings → `BookSettings` (incl. `lint-book`, deferred from P6)
   - [ ] `cli/main.ts` composition root + thin `cli/commands/*`; delete `cli.ts`
   - [ ] Tests: `build-website`, `build-pdf` with in-memory fs + fake toolchain
 
@@ -94,7 +94,7 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
 - [ ] `grep 'from "marked"' src` → 1 path (`adapters/markdown/marked-parser.ts`)
 - [ ] `jsdom`/`mermaid` → `adapters/diagrams/*` only
 - [ ] `grep 'node:' src/domain src/application` → empty
-- [ ] `src/{lib,build-web-book,build-tex-book,diagrams,md-to-html,lint}` gone
+- [ ] `src/{lib,build-web-book,build-tex-book,diagrams,md-to-html}` gone (`src/lint` done in P6)
 - [ ] `just verify` + `just test` + `just docker-book` green
 - [ ] Docs describe the new layout; CI enforces boundaries + verify
 

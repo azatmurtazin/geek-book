@@ -1,17 +1,50 @@
+// The link family: internal links and anchors, and book pictures.
+//
+// `checkLinks` walks each file's raw lines (so a bad link is reported at its own
+// line) but asks the shared `AnchorIndex` whether the anchor a link names
+// exists — the same anchors `assemble` gives the headings, with no second
+// Markdown parse and no second slug rule in the linter.
+
 import fs from "node:fs";
 import path from "node:path";
-import type { Reporter } from "./errors.js";
-import { slugify, splitLines } from "../lib/markdown.js";
-import { smartTypography } from "../lib/smart-typography.js";
+import type { BookConfig } from "../../lib/book-config.js";
+import { splitLines } from "../../domain/values/text.js";
+import { assemble } from "../../domain/services/assemble.js";
+import { indexAnchors, type AnchorIndex } from "../../domain/services/anchor-index.js";
+import { MarkedParser } from "../markdown/marked-parser.js";
+import { substituteContentPlaceholders } from "../../lib/content-placeholders.js";
+import { isRemoteImage, resolveImagePath } from "../../lib/images.js";
+import type { Reporter } from "./reporter.js";
 import {
   imageTargets,
   linkTargets,
   matchFence,
-  matchHeading,
   stripCodeSpans,
-} from "./markdown.js";
-import { isRemoteImage, resolveImagePath } from "../lib/images.js";
-import type { BookConfig } from "../lib/book-config.js";
+} from "./lines.js";
+
+/**
+ * The anchor index of the written chapters, keyed by book-relative path.
+ *
+ * Each chapter is run through the same lex → assemble walk the builders use, so
+ * the anchors here are the ones the renderers actually emit: `c3` on a title,
+ * `c3--a-slug` below, smartened exactly as the book asks.
+ */
+export function anchorIndexOf(cfg: BookConfig, files: readonly string[]): AnchorIndex {
+  const parser = new MarkedParser(cfg.markdown.breaks);
+  const relBooks = files.map((file) => path.relative(cfg.bookDir, file).split(path.sep).join("/"));
+  const idOf = new Map(relBooks.map((rel, id) => [rel, id]));
+
+  const chapters = files.map((file, id) => {
+    const source = substituteContentPlaceholders(cfg, fs.readFileSync(file, "utf8"));
+    const { blocks } = assemble(parser.lex(source), { chapterId: id, relBook: relBooks[id], idOf }, {
+      bookDir: cfg.bookDir,
+      smartTypography: cfg.markdown.smartTypography,
+    });
+    return { relBook: relBooks[id], id, blocks };
+  });
+
+  return indexAnchors(chapters);
+}
 
 /** Resolve every internal link in `file`, checking targets and anchors.
  *
@@ -23,7 +56,7 @@ export function checkLinks(
   cfg: BookConfig,
   reporter: Reporter,
   file: string,
-  allFiles: string[],
+  index: AnchorIndex,
   planned: Set<string>,
   linkBase: string = path.dirname(file),
 ): void {
@@ -31,28 +64,6 @@ export function checkLinks(
   // The root docs (README.md, CHANGELOG.md) carry images no edition builds, so
   // only files inside the book directory are checked for them.
   const insideBook = fromRelBook !== "" && !fromRelBook.startsWith("..") && !path.isAbsolute(fromRelBook);
-  const anchors = new Map<string, Set<string>>();
-
-  for (const targetPath of allFiles) {
-    const heads: string[] = [];
-    let inFence = false;
-    for (const line of splitLines(fs.readFileSync(targetPath, "utf8"))) {
-      if (matchFence(line)) {
-        inFence = !inFence;
-        continue;
-      }
-      if (inFence) {
-        continue;
-      }
-      const heading = matchHeading(line);
-      if (heading) {
-        // Headings are raw lines here, so ask the same smartener the build asks
-        // before slugging: the id must match the one the renderers emit.
-        heads.push(slugify(cfg.markdown.smartTypography ? smartTypography(heading.text) : heading.text));
-      }
-    }
-    anchors.set(targetPath, new Set(heads));
-  }
 
   // Skip link bodies inside fenced code.
   const lines = splitLines(fs.readFileSync(file, "utf8"));
@@ -92,9 +103,11 @@ export function checkLinks(
         }
         resolved = candidate;
       }
-      if (anchor && path.extname(resolved) === ".md"
-        && !(anchors.get(resolved) ?? new Set<string>()).has(anchor)) {
-        reporter.error(file, i, `anchor #${anchor} not found in ${pathPart}`);
+      if (anchor && path.extname(resolved) === ".md") {
+        const targetRel = path.relative(cfg.bookDir, resolved).split(path.sep).join("/");
+        if (!index.hasAnchor(targetRel, anchor)) {
+          reporter.error(file, i, `anchor #${anchor} not found in ${pathPart}`);
+        }
       }
     }
     if (insideBook) {

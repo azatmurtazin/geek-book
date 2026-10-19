@@ -54,7 +54,7 @@ const COMMANDS: Record<string, Command> = {
   },
   lint: {
     summary: "check the sources (summary, chapters, links, config)",
-    run: async (args) => (await import("./lint/cli.js")).main(cfg, args),
+    run: async (args) => (await import("./adapters/lint/cli.js")).main(cfg, args),
   },
   md: {
     summary: "render one Markdown file to a standalone HTML page",
