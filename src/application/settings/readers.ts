@@ -1,5 +1,5 @@
-// The `as*` readers: one lenient reader per config value, each falling back to
-// `defaults.ts` rather than throwing, so a malformed config degrades to the
+// The `as*` readers: one lenient reader per settings value, each falling back
+// to `defaults.ts` rather than throwing, so a malformed config degrades to the
 // conventional book instead of failing the build. The composite readers at the
 // bottom (`readColors`, `readLint`, …) assemble a whole section from its raw
 // JSON.
@@ -15,8 +15,8 @@ import type {
   PaperName,
   TypeConfig,
   WebLinkConfig,
-} from "./types.js";
-import { DIAGRAM_THEMES, PAPERS } from "./types.js";
+} from "../settings.js";
+import { DIAGRAM_THEMES, PAPERS } from "../settings.js";
 import { DEFAULTS } from "./defaults.js";
 
 export function asString(value: unknown, fallback: string): string {

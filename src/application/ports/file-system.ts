@@ -1,10 +1,11 @@
 // The FileSystem port: the thin seam the builders, the server and the config
 // reader reach the disk through.
 //
-// It mirrors the handful of `node:fs` calls the engine makes and nothing more —
+// It mirrors the handful of filesystem calls the engine makes and nothing more —
 // no globbing, no watchers, no streams. A test drives a whole build against an
 // in-memory implementation, and the adapter
-// (`adapters/fs/node-file-system.ts`) is the only place that imports `node:fs`.
+// (`adapters/fs/node-file-system.ts`) is the only place that imports the fs
+// builtin.
 //
 // Bytes cross as `Uint8Array`, never `Buffer`, so the port carries no Node type.
 

@@ -1,11 +1,11 @@
-// The config's fallbacks: what a book that says nothing gets.
+// The settings' fallbacks: what a book that says nothing gets.
 //
 // Kept on its own so the values read as one table, and so the readers
-// (`validators.ts`) have a single place to fall back to. The `satisfies` clauses
+// (`readers.ts`) have a single place to fall back to. The `satisfies` clauses
 // check each section against the shape it fills without widening the literal
 // types the rest of the engine relies on.
 
-import type { PaperName, TypeConfig } from "./types.js";
+import type { PaperName, TypeConfig } from "../settings.js";
 import { DEFAULT_COLORS } from "../../domain/values/palette.js";
 import { DEFAULT_FONTS } from "../../domain/values/fonts.js";
 

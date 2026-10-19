@@ -104,3 +104,14 @@ export function join(...pieces: string[]): string {
   }
   return joined === "" ? "." : normalize(joined);
 }
+
+/**
+ * Resolve `value` against `base`: an absolute `value` wins, otherwise it hangs
+ * off `base`. Like `path.resolve`, the result has no trailing slash (except the
+ * root), which is how the settings' absolute paths are spelled.
+ */
+export function resolve(base: string, value: string): string {
+  const combined = isAbsolute(value) ? value : `${base}/${value}`;
+  const normalized = normalize(combined);
+  return normalized.length > 1 ? normalized.replace(/\/+$/, "") : normalized;
+}

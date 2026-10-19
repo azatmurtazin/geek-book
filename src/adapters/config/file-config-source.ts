@@ -8,9 +8,7 @@
 import path from "node:path";
 import type { FileSystem } from "../../application/ports/file-system.js";
 import type { ConfigSource, RawConfig } from "../../application/ports/config-source.js";
-
-/** The config file's conventional name, at the root the CLI runs from. */
-export const CONFIG_FILE = "book.config.json";
+import { CONFIG_FILE } from "../../application/settings/config-option.js";
 
 /** Parse a JSON file, or `null` when it is absent or not valid JSON. */
 function readJson(fs: FileSystem, file: string): unknown {

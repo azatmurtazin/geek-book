@@ -1,22 +1,23 @@
-// The shapes a book's config takes, and the paper table they name.
+// The shapes a book's settings take, and the paper table they name.
 //
-// `BookConfig` is the one the rest of the engine sees; the others describe the
-// sections it is assembled from. Nothing here reads or defaults anything — that
-// is `validators.ts` and `defaults.ts`.
+// `BookSettings` is the one the rest of the engine sees; the other interfaces
+// describe the sections it is assembled from. Nothing here reads or defaults
+// anything — that is `settings/readers.ts` and `settings/defaults.ts`, applied
+// by the pure `usecases/load-settings.ts`.
 //
 // The pure values — the paper table, the palette, the code-language rules and
 // the font families — live in `domain/values/` and are re-exported here, so
-// importers keep naming `book-config.js`.
+// importers keep naming `settings.js`.
 
-import type { CodeLanguage } from "../../domain/values/code-language.js";
-import type { ColorsConfig } from "../../domain/values/palette.js";
-import type { PaperName } from "../../domain/values/geometry.js";
-import type { FontFamilies } from "../../domain/values/fonts.js";
+import type { CodeLanguage } from "../domain/values/code-language.js";
+import type { ColorsConfig } from "../domain/values/palette.js";
+import type { PaperName } from "../domain/values/geometry.js";
+import type { FontFamilies } from "../domain/values/fonts.js";
 
-export type { ColorKey, ColorsConfig } from "../../domain/values/palette.js";
-export type { CommentStyle } from "../../domain/values/code-language.js";
-export { PAPERS } from "../../domain/values/geometry.js";
-export type { PaperName } from "../../domain/values/geometry.js";
+export type { ColorKey, ColorsConfig } from "../domain/values/palette.js";
+export type { CommentStyle } from "../domain/values/code-language.js";
+export { PAPERS } from "../domain/values/geometry.js";
+export type { PaperName } from "../domain/values/geometry.js";
 
 /**
  * The typefaces the book is set in (see `domain/values/fonts.ts`). A book names
@@ -211,7 +212,13 @@ export interface ServeConfig {
   port: number;
 }
 
-export interface BookConfig {
+/**
+ * A book's resolved settings: the raw config and package metadata after the
+ * lenient readers have run, with every path absolute. The engine reads nothing
+ * else about *which* book it is building — the title, the sources, the two
+ * output paths and every tunable are here.
+ */
+export interface BookSettings {
   /** The book root: the directory the CLI runs from, or the directory of the
    * config file named by `--config`. */
   root: string;
