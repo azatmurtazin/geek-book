@@ -1,13 +1,15 @@
 // The web build end to end: the `site` fixture built to a temp directory, under
-// both naming schemes. `main` is what the `web` command runs, so these read back
-// the output tree and the hrefs the browser would follow. The fixture's own
-// config keeps the default naming; a test overrides `web` to ask for pretty URLs.
+// both naming schemes. `buildWebsite` is what the `web` command runs, so these
+// read back the output tree and the hrefs the browser would follow. The
+// fixture's own config keeps the default naming; a test overrides `web` to ask
+// for pretty URLs.
 
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { main } from "../../../src/build-web-book/cli.js";
+import { buildWebsite } from "../../../src/application/usecases/build-website.js";
+import { composeContext } from "../../../src/cli/context.js";
 import { fixtureConfig } from "../../helpers/config.js";
 import type { BookConfig } from "../../../src/lib/book-config.js";
 
@@ -16,11 +18,16 @@ afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
 
 const base = fixtureConfig("site");
 
+/** The real adapters, with the reporters silenced. */
+function context(cfg: BookConfig) {
+  return composeContext(cfg, { report: () => {} }, { info: () => {} });
+}
+
 /** Build the fixture to a fresh directory with `web` overrides, and return it. */
 async function build(name: string, web: Partial<BookConfig["web"]> = {}): Promise<string> {
   const cfg: BookConfig = { ...base, web: { ...base.web, ...web } };
   const out = path.join(root, name);
-  expect(await main(cfg, [out])).toBe(0);
+  expect((await buildWebsite(context(cfg), out)).ok).toBe(true);
   return out;
 }
 
@@ -105,7 +112,7 @@ describe("web build — pretty URLs without a README", () => {
       readme: path.join(base.bookDir, "no-such-readme.md"),
     };
     const out = path.join(root, "no-readme");
-    expect(await main(cfg, [out])).toBe(0);
+    expect((await buildWebsite(context(cfg), out)).ok).toBe(true);
     expect(read(out, "index.html")).toContain('content="0;url=chapters/01_start/"');
   });
 });

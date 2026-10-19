@@ -26,11 +26,11 @@ import { FileConfigSource } from "../adapters/config/file-config-source.js";
 import { NodeFileSystem } from "../adapters/fs/node-file-system.js";
 import { ConsoleLogger } from "../adapters/reporting/console-logger.js";
 import { ConsoleReporter } from "../adapters/reporting/console-reporter.js";
-import { AssetTemplateStore } from "../adapters/templates/asset-template-store.js";
 import { takeConfigOption } from "../application/settings/config-option.js";
 import { loadSettings } from "../application/usecases/load-settings.js";
 import { COMMANDS } from "./commands/index.js";
 import type { AppContext } from "./context.js";
+import { composeContext } from "./context.js";
 import type { Logger } from "../application/ports/logger.js";
 
 /** The help text: what the CLI is, and the subcommands it knows. */
@@ -65,13 +65,7 @@ export async function main(argv: string[]): Promise<number> {
   const loaded = loadSettings(new FileConfigSource(io, process.cwd(), option.file).read());
   for (const diagnostic of loaded.diagnostics) reporter.report(diagnostic);
 
-  const ctx: AppContext = {
-    settings: loaded.settings,
-    fs: io,
-    templates: new AssetTemplateStore(),
-    reporter,
-    logger,
-  };
+  const ctx: AppContext = composeContext(loaded.settings, reporter, logger, io);
 
   if (option.missingValue) {
     reporter.report({
