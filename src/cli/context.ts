@@ -13,6 +13,7 @@ import { RemoteImageStore } from "../adapters/http/remote-image-store.js";
 import { MarkedParser } from "../adapters/markdown/marked-parser.js";
 import { NodeProcessRunner } from "../adapters/process/node-process-runner.js";
 import { SystemPdfToolchain } from "../adapters/process/system-pdf-toolchain.js";
+import { NodeSiteServer } from "../adapters/http/node-site-server.js";
 import { SystemLatexRenderer } from "../adapters/render-tex/tex-renderer.js";
 import { AssetTemplateStore } from "../adapters/templates/asset-template-store.js";
 import { HtmlWebsiteRenderer } from "../adapters/web/html-website-renderer.js";
@@ -25,6 +26,7 @@ import type { Logger } from "../application/ports/logger.js";
 import type { MarkdownParser } from "../application/ports/markdown-parser.js";
 import type { PdfToolchain } from "../application/ports/pdf-toolchain.js";
 import type { Reporter } from "../application/ports/reporter.js";
+import type { SiteServer } from "../application/ports/site-server.js";
 import type { StandaloneRenderer } from "../application/ports/standalone-renderer.js";
 import type { TemplateStore } from "../application/ports/template-store.js";
 import type { WebsiteRenderer } from "../application/ports/website-renderer.js";
@@ -50,6 +52,8 @@ export interface AppContext {
   readonly latex: LatexRenderer;
   /** LaTeX, rsvg-convert and pdfinfo, on the host running the build. */
   readonly tools: PdfToolchain;
+  /** The preview server the `serve` command starts. */
+  readonly server: SiteServer;
   /**
    * Open the remote-image cache a build roots at `dir`. `print` rejects formats
    * the printed edition cannot embed; the website takes anything.
@@ -76,6 +80,7 @@ export function composeContext(
     standalone: new LayoutStandaloneRenderer(settings),
     latex: new SystemLatexRenderer(),
     tools: new SystemPdfToolchain(new NodeProcessRunner(), fs),
+    server: new NodeSiteServer(),
     openImages: (dir, print) =>
       new RemoteImageStore(
         new RemoteImages(dir, {

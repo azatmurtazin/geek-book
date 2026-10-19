@@ -57,9 +57,10 @@ export async function main(argv: string[]): Promise<number> {
 
   // The CLI is where diagnostics become text and an exit code is chosen.
   const reporter = new ConsoleReporter(process.stdout, process.stderr);
-  // The CLI's own usage/help text is stderr (as it always has been); build
-  // progress goes to stdout.
-  const logger = new ConsoleLogger(process.stderr);
+  // Build progress goes to stdout; the CLI's own usage/help text is stderr (as
+  // it always has been).
+  const logger = new ConsoleLogger(process.stdout);
+  const usageLogger = new ConsoleLogger(process.stderr);
 
   const io = new NodeFileSystem();
   const loaded = loadSettings(new FileConfigSource(io, process.cwd(), option.file).read());
@@ -73,8 +74,8 @@ export async function main(argv: string[]): Promise<number> {
       code: "cli/config-missing-value",
       message: "--config needs a file",
     });
-    logger.info("");
-    usage(ctx, logger);
+    usageLogger.info("");
+    usage(ctx, usageLogger);
     return 2;
   }
   if (option.file) {
@@ -91,7 +92,7 @@ export async function main(argv: string[]): Promise<number> {
 
   const [command, ...args] = option.argv;
   if (!command || command === "help" || command === "--help" || command === "-h") {
-    usage(ctx, logger);
+    usage(ctx, usageLogger);
     return command ? 0 : 2;
   }
   const chosen = COMMANDS[command];
@@ -101,8 +102,8 @@ export async function main(argv: string[]): Promise<number> {
       code: "cli/unknown-command",
       message: `unknown command '${command}'`,
     });
-    logger.info("");
-    usage(ctx, logger);
+    usageLogger.info("");
+    usage(ctx, usageLogger);
     return 2;
   }
   return chosen.run(ctx, args);
