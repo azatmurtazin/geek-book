@@ -57,7 +57,7 @@ export function checkLinks(
   reporter: Reporter,
   file: string,
   index: AnchorIndex,
-  planned: Set<string>,
+  planned: ReadonlySet<string>,
   linkBase: string = path.dirname(file),
 ): void {
   const fromRelBook = path.relative(cfg.bookDir, file).split(path.sep).join("/");

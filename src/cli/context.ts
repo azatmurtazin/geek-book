@@ -10,6 +10,7 @@
 import { MermaidRenderer } from "../adapters/diagrams/mermaid-renderer.js";
 import { NodeFileSystem } from "../adapters/fs/node-file-system.js";
 import { RemoteImageStore } from "../adapters/http/remote-image-store.js";
+import { BookLintChecks } from "../adapters/lint/book-checks.js";
 import { MarkedParser } from "../adapters/markdown/marked-parser.js";
 import { NodeProcessRunner } from "../adapters/process/node-process-runner.js";
 import { SystemPdfToolchain } from "../adapters/process/system-pdf-toolchain.js";
@@ -22,6 +23,7 @@ import type { DiagramRenderer } from "../application/ports/diagram-renderer.js";
 import type { FileSystem } from "../application/ports/file-system.js";
 import type { ImageStore } from "../application/ports/image-store.js";
 import type { LatexRenderer } from "../application/ports/latex-renderer.js";
+import type { LintChecks } from "../application/ports/lint-checks.js";
 import type { Logger } from "../application/ports/logger.js";
 import type { MarkdownParser } from "../application/ports/markdown-parser.js";
 import type { PdfToolchain } from "../application/ports/pdf-toolchain.js";
@@ -54,6 +56,8 @@ export interface AppContext {
   readonly tools: PdfToolchain;
   /** The preview server the `serve` command starts. */
   readonly server: SiteServer;
+  /** The source checks the `lint` command runs. */
+  readonly checks: LintChecks;
   /**
    * Open the remote-image cache a build roots at `dir`. `print` rejects formats
    * the printed edition cannot embed; the website takes anything.
@@ -81,6 +85,7 @@ export function composeContext(
     latex: new SystemLatexRenderer(),
     tools: new SystemPdfToolchain(new NodeProcessRunner(), fs),
     server: new NodeSiteServer(),
+    checks: new BookLintChecks(),
     openImages: (dir, print) =>
       new RemoteImageStore(
         new RemoteImages(dir, {
