@@ -1,0 +1,1449 @@
+
+Table of Contents
+Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+Installing geek-book . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+Your first book . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+
+Writing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+The book tree . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+SUMMARY.md . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+Chapters . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+
+Formatting . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+Code . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+Media . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+
+Images . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+Remote images . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+Diagrams . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 22
+Configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 23
+
+Fonts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+The printed page . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 27
+The website . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+Publishing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 32
+
+Commands . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 33
+Linting . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+Continuous integration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 37
+
+Introduction
+What geek-book is, and how to read this guide.
+geek-book is a build engine for books. You write the prose in Markdown, keep it in a conventional
+directory, and the engine produces two editions from the same sources: a static website you can
+serve from any file host, and a print-ready PDF you can send to a printer or a reader.
+There is no database, no templating language and no separate build tool. A book is a directory of
+text files, and the engine is the program that reads them. This guide documents version 0.1.3.
+
+
+The two editions
+One source, two renderings. The website is plain HTML and CSS with a single small script that
+handles the day/night switch and the folding sidebar; the printed edition is LaTeX, typeset by
+LuaLaTeX, with the page geometry, the palette and the type scale all under the book’s control.
+The editions share more than the prose. A heading gets the same anchor in both, so a link names
+the same place on the site and on the page; code is coloured by one shared stylesheet; a diagram is
+drawn once and embedded inline in one edition and as a figure in the other.
+
+
+What a book looks like
+Everything the engine needs sits in a conventional tree:
+
+• book.config.json names the book and points the engine at its sources.
+• book/SUMMARY.md is the table of contents and the chapter order.
+• book/chapters/ holds the prose, one directory per chapter group.
+• book/README.md becomes the website’s front page.
+• book/images/ holds the pictures the prose uses, and the cover.
+
+
+How to read this guide
+After Installing geek-book and Your first book, the sections follow the order you meet them:
+
+• Writing — the tree, the summary, chapters, code.
+• Media — images and diagrams.
+• Configuration — the full book.config.json .
+• Publishing — commands, linting and CI.
+
+
+
+
+3
+
+Installing geek-book
+The engine, the toolchain it asks for, and the image that carries both.
+The website build needs nothing but Node.js — version 20 or newer — and one npm install for
+the engine’s dependencies. The printed edition adds three programs the engine shells out to, and
+the Docker image bundles all of them so a machine can build the PDF with no host setup at all.
+
+
+Install the engine
+
+Shell
+
+npm add azatmurtazin:geek-book
+
+
+Or add into your package.json :
+
+JSON
+
+{
+"dependencies": {
+"geek-book": "github:azatmurtazin/geek-book"
+}
+}
+
+
+
+
+The print toolchain
+The PDF build fails early and says what is missing. It wants:
+
+• LuaLaTeX — the typesetting engine (MacTeX, TeX Live, or the Docker image).
+• rsvg-convert — turns a diagram’s SVG into a PDF figure ( librsvg ).
+• pdfinfo — poppler; the engine reads a PDF’s page count and size back.
+• The book's fonts — the families book.config.json names have to be installed where the
+PDF is built; the defaults ship with the Docker image.
+
+The engine’s own Justfile reports which of these a machine has:
+
+Shell
+
+just install-tools
+
+
+
+
+The image
+
+The engine’s docker/ directory builds an image with Node, LuaLaTeX and the default fonts
+already in place. A book that copies the engine’s compose service gets a build that runs the same
+on any machine:
+
+Shell
+
+just docker-book
+
+
+The image is also what the engine’s own CI runs, so a change that breaks a book build is caught
+the same way on a laptop and on a server.
+
+
+4
+
+Your first book
+From an empty directory to a website and a bound PDF.
+A book is the directory the engine runs from. There is no scaffolding command: you make the
+directory, write one configuration file and a handful of Markdown, and the engine takes it from
+there. The engine’s templates/ directory holds copies of the files a new book starts from — a
+configuration, a Justfile, a compose service, a pre-commit config and the CI workflows.
+
+
+Make the tree
+
+my-book/
+book.config.json
+package.json
+book/
+SUMMARY.md
+README.md
+chapters/
+images/
+
+
+book.config.json is the only file specific to your book:
+
+JSON
+
+{
+"title": "My Book",
+"tagline": "a book built with geek-book",
+"author": "Me"
+}
+
+
+Everything else has a default that fits the layout above: the sources under book/ , the website in
+build/html and the PDF in build/book.pdf . The title is the one key the file should carry.
+
+
+Write the contents
+
+book/SUMMARY.md is the table of contents and the chapter order. Start it with one group and one
+chapter:
+
+Markdown
+
+# Summary
+
+
+# Getting started
+
+
+- [Getting started](chapters/00_start/00_index.md)
+
+
+Then book/chapters/00_start/00_index.md holds the prose, opening with its title:
+
+Markdown
+
+# Getting started
+
+The first page of a new book.
+
+
+
+5
+
+geek-book Your first book
+
+
+book/README.md becomes the website’s front page; point it at the chapter and say what the book
+is.
+
+
+Build it
+Three commands do the work, and a fourth adds the print edition:
+
+Shell
+
+npx geek-book lint # check the tree and the prose
+npx geek-book web # write build/html/
+npx geek-book serve # preview it on http://localhost:4000
+npx geek-book pdf # write build/book.pdf
+
+
+That is the whole loop. Everything after this page refines one part of it: the tree, the prose, the
+pictures, the configuration, and how a book ships.
+
+
+
+
+6
+
+Writing
+The tree, the summary and the prose the engine typesets.
+A book is ordinary Markdown in a conventional tree. The engine adds no book-specific syntax:
+headings, lists, tables, quotes, links and fenced code are the whole vocabulary, rendered once for
+the website and once for the PDF.
+What the engine does care about is structure. The tree decides what is a book page and what is an
+asset; SUMMARY.md decides the order; each chapter opens with exactly one title. The linter checks
+all of it before either edition is built, so a broken link or an untagged fence is a message rather
+than a surprise in the printed copy.
+
+
+In this section
+• The book tree — the files the engine reads, and what each is for.
+• SUMMARY.md — groups, chapters and the order they appear in.
+• Chapters — one title per file, headings, links and placeholders.
+• Formatting — the constructs the engine can set.
+• Code — fenced blocks, languages and highlighting.
+
+
+
+
+7
+
+The book tree
+The files the engine reads, and what each one is for.
+The engine reads a directory and writes two editions of the book in it. It looks for the same hand-
+ful of names every time, and every one of them can be moved or renamed in book.config.json
+when the default does not fit.
+
+
+Sources
+
+Path What it is
+
+book.config.json The book’s identity: title, tagline, paths and look.
+book/SUMMARY.md The table of contents and the chapter order.
+book/README.md The website’s front page.
+book/chapters/ The prose, one directory per chapter group.
+book/images/ The pictures the prose uses, and the cover.
+
+book.config.json is read from the directory the engine runs from; everything else defaults to
+a path beneath book/ . The title is the one key a book should carry — a file with none names the
+book ”Untitled book”.
+
+
+Outputs
+
+Path What it is
+
+build/html/ The website: one page per chapter, plus the index.
+build/book.pdf The printed edition, cover and all.
+
+Both are written fresh on each build, and nothing reads back what it wrote. The two output paths
+are the output.web and output.pdf keys.
+
+
+Assets
+
+book/images/ holds the pictures, including the cover. The cover is book/images/cover.jpg
+by default and may be absent — a book with no cover simply has no cover page in the PDF. It
+belongs to the printed edition alone — the website never uses it — and it must be a png or jpeg, the
+formats LaTeX can place.
+Nothing else in the repository is read as a book. The engine’s own src/ and docker/ directories,
+and the build output under build/ , are the engine’s furniture, not the book’s.
+
+
+Paths are configurable
+
+A book that keeps its sources somewhere other than book/ says so once and the engine, the
+linter, the server and both editions follow:
+
+
+
+
+8
+
+geek-book The book tree
+
+
+JSON
+
+{
+"bookDir": "manuscript",
+"output": { "web": "site", "pdf": "dist/book.pdf" }
+}
+
+
+bookDir is resolved relative to the book root, so the SUMMARY, the front page, the chapters
+and the images all move with it. summary , chapters and readme move the table of contents,
+the prose directory and the front page on their own, all relative to the book root; the images stay
+under bookDir .
+
+
+
+
+9
+
+SUMMARY.md
+The table of contents, and the order the chapters are bound in.
+book/SUMMARY.md is the single source of truth for what the book contains. The engine numbers
+the chapters, builds the website’s sidebar and typesets the book from this file alone, so a chapter
+that is not listed here is not in either edition — and the linter says so.
+
+
+The shape of the file
+The first heading is the file’s own title and is ignored. Every heading after it opens a group; every
+list item is a chapter, with a label and the path to its file:
+
+Markdown
+
+# Summary
+
+# Getting started
+
+
+- [Getting started](chapters/00_start/00_index.md)
+- [Installing](chapters/00_start/01_installing.md)
+- [Your first book](chapters/00_start/02_first_book.md)
+
+
+# Reference
+
+- [Reference](chapters/01_reference/00_index.md)
+
+
+The indent is what makes the second and third entries sections of the group rather than chapters
+of their own; they still become pages, nested under the first. The path is relative to book/ and
+ends in .md . The file itself lives at book/SUMMARY.md ; the config’s summary key can move it
+elsewhere, but the paths inside stay relative to book/ .
+
+
+The rules
+The linter’s summary family checks the tree against the prose:
+
+• every Markdown file under book/chapters/ is listed here, and every entry points at a file
+that exists — a listed file that is not written yet is a note, not an error, since the tree is allowed
+to run ahead of the prose;
+• a section is indented under a chapter of the same group, never under nothing;
+• every chapter group directory holds a 00_index.md , the group’s own page.
+
+Group headings and the order of the list are also the running order of the printed book and the
+order of the sidebar on the site. Moving a list item moves the chapter in both editions.
+
+
+Labels
+The label in brackets is what the table of contents, the sidebar and the running heads show. It
+does not have to match the file’s own # Heading , though keeping the two close spares the reader
+two names for one page.
+
+
+
+10
+
+Chapters
+One title per file, and the rules that make a chapter a chapter.
+A chapter is one .md file. The engine treats it as a page of the website and a section of the printed
+book, and it expects the file to look like one: a single title, then the prose beneath it.
+
+
+Exactly one title
+Every chapter opens with its # Title — the first line of the file — and has no other # heading.
+The engine uses that line as the page’s title, and the printed edition uses it as the chapter heading.
+A file that opens with a ## heading, or that carries two # titles, fails the linter before either
+edition is built.
+Headings below the title nest as usual: ## for a section, ### for a subsection, and so on, with no
+skipped level — an ### may not follow an # directly.
+
+
+Linking
+A link to another chapter is a path relative to the file that carries it:
+
+Markdown
+
+[Installing](01_installing.md)
+
+
+The linter resolves it offline and fails the build if the target does not exist. A link to a heading is an
+anchor on the same file or another:
+Markdown
+
+Back to [the tree](01_tree.md#the-book-tree).
+
+An anchor is the heading lower-cased, with punctuation removed and spaces turned into hy-
+phens; that is also the id the website emits, so the same link lands on the same heading in both
+editions.
+
+
+Placeholders
+Prose may cite the book’s own metadata with a token between double braces. The built-in tokens
+are version , title , author and tagline , all filled from the configuration, so the same
+source reads correctly in both editions:
+
+Markdown
+
+This is the {{ version }} edition of {{ title }}, by {{ author }}.
+
+
+A book adds tokens of its own with the placeholders map in its config, each key a token name
+written in the prose:
+
+JSON
+
+{ "placeholders": { "edition": "second" } }
+
+
+Placeholders are never touched inside a fenced block, so a code sample that carries {{ … }} of
+its own — a Go template, a JSX expression — is left exactly as it was written, and an unknown
+token such as Go’s {{.}} passes through.
+
+11
+
+Formatting
+The constructs the engine sets, collected on one page.
+Nothing here is book-specific syntax. The engine typesets ordinary Markdown — the subset
+below is everything the guide itself uses — and renders it once for the website and once for the
+PDF. Where the two editions differ, the difference belongs to the medium, not to the source.
+
+
+Headings
+The title is an # heading; sections are ## , subsections ### . The printed edition turns them into
+chapter and section headings; the website uses them for anchors and the table of contents.
+
+
+A table
+
+Construct Website PDF Note
+
+Paragraph wraps ragged right the unit of everything
+Table scrolls fixed keep the cells short
+Quote styled callout panel for asides and warnings
+Diagram inline SVG figure one source, two render-
+ings
+
+Tables are pipes and a rule, and the align row is optional. The linter allows a table row up to 240
+columns by default, wider than prose, because a comparison table is often the point of the page.
+
+
+A quote
+
+A quotation is a callout panel in the printed edition and a styled block on the website. Use it for
+the aside that is not part of the argument.
+
+
+
+Lists
+Bulleted and numbered lists both work, and both nest:
+
+1. The summary fixes the chapter order.
+2. The prose is rendered, once per edition.
+3. The print build binds the pages together.
+
+• a bullet,
+• another bullet,
+– and a nested one.
+
+
+Inline markup
+Text may be emphasised, bold, or code . A link to a heading on this page is an anchor; a
+link to another chapter is a relative path. A link that leaves the book keeps its address: the
+
+12
+
+geek-book Formatting
+
+
+CommonMark spec is off the site and out of the PDF. The site hands the address to the browser,
+the printed page marks it as a link that leaves the book, and the link check is what actually visits
+it.
+
+
+Smart typography
+By default the prose keeps the characters as written: a straight quote is a straight quote, and two
+hyphens are two hyphens. A book that would rather have the typographer’s marks turns them on
+with markdown.smartTypography :
+
+JSON
+
+{ "markdown": { "smartTypography": true } }
+
+
+Then a pair of straight quotes becomes “curly” ones, and -- and --- become an en dash
+and an em dash. The change reaches the prose of both editions, and nothing else — code, link
+addresses and raw HTML are left as written. The identifiers headings get follow the same text, so
+an anchor written against a smartened heading still resolves.
+
+
+Line breaks
+A paragraph is one paragraph however its source is wrapped. A single newline between two
+lines of prose is a soft break: the website joins the lines back into one run of text, so a book can
+hard-wrap its Markdown at a comfortable width without changing what the reader sees. A hard
+break — two trailing spaces at the end of a line — always breaks, in both editions.
+A book that would rather have each single newline show up on the website — verse, an address, a
+caption — turns that on with markdown.breaks :
+
+JSON
+
+{ "markdown": { "breaks": true } }
+
+
+Then a single newline becomes a <br> on the website. Because the linter’s lint.proseWidth
+encourages hard-wrapping, the key is off by default: left on in a hard-wrapped book, every source
+line would become a break. The printed edition ignores the key either way and always keeps a
+single newline soft, so the PDF is unaffected.
+
+
+
+
+13
+
+Code
+Fenced blocks, language tags and the highlighting both editions share.
+Code is written like any other block: three backticks, the language, the code, three backticks. The
+tag is not a hint to an editor — it is what the linter checks the fence against, what the label in the
+corner says, and what the highlighter tokenises the block for.
+
+
+Always tag the fence
+A fence with no language is an error:
+
+Python
+
+def describe(book: str) -> str:
+"""Return a one-line description of a book."""
+return f"{book}: a book built with geek-book"
+
+The tokenizer knows the language the tag names: keywords, strings, comments and numbers
+are coloured from one stylesheet shared by the website and the standalone page layout, so the
+two cannot drift. The label in the top-right corner comes from the same tag — python shows as
+”Python”, js as ”JavaScript”.
+
+
+Declared languages
+The linter accepts a generous set out of the box: the prose languages, shells, the data formats and
+the common platform languages. A tag outside that set is a warning, not an error, and the fix is to
+declare it. A book that writes about Go and Rust names them in book.config.json :
+
+JSON
+
+{
+"languages": ["go", "rust", "text", "markdown", "mermaid"]
+}
+
+
+Setting languages replaces the default set, so a book that names its own list should include the
+tags it still uses — text for pasted output, and mermaid for diagrams.
+languages is only the fence set. The book’s own language is the separate language key in
+Configuration; languages never changes how the prose itself is set.
+
+
+Teaching the renderers a language
+languages only quiets the linter. A book that writes in a language the engine has never heard of
+also wants its blocks labelled and its comments muted like everyone else’s. The code key maps a
+fence tag to a label and a comment style:
+
+JSON
+
+{
+"code": {
+"zig": { "label": "Zig", "comment": "slash" },
+"beancount": { "label": "Beancount", "comment": "hash" }
+}
+}
+
+
+14
+
+geek-book Code
+
+
+label is the chip in the corner; comment is slash or hash , for // and # . A tag declared here
+is accepted by the linter too, so it need not also appear in languages . An entry may set either
+field alone — give a built-in language a new label, or fix its comment style, without touching the
+rest.
+
+
+Pasted output
+A text fence is for output rather than source: a command transcript, a log excerpt, a small
+ASCII diagram. It is not highlighted, and it has to fit the print column — 80 columns wide:
+
+$ geek-book lint
+9 chapter file(s), 0 error(s), 0 warning(s)
+
+
+A mermaid fence is a diagram of its own, and gets its own section.
+
+
+
+
+15
+
+Media
+Pictures and diagrams, from the same source to both editions.
+A book carries two kinds of illustration: pictures, which are files the book keeps or cites, and
+diagrams, which are written as text and drawn at build time. Both reach the website and the PDF,
+and the difference between the editions is how they are placed, not whether they appear.
+
+
+In this section
+• Images — local files, the two spellings, and what the print build does with them.
+• Remote images — pictures the book cites with a URL.
+• Diagrams — mermaid fences, drawn for both editions.
+
+
+
+
+16
+
+Images
+Local pictures, written the way Markdown writes them.
+A picture is an ![alt](source) . The source is either absolute inside the book or relative to the
+file that carries it, and both editions resolve it:
+
+Markdown
+
+![A developer at a keyboard](/images/developer.jpg)
+
+
+
+
+17
+
+geek-book Images
+
+
+
+
+The spelling above counts from the book root. The spelling below counts from the file’s own
+directory, climbing to book/images/ :
+
+
+
+18
+
+geek-book Images
+
+
+Markdown
+
+![A software lifecycle, drawn wide](../../images/sdlc.jpeg)
+
+
+
+
+Both end up in book/images/ , and the linter checks that the file is there. A source that climbs
+
+19
+
+geek-book Images
+
+
+out of the book directory is an error: the web build mirrors the book tree into the output direc-
+tory, so a picture living outside it has nowhere to land.
+
+
+What each edition does
+The website copies the file in beside the page and rewrites src , so a chapter nested any depth
+deep still finds its pictures. The print build embeds the image at the size the site gives it — 96
+pixels to the inch — shrinking it to the text block only when it would not fit, so a small picture is
+never stretched across the page.
+
+
+Formats
+The website copies the file and lets the browser draw it, so any format a browser renders works
+there. The print build hands the file to LaTeX instead, which reads png and jpeg from disk — a pdf
+page embeds too, but a browser draws it as nothing.
+A book built for both editions therefore keeps its pictures png or jpeg, the two formats both
+editions read. Nothing checks the extension, so an svg or webp passes the linter and the website
+and fails only when the PDF is built. A drawing that must survive both is a diagram, not a file.
+
+
+Copies are shared
+Repeating a picture is cheap. The engine copies each distinct source once per chapter and reuses
+the copy, so an image referenced twice is stored once.
+
+
+
+
+20
+
+Remote images
+Pictures the book cites with a URL rather than keeps.
+A source may be an http(s) URL, for a picture the book points at rather than carries:
+
+
+
+
+The build fetches it once per run and both editions read that copy — the website into
+images/remote/ , the printed edition into build/figures/ . The site ships the picture
+with itself instead of sending the reader off to the origin, and the print build embeds it like any
+other local file.
+
+
+What to know
+A book that uses remote images needs the network to build, which is the one thing to remember
+about them — and so do the pre-commit hook and CI, which build the same book. The linter
+reports each remote source it finds, so the requirement is visible rather than surprising.
+A fetch that fails, or that answers with something other than an image, stops the build with
+the URL. The printed edition can embed png and jpeg only; any other format is refused with a
+message, since LaTeX cannot place it. The website alone would accept more, but a book is built for
+both editions.
+
+
+
+
+21
+
+Diagrams
+mermaid fences, drawn once and placed in both editions.
+A diagram is written like any other fenced block — the language is mermaid , and the contents are
+Mermaid’s own syntax:
+
+
+
+
+Website
+
+Markdown lint
+
+LaTeX PDF
+
+
+
+
+The build runs Mermaid in a small DOM, rewrites the labels it emits into plain SVG text, and
+embeds the result in both editions. The website gets an inline <svg> that scales with the column;
+the printed edition gets a figure rendered from the same drawing and placed to fit the text block.
+One source, two renderings, no second version to keep in step.
+A fence that Mermaid cannot parse fails the build when it is drawn, so a broken diagram is caught
+by building the book rather than discovered on the printed page.
+
+
+
+
+22
+
+Configuration
+book.config.json: what it sets, and what it leaves to the defaults.
+The engine learns everything specific to a book from one file at the book root. Nothing in it is
+required except, in practice, a title, and every value has a default that fits the conventional layout.
+geek-book config prints the whole resolved configuration — every default and every override
+— which is the fastest way to see what a setting actually did.
+The file’s shape is described by book.schema.json , which ships with the engine. An editor
+reads it through the config’s $schema key, and geek-book lint config checks the file
+against it — the same schema, so the two can never disagree.
+
+
+A complete example
+
+JSON
+
+{
+"$schema": "./book.schema.json",
+"title": "My Book",
+"tagline": "a book built with geek-book",
+"author": "Me",
+"version": "1.2.0",
+"bookDir": "book",
+"output": { "web": "build/html", "pdf": "build/book.pdf" },
+"docs": ["README.md"],
+"languages": ["js", "ts", "python", "text", "markdown", "mermaid"],
+"fonts": { "text": "Literata", "code": "JetBrains Mono" },
+"tex": {
+"geometry": { "paper": "a5", "top": 16, "bottom": 16, "left": 14, "right": 14 },
+"type": { "base": 10 }
+}
+}
+
+
+
+
+The keys
+
+
+
+
+23
+
+geek-book Configuration
+
+
+
+
+Key Default What it is
+
+title the package name The book’s title, on the site and the
+cover.
+tagline none A one-line subtitle.
+author none The author’s name, for the
+colophon.
+version the package version What the version token resolves to
+in the prose.
+placeholders none A book’s own prose tokens, be-
+yond version , title , author
+and tagline .
+language en The book’s language, a BCP 47 tag
+such as de or pt-BR .
+strings English Overrides for the fixed interface
+labels.
+bookDir book Where the sources live.
+summary <bookDir>/SUMMARY.md The table of contents the build
+follows.
+chapters <bookDir>/chapters The directory the chapter prose
+lives in.
+readme <bookDir>/README.md The website’s home page.
+output.web build/html Where the website is written.
+output.pdf build/book.pdf Where the PDF is written.
+docs README.md , CONTRIBUTING.md Root Markdown whose links are
+linted.
+languages the built-in set Fence languages the linter accepts.
+code none Labels and comment styles for a
+book’s own languages. See Code.
+lint 100 / 240 / 80 Line budgets the chapter check
+enforces.
+markdown.smartTypography off Curly quotes and en/em dashes in
+the prose. See Formatting.
+markdown.breaks off A single newline in a paragraph
+becomes a line break on the web-
+site. See Formatting.
+fonts Literata, JetBrains Mono See Fonts.
+tex the engine’s page See The printed page.
+web none The site’s metadata, stylesheet and
+<head> HTML. See The website.
+web.baseUrl none The site’s base URL, for root links
+and canonical tags.
+web.description the tagline What search engines and social
+cards show.
+web.favicon none The site’s favicon.
+web.prettyUrls off Write each page as a directory
+( <name>/index.html ) so URLs
+carry no extension. See The
+website.
+web.links none Labelled links the site’s footer
+carries.
+
+The version is read from the book’s own package.json unless the config names one, so the
+
+
+24
+
+geek-book Configuration
+
+
+number still lives in exactly one place. docs exists because a book repo holds Markdown outside
+book/ — a README, a changelog — whose links the linter should resolve just the same.
+
+
+Sources
+
+The summary, the chapter prose and the website’s front page default to book/SUMMARY.md ,
+book/chapters/ and book/README.md . Each moves with its own key — summary , chapters
+and readme , all relative to the book root — and the build, the linter and the server follow. The
+chapter paths inside SUMMARY.md stay relative to the book directory, so a book that moves
+chapters updates them to match; the summary check names any that do not. With no readme
+file, the website’s home page is a redirect to the first chapter.
+
+
+Language
+language is the book’s own language, a BCP 47 tag such as en , en-GB , de or pt-BR . It sets the
+website’s lang attribute, so a browser and a screen reader treat the prose as that language, and
+it tells the printed edition which hyphenation patterns to use. English is LaTeX’s own default
+and needs nothing; a book that names another language has to have that language’s babel files
+installed where the PDF is built. A tag the engine does not recognize keeps the English patterns.
+The interface around the prose stays English until the book says otherwise. The strings map
+overrides the labels the two editions print — previous , next , contents (the table of contents
+heading), home , and the two controls’ names:
+
+JSON
+
+{
+"language": "de",
+"strings": { "previous": "Zurück", "next": "Weiter", "contents": "Inhalt" }
+}
+
+
+contents is the printed table of contents’ heading; leave it out and a language the engine loads
+keeps the caption babel gives it, in that language’s words — English, which loads no babel, keeps
+the engine’s name. The other labels are the website’s, with home on the standalone rendered
+page.
+This key is not the linter’s languages , which is the set of code-fence tags it accepts. language is
+what the book itself is written in.
+
+
+Line budgets
+The chapters family holds prose to 100 columns, a table row to 240 and a text or ascii di-
+agram to 80 — the widths the printed page and the code panels were sized for. A book whose
+subject needs a different measure sets its own:
+
+JSON
+
+{
+"lint": { "proseWidth": 88, "tableWidth": 200, "diagramWidth": 100 }
+}
+
+
+Only the numbers change; what each check looks at is the same. See Linting.
+
+
+
+
+25
+
+Fonts
+The families both editions are set in, and how each edition finds them.
+A book is set in two families: one for the text, the headings and the diagrams, one for code. A
+book names families, never files. The website loads them from a stylesheet, and the printed
+edition asks the build machine for them by name, which is why the print toolchain wants the
+fonts installed there.
+
+
+The defaults
+
+JSON
+
+{
+"fonts": {
+"text": "Literata",
+"code": "JetBrains Mono",
+"bold": "Literata:mode=harf;wght=700",
+"web": "https://fonts.googleapis.com/css2?family=Literata&family=JetBrains+Mono&display=swap"
+}
+}
+
+
+The built-in stylesheet asks Google for Literata and JetBrains Mono, and the Docker image ships
+both, so a book that says nothing gets the two editions set in the same type.
+
+
+Naming your own families
+A book that names its own text and code starts with no webfont and its families’ own bold —
+the two defaults belong to the default families and travel with them. Name a stylesheet under
+web when the site should load the new families (or "" for none):
+
+JSON
+
+{
+"fonts": {
+"text": "Source Serif 4",
+"code": "IBM Plex Mono",
+"web": "https://fonts.googleapis.com/css2?family=Source+Serif+4&family=IBM+Plex+Mono&display=swap"
+}
+}
+
+
+The printed edition still asks the system for ”Source Serif 4” and ”IBM Plex Mono”, so those
+families have to be installed where the PDF is built.
+
+
+Bold, when the family has no face of its own
+bold spells the text family’s bold as a fontspec declaration ( Family:options ). It matters when
+bold is a weight instance of a variable font — as it is for Literata — rather than a face of its own:
+fontconfig then reports no bold for the family, and the declaration tells LuaLaTeX which instance
+to use. Leave bold out (or empty) to take the family’s own bold.
+
+
+
+
+26
+
+The printed page
+Geometry, palette, type scale — and a file of LaTeX for anything else.
+Everything about the printed edition that a book is likely to change lives under tex in
+book.config.json . The page and the type scale are the PDF’s alone; the palette is not — its
+nine colours are the website’s light palette too, so the two editions match. geek-book config
+prints every resolved value.
+
+
+The page
+
+JSON
+
+{
+"tex": {
+"geometry": { "paper": "a4", "top": 19, "bottom": 19, "left": 18, "right": 18 }
+}
+}
+
+
+paper is one of a4 , a5 , letter or legal , and the four margins are millimetres. The text
+block the print build measures pictures against is derived from these, so a book that changes its
+page changes what fits with it and says nothing else.
+
+
+The palette
+Nine colours, each #rrggbb :
+
+Key What it colours
+
+fg the body text, headings and links
+muted folios, running heads and secondary text
+rule hairlines: heading rules, the code panel’s border
+codeBackground the code panel’s fill
+codeForeground code text
+codeComment comments inside code
+calloutBackground the callout panel’s fill
+calloutBorder the callout’s accent bar
+calloutForeground the text inside a callout
+
+The website reads the same nine: they become its --fg , --muted , --rule , code-panel and
+callout custom properties, so a book’s palette reaches both editions. The colours with no printed
+counterpart — the site’s accent, its page and sidebar backgrounds — are not here; see The website.
+
+
+The type scale
+
+JSON
+
+{
+"tex": {
+"type": { "base": 11, "chapter": 20, "section": 15, "subsection": 12.5 }
+}
+}
+
+
+27
+
+geek-book The printed page
+
+
+base is the document class size — 10, 11 or 12 — and the rest are heading sizes in points. A head-
+ing’s leading is its size times 1.2, rounded up. Any key may be left out; the engine’s defaults stand
+in.
+
+
+Anything else: a preamble file
+For what the knobs do not reach, tex.preamble names a file of plain LaTeX, relative to the book
+root, appended after the built-in preamble and before \begin{document} :
+
+% tex/book.tex
+\renewcommand{\pefolio}{\fontsize{9}{11}\selectfont\color{muted}\thepage}
+\titleformat{\chapter}[block]{\normalfont\LARGE\bfseries\color{fg}}{}{0em}{}
+
+
+That file can redefine what the engine ships without copying it. The example resets the folio and
+redefines the chapter format — the sort of change the config keys do not expose.
+
+
+
+
+28
+
+The website
+What the site says about itself, and the stylesheet and head HTML it adds to the built-in look.
+The printed edition’s knobs live under tex ; the website’s are their mirror under web . Some say
+what the site is — its address, its description, its favicon — and some change how it looks: the
+site’s appearance is CSS, so a book changes it the way any site does, with a stylesheet of its own.
+geek-book config prints every resolved value.
+
+
+The site's address
+web.baseUrl is where the site is published. An absolute URL also gives every page a canonical
+address and the social card tags a link preview reads:
+
+JSON
+
+{
+"web": { "baseUrl": "https://example.com/book/" }
+}
+
+
+The home page’s canonical is the base URL itself; a chapter’s is the base with the page’s output
+path appended:
+
+https://example.com/book/chapters/01_writing/01_tree.html
+
+
+A root-relative path ( /book/ ) instead only sets the base path, for a site whose host is not known
+at build time; then no canonical is written. Either way the base path keeps the site’s root links
+on the site rather than on the host’s root — the standalone page’s brand and Home links, in
+particular. With no base URL both are / , which is the common case.
+
+
+Pretty URLs
+
+By default each chapter is one file per page — chapters/01_writing/01_tree.md is written
+as chapters/01_writing/01_tree.html — so its address ends in .html . A book that would
+rather have extensionless addresses turns on web.prettyUrls :
+
+JSON
+
+{
+"web": { "prettyUrls": true }
+}
+
+
+Every page is then written as a directory holding its own index.html ( chapters/01_writing/01_tree/
+which a static host serves for the directory it names. The address above becomes:
+
+https://example.com/book/chapters/01_writing/01_tree/
+
+
+Every link the build emits follows the new shape — the sidebar, the previous/next links, the
+chapter-to-chapter links and their #anchors , all measured against the page’s own directory. The
+home page is the site root’s index.html under either scheme, and the assets (the stylesheet, the
+favicon, the pictures) stay plain files; only the chapter pages move into directories. The printed
+edition is untouched.
+
+
+29
+
+geek-book The website
+
+
+Two things to keep in mind. The scheme moves every page, so a site already published at .html
+addresses needs its host to redirect those, or their readers get a 404. And the preview server
+serves both schemes — it asks a browser that names a directory without a trailing slash to add
+one, so a page’s own relative links resolve from the right place.
+
+
+Description and cards
+web.description is the one line search engines and social cards show. It defaults to the
+tagline :
+
+JSON
+
+{
+"web": { "description": "Build a book from Markdown, website and all." }
+}
+
+
+Every page carries it as a description meta tag and in the Open Graph and Twitter card tags,
+with the page title, the book title as the site name, and the author when the config names one.
+The canonical address joins them when baseUrl is absolute. The card’s image is not a key —
+web.head is the place for one, and for anything else the engine does not know.
+
+
+Favicon
+web.favicon names a file, relative to the book root, that the build copies into the site and links
+from every page:
+
+JSON
+
+{
+"web": { "favicon": "web/icon.png" }
+}
+
+
+
+
+Footer links
+web.links is a list of labelled links the site’s footer carries, in order — a repository, a licence,
+anything:
+
+JSON
+
+{
+"web": {
+"links": [
+{ "label": "Source", "href": "https://github.com/me/book" },
+{ "label": "Edit this page", "href": "https://github.com/me/book/edit/main/{path}" }
+]
+}
+}
+
+
+Two placeholders make a link follow the page: {path} is the source file’s path from the book
+root ( book/chapters/01_writing/01_tree.md ) and {url} is the page’s absolute address,
+when baseUrl gives one. The first link above is the same everywhere; the second opens an editor
+on the page being read.
+
+
+
+
+30
+
+geek-book The website
+
+
+Extra CSS
+web.css names a file of CSS, relative to the book root, appended after the engine’s stylesheet:
+
+JSON
+
+{
+"web": { "css": "web/book.css" }
+}
+
+
+It comes last, so it wins wherever it overlaps — the built-in rules are defaults, not a fence. A book
+can narrow the reading column, restyle the sidebar, or repaint the palette by redefining the
+custom properties the stylesheet opens with:
+
+/* web/book.css */
+:root { --accent: #b3461f; }
+.book-body { max-width: 40rem; }
+
+
+The palette is shared: the website’s light colours come from tex.colors , the same nine the
+printed page uses, so a book’s palette reaches both editions. The rest of the site’s :root — its
+accent, its page and sidebar backgrounds — is the website’s own. This file can override any of
+it, the shared palette included. The reader’s night theme is the engine’s and does not follow
+tex.colors .
+
+
+Extra head HTML
+For a meta tag, a social image or an analytics snippet, web.head names a file of HTML injected
+into every page’s <head> , after the stylesheet link:
+
+JSON
+
+{
+"web": { "head": "web/head.html" }
+}
+
+
+
+<!-- web/head.html -->
+<meta property="og:image" content="https://example.com/book/card.png">
+
+
+The two files above name plain files relative to the book root, the web’s counterpart to
+tex.preamble , and they come last, so they can add to or override what the engine emits.
+The stylesheet, the head HTML, the favicon and the footer links do not reach the standalone
+page the md command renders, which keeps its own layout; that page does read baseUrl and
+description , so its root links and meta tags match the site.
+
+
+
+
+31
+
+Publishing
+Commands, checks, and the automation a book repo copies.
+A book is finished when it builds clean and both editions are in place. The engine’s commands
+are small and composable, the linter checks the sources before either edition is built, and the
+templates a book repo copies wire all of it into pre-commit hooks and CI.
+
+
+In this section
+• Commands — the full command line.
+• Linting — the four families of check, and what each catches.
+• Continuous integration — templates, Docker and releases.
+
+
+
+
+32
+
+Commands
+Every command the engine carries.
+The engine is one binary with a handful of subcommands. All of them run from the book root
+and read book.config.json there; most take an optional path. A --config <file> option,
+written anywhere on the line, builds the book beside that config file instead.
+
+Command What it does
+
+geek-book web [dir] Build the website (default: build/html ).
+geek-book pdf [file] Build the PDF (default: build/book.pdf ).
+geek-book serve [dir] [port] Preview the built site (default: web output, 4000).
+geek-book lint [family…] Check the sources: summary , chapters , links ,
+config .
+geek-book md <in> [out] Render one Markdown file to a standalone page.
+geek-book pdf-info <pdf> Page count, size and friends, via poppler.
+geek-book config Print the resolved book configuration.
+
+
+Choosing the book
+By default the book is the directory the command runs from. --config <file> names an-
+other book.config.json , and the book becomes the directory holding it: the sources, the
+package.json the version is read from, and the default output paths are all resolved there.
+
+Shell
+
+geek-book --config ../my-book/book.config.json web
+geek-book web --config ../my-book/book.config.json
+
+
+The option may sit before or after the command — the two lines above are the same — and the file
+it names must exist.
+
+
+Building
+web and pdf write their output and nothing else. Both are safe to run again, and both overwrite
+what was there. serve previews the built site rather than rebuilding it, so run a build first:
+
+Shell
+
+geek-book web build/html
+geek-book serve build/html 4000
+
+
+md renders a single file outside any book, through the same Markdown renderer and the stan-
+dalone page layout. It is how a chapter looks on its own, without the sidebar.
+
+
+Checking
+lint runs four families and can run them one at a time:
+
+geek-book lint # all four
+geek-book lint links # just the link check
+
+
+33
+
+geek-book Commands
+
+
+It exits non-zero on an error and writes a summary line. Warnings — an unusual fence language,
+a group with no index page — do not fail the build. Linting has the details.
+
+
+Inspecting
+config prints everything the engine resolved, defaults and overrides alike. It is the fastest
+way to answer ”what did that setting actually do?”, and it is what a bug report should carry.
+pdf-info is a thin wrapper over poppler’s pdfinfo , for the page count and page size of a fin-
+ished PDF.
+
+
+
+
+34
+
+Linting
+What the engine checks before it builds, and why.
+geek-book lint reads the sources the way the builders will and reports what would go wrong.
+It runs four families of check — summary , chapters , links and config — and any of them
+can be run alone. The split matters because a book can be wrong in independent ways: the tree,
+the prose, the references between them, and the configuration itself.
+
+
+summary
+The tree against the prose:
+
+• every Markdown file under book/chapters/ is listed in SUMMARY.md ;
+• every entry points at a file that exists — one that is planned but not written is a note, not an
+error, because the tree may run ahead of the prose;
+• a section is indented under a chapter of the same group;
+• every chapter group has its 00_index.md .
+
+
+chapters
+The prose itself:
+
+• exactly one # title, on the file’s first line, with no skipped heading level;
+• every fenced block is tagged with a language — a language outside the declared set is a warn-
+ing;
+• a text or ascii fence stays within the print budget, 80 columns by default;
+• no tabs, no trailing whitespace, a trailing newline, and prose lines inside the prose budget, 100
+columns by default — unless the line carries a run too long to wrap, such as a URL, which no
+amount of editing could bring inside the budget.
+
+The three budgets — prose, table row and diagram — are the lint block in book.config.json ;
+see Configuration.
+
+
+links
+Internal references:
+
+• every relative link points at a file that exists;
+• every #anchor names a heading in its target, using the same slug rule the website uses, so a
+link that lints clean lands in the right place in both editions.
+
+External http(s) links are left to the build’s link check — lychee in the book templates —
+which actually visits them, and reports the ones that have gone dead.
+
+
+
+
+35
+
+geek-book Linting
+
+
+config
+The configuration file, against the schema the engine ships:
+
+• an unknown key is a warning — the engine ignores it, so it is usually a typo for a key that
+exists;
+• a value the engine would reject and replace with its default — a paper that is not a4 , a5 ,
+letter or legal , a colour that is not #rrggbb , a base size that is not 10, 11 or 12 — is a warn-
+ing too;
+• a file that does not parse as JSON is a warning, because the engine would otherwise build the
+defaults without a word.
+
+Every finding here is advisory: the engine treats each key as optional and falls back to a default, so
+a warning never fails the build. The check reads book.schema.json , the same schema an editor
+reads through the config’s $schema key, so the two can never disagree.
+
+
+
+
+36
+
+Continuous integration
+The templates the engine ships, and what they automate.
+The engine’s templates/ directory holds the book-side files a new repository copies in: a
+book.config.json , a Justfile , a compose service for the build image, a pre-commit con-
+fig, a link-check config and the workflows. They are the same shape as the ones in a working
+book repo, with a few placeholders — <owner> , <book> and <Book Title> — to replace. The
+engine’s templates/README.md lists each file and what it is for.
+
+
+Pre-commit
+The pre-commit config does file hygiene — trailing whitespace, end-of-file, oversized files — and
+then lints and builds both editions. A commit that would break the book fails before it lands, on
+the same checks CI will run.
+
+
+Docker
+
+Every build runs in the engine’s docker/ image, which carries Node, LuaLaTeX and the default
+fonts. A book copies the compose service and gets a build that runs the same on any machine:
+
+Shell
+
+just docker-book
+
+
+The image is also what the engine’s own CI runs, so a change to the engine is proven against a real
+book build before it ships.
+
+
+The workflows
+Three workflows come with the templates:
+
+• CI — lint the engine and the book, then build both editions in Docker and keep the website and
+the PDF as artifacts for a few days.
+• Link check — visit every external link on a push, a pull request, a weekly schedule and on
+demand, so link rot is noticed without failing the ordinary build.
+• Release — on a v* tag, attach the PDF and a zip of the site to the GitHub Release.
+
+A book repository holds the Markdown and almost nothing else. The renderers, the linter, the
+preview server and the build image all come from the engine, which the book depends on by
+path.
+
+
+
+
+37

@@ -3,7 +3,7 @@
 Execution checklist for [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md).
 Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline: [`CURRENT_ARCHITECTURE.md`](./CURRENT_ARCHITECTURE.md).
 
-**Status:** in progress — P0 harness landed (PDF reference pending), P1–P5 done · one phase = one PR = one green baseline.
+**Status:** in progress — P0 baseline complete, P1–P5 done · one phase = one PR = one green baseline.
 
 ## Invariants (every commit)
 
@@ -23,9 +23,9 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
   - [x] Isolated, structural jsdom/Mermaid integration test (no SVG bytes frozen)
   - [ ] Moves to `test/adapters/diagrams/` in P8
 
-- [ ] **P0 — Baseline + guardrails** (S/Low) — harness landed; PDF reference pending
+- [x] **P0 — Baseline + guardrails** (S/Low) — done
   - [x] `tools/baseline/` + `just baseline`/`just verify`; `test/baseline/*` (web, lint, config, md)
-  - [ ] Capture `book.txt`/`book.info` in the pinned image (`just docker-baseline`) — needs a running Docker daemon
+  - [x] Capture `book.txt`/`book.info` in the pinned image (`just docker-baseline`)
   - [x] `dependency-cruiser` at `warn` + `just boundaries` (SWC parser, since the repo tracks TypeScript 7)
   - [x] `test/architecture.test.ts` (report-only; `marked` importer allowlist)
   - [x] Wire `boundaries` (non-failing) + `verify` (failing) into CI
