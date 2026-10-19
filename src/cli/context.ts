@@ -16,6 +16,7 @@ import { SystemPdfToolchain } from "../adapters/process/system-pdf-toolchain.js"
 import { SystemLatexRenderer } from "../adapters/render-tex/tex-renderer.js";
 import { AssetTemplateStore } from "../adapters/templates/asset-template-store.js";
 import { HtmlWebsiteRenderer } from "../adapters/web/html-website-renderer.js";
+import { LayoutStandaloneRenderer } from "../adapters/web/standalone-renderer.js";
 import type { DiagramRenderer } from "../application/ports/diagram-renderer.js";
 import type { FileSystem } from "../application/ports/file-system.js";
 import type { ImageStore } from "../application/ports/image-store.js";
@@ -24,6 +25,7 @@ import type { Logger } from "../application/ports/logger.js";
 import type { MarkdownParser } from "../application/ports/markdown-parser.js";
 import type { PdfToolchain } from "../application/ports/pdf-toolchain.js";
 import type { Reporter } from "../application/ports/reporter.js";
+import type { StandaloneRenderer } from "../application/ports/standalone-renderer.js";
 import type { TemplateStore } from "../application/ports/template-store.js";
 import type { WebsiteRenderer } from "../application/ports/website-renderer.js";
 import type { BookSettings } from "../application/settings.js";
@@ -42,6 +44,8 @@ export interface AppContext {
   readonly diagrams: DiagramRenderer;
   /** The website's HTML renderer. */
   readonly renderer: WebsiteRenderer;
+  /** The single-file renderer the `md` command draws through. */
+  readonly standalone: StandaloneRenderer;
   /** The printed edition's LaTeX renderer. */
   readonly latex: LatexRenderer;
   /** LaTeX, rsvg-convert and pdfinfo, on the host running the build. */
@@ -69,6 +73,7 @@ export function composeContext(
     markdown: new MarkedParser(settings.markdown.breaks),
     diagrams: new MermaidRenderer(settings),
     renderer: new HtmlWebsiteRenderer(),
+    standalone: new LayoutStandaloneRenderer(settings),
     latex: new SystemLatexRenderer(),
     tools: new SystemPdfToolchain(new NodeProcessRunner(), fs),
     openImages: (dir, print) =>
