@@ -6,7 +6,7 @@
 // page linking to itself — plus the assets, which are plain files under both.
 
 import { describe, expect, it } from "vitest";
-import { assetHref, outputRelFor, pageHref } from "../../src/build-web-book/paths.js";
+import { assetHref, outputRelFor, pageHref } from "../../../src/adapters/web/paths.js";
 
 describe("outputRelFor", () => {
   it("writes `<name>.html` by default", () => {

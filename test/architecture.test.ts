@@ -8,8 +8,9 @@
 //
 //   1. the rules that already hold stay clean (domain purity, layering, no node:
 //      builtins in the pure layers — vacuously true until those folders exist);
-//   2. the `marked` importers are exactly a known allowlist that shrinks each
-//      phase, ending at one path in Phase 5 and zero in Phase 8.
+//   2. the `marked` importers are exactly a known allowlist that shrank each
+//      phase and is empty from Phase 5: `marked` is reached only through
+//      `src/adapters/markdown/`, which the rule allows by path.
 //
 // When a phase moves a consumer, the allowlist shrinks in the same PR — that
 // edit is the record of the progress, and a stray new importer fails here.
@@ -29,11 +30,8 @@ const ENFORCED_NOW = [
   "no-node-builtins-in-domain-or-application",
 ];
 
-/** The legacy `marked` importers the web path still needs. Shrinks each phase; empty by Phase 8. */
-const MARKED_ALLOWLIST = new Set([
-  "src/lib/markdown.ts",
-  "src/lib/smart-typography.ts",
-]);
+/** The legacy `marked` importers the web path still needs. Empty since Phase 5. */
+const MARKED_ALLOWLIST = new Set<string>([]);
 
 /** Run the committed rule set over `src`, the same way `just boundaries` does. */
 async function doCruise(): Promise<ICruiseResult> {

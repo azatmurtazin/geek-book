@@ -30,7 +30,7 @@ export type MdNode =
   | { type: "text"; inline: readonly MdInline[] }
   | { type: "code"; lang: string; text: string; escaped: boolean }
   | { type: "blockquote"; children: readonly MdNode[] }
-  | { type: "list"; ordered: boolean; start: number; items: readonly (readonly MdNode[])[] }
+  | { type: "list"; ordered: boolean; start: number; loose: boolean; items: readonly (readonly MdNode[])[] }
   | {
       type: "table";
       align: readonly Align[];

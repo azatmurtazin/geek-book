@@ -1,15 +1,14 @@
 // One path from raw Markdown to a Chapter model.
 //
 // Both builders ordered the same five steps themselves, slightly differently:
-// fill placeholders, fetch remote images, extract mermaid fences, lex the
-// source, assemble the tree. They happen once here, in one order, so the two
+// fill placeholders, extract mermaid fences, lex the source, fetch remote
+// images, assemble the tree. They happen once here, in one order, so the two
 // editions cannot drift. Which parser, renderer and store stand behind the
 // ports is the composition root's business.
 //
-// The order is the one the printed edition already used — substitute, fetch,
-// extract, lex, draw, assemble — because substituting after the fences were
-// extracted (or fetching after lexing) could change what a link or a figure
-// resolves to.
+// Substituting happens before the fences come out, so a placeholder inside a
+// fence is filled for both editions; fetching happens after lexing, so it reads
+// the pictures the neutral tree actually carries.
 
 import type { Figure } from "../../domain/model/assets.js";
 import type { Chapter, ChapterContext } from "../../domain/model/chapter.js";
@@ -45,18 +44,6 @@ export interface SourceDeps {
 }
 
 /**
- * A chapter, plus what a renderer that still works from Markdown needs: the
- * source with placeholders filled and fences swapped for their placeholders,
- * and the drawn SVG for each. Phase 5's HTML renderer reads the `chapter`
- * alone; until then the website spells its pages from these two faces.
- */
-export interface SourceModel {
-  readonly chapter: Chapter;
-  readonly markdown: string;
-  readonly diagrams: ReadonlyMap<number, string>;
-}
-
-/**
  * Raw Markdown → a Chapter, with every asset the build must prepare already
  * registered. A remote image the build could not fetch comes back as a
  * diagnostic; the caller prints it.
@@ -65,31 +52,29 @@ export async function sourceToModel(
   source: string,
   ctx: ChapterContext,
   deps: SourceDeps,
-): Promise<Result<SourceModel>> {
+): Promise<Result<Chapter>> {
   const substituted = deps.substitute(source);
+  const { markdown, diagrams } = extractDiagrams(substituted);
+  const nodes = deps.markdown.lex(markdown);
   try {
     // Remote images have to be on disk before the walk reaches them.
-    await deps.images.collect(substituted);
+    await deps.images.collect(nodes);
   } catch (error) {
     return fail({ severity: "error", code: "image/fetch", message: (error as Error).message });
   }
-  const { markdown, diagrams } = extractDiagrams(substituted);
-  const nodes = deps.markdown.lex(markdown);
   if (deps.smartTypography) {
     applySmartTypography(nodes);
   }
   const figures = new Map<number, Figure>();
-  const rendered = new Map<number, string>();
   for (const [index, diagramSource] of diagrams) {
     const { id, name } = deps.diagramName(index);
-    const figure = await deps.diagrams.render(diagramSource, id, name);
-    figures.set(index, figure);
-    rendered.set(index, figure.svg);
+    figures.set(index, await deps.diagrams.render(diagramSource, id, name));
   }
-  const chapter = assemble(nodes, ctx, {
-    bookDir: deps.bookDir,
-    remoteFile: (url) => deps.images.lookup(url)?.file ?? null,
-    diagrams: figures,
-  });
-  return ok({ chapter, markdown, diagrams: rendered });
+  return ok(
+    assemble(nodes, ctx, {
+      bookDir: deps.bookDir,
+      remoteFile: (url) => deps.images.lookup(url)?.file ?? null,
+      diagrams: figures,
+    }),
+  );
 }

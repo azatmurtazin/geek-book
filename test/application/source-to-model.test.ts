@@ -39,14 +39,14 @@ class FakeRenderer implements DiagramRenderer {
 
 /** An in-memory store: fetches nothing, but records its input and can fail. */
 class FakeStore implements ImageStore {
-  readonly collected: string[] = [];
+  readonly collected: MdNode[][] = [];
   fetched = 0;
   constructor(
     private readonly found: Map<string, StoredImage> = new Map(),
     private readonly fails = false,
   ) {}
-  async collect(markdown: string): Promise<void> {
-    this.collected.push(markdown);
+  async collect(nodes: readonly MdNode[]): Promise<void> {
+    this.collected.push([...nodes]);
     if (this.fails) {
       throw new Error("cannot fetch image https://example.org/bird.png: boom");
     }
@@ -71,7 +71,7 @@ function makeDeps(over: Partial<SourceDeps> = {}): SourceDeps {
 }
 
 describe("sourceToModel — the one order", () => {
-  it("fills placeholders, fetches, then hands the fence-free source to the parser", async () => {
+  it("fills placeholders, strips the fences, lexes, then collects the tree's images", async () => {
     const parser = new FakeParser([]);
     const store = new FakeStore();
     const deps = makeDeps({
@@ -84,11 +84,12 @@ describe("sourceToModel — the one order", () => {
     const result = await sourceToModel(source, CTX, deps);
 
     expect(result.ok).toBe(true);
-    expect(store.collected).toEqual([expect.stringContaining("1.2.3")]);
     expect(parser.sources).toHaveLength(1);
     expect(parser.sources[0]).toContain("1.2.3");
     expect(parser.sources[0]).toContain("::gb-diagram-1::");
     expect(parser.sources[0]).not.toContain("mermaid");
+    // Collection reads the lexed tree, not the source.
+    expect(store.collected).toEqual([[]]);
   });
 });
 
@@ -104,12 +105,12 @@ describe("sourceToModel — drawings", () => {
 
     expect(renderer.calls).toEqual([{ source: "flowchart LR", id: "tex-dgm-3-1", name: "c3-d1.pdf" }]);
     if (!result.ok) throw new Error("expected ok");
-    expect([...result.value.diagrams.entries()]).toEqual([[1, '<svg data-id="tex-dgm-3-1"></svg>']]);
+    expect(result.value.figures.map((figure) => figure.name)).toEqual(["c3-d1.pdf"]);
   });
 });
 
 describe("sourceToModel — the model", () => {
-  it("returns the chapter, its drawings and the source the old renderers need", async () => {
+  it("returns the assembled chapter, its drawings and its images", async () => {
     const tree: MdNode[] = [
       { type: "heading", depth: 1, inline: [{ type: "text", text: "Title" }] },
       { type: "paragraph", inline: [{ type: "image", href: "images/bird.png", alt: "A bird" }] },
@@ -119,12 +120,10 @@ describe("sourceToModel — the model", () => {
     const result = await sourceToModel("```mermaid\nflowchart LR\n```\n", CTX, deps);
 
     if (!result.ok) throw new Error("expected ok");
-    const { chapter, markdown, diagrams } = result.value;
+    const chapter = result.value;
     expect(chapter.blocks[0]).toMatchObject({ kind: "heading", anchors: ["c3", "c3--title"] });
     expect(chapter.images).toEqual([{ relBook: "chapters/01_start/images/bird.png", name: "c3-i0.png" }]);
     expect(chapter.figures.map((figure) => figure.name)).toEqual(["f-1.pdf"]);
-    expect(markdown).toContain("::gb-diagram-1::");
-    expect(diagrams.get(1)).toBe('<svg data-id="dgm-1"></svg>');
   });
 
   it("resolves a remote picture through the store", async () => {
@@ -136,7 +135,7 @@ describe("sourceToModel — the model", () => {
     const result = await sourceToModel("", CTX, deps);
 
     if (!result.ok) throw new Error("expected ok");
-    expect(result.value.chapter.blocks[0]).toMatchObject({
+    expect(result.value.blocks[0]).toMatchObject({
       kind: "image",
       ref: { file: "/tmp/abc.png", name: "abc.png" },
       alt: "bird",
@@ -174,8 +173,8 @@ describe("sourceToModel — failures and typography", () => {
     );
 
     if (!off.ok || !on.ok) throw new Error("expected ok");
-    expect(off.value.chapter.blocks[0]).toMatchObject({ content: [{ kind: "text", text: 'He said "hi"' }] });
-    expect(on.value.chapter.blocks[0]).toMatchObject({
+    expect(off.value.blocks[0]).toMatchObject({ content: [{ kind: "text", text: 'He said "hi"' }] });
+    expect(on.value.blocks[0]).toMatchObject({
       content: [{ kind: "text", text: "He said \u201chi\u201d" }],
     });
   });

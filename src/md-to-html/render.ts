@@ -1,48 +1,61 @@
 // Render a Markdown source into a standalone HTML page.
 //
-// The body is wrapped in _layouts/default.html, which carries the fonts and
-// styles. The layout leaves a placeholder for the content CSS shared with the
-// web book ({{ content-css }}, from src/lib/content.css) and for the book's own
-// typefaces and palette ({{ font-links }}, {{ font-text }}, {{ font-code }},
-// {{ palette }}), filled here from src/lib/fonts.ts and src/lib/web-palette.ts
-// so the two targets cannot drift. Heading ids are
-// generated with the same slugifier the linter uses, so in-page `#anchor` links
-// land on the ids the site renderers emit. The page title is taken from the
-// first `#` heading.
+// The body is rendered from the same document tree the printed edition uses
+// (`domain/services/assemble.ts` → `adapters/render-html`), so heading ids come
+// from the same slugifier the linter checks and a page needs no second HTML
+// pipeline. The tree is wrapped in _layouts/default.html, which carries the
+// fonts and styles. The layout leaves a placeholder for the content CSS shared
+// with the web book ({{ content-css }}, from
+// `adapters/render-html/content.css`) and for the book's own typefaces and
+// palette ({{ font-links }}, {{ font-text }}, {{ font-code }}, {{ palette }}),
+// filled here from `adapters/render-html/stylesheets.ts` so the two targets
+// cannot drift. The page title is taken from the first `#` heading.
 //
 // Shared by the web-book build and the md-to-html CLI.
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { markedInstance } from "../lib/markdown.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
-import { escapeHtml, brandHtml } from "../lib/html.js";
+import { escapeHtml, brandHtml } from "../adapters/render-html/escape.js";
 import type { BookConfig } from "../lib/book-config.js";
 import { ui } from "../lib/ui-strings.js";
-import { tokenizeCode } from "../lib/code-tokens.js";
-import { readCss } from "../lib/css.js";
-import { codeStack, fontLinks, textStack } from "../lib/fonts.js";
-import { webPaletteVars } from "../lib/web-palette.js";
-import { basePath, metaTags } from "../lib/site-meta.js";
-import { extractDiagrams } from "../domain/services/extract-diagrams.js";
-import { renderMermaid, substituteDiagrams } from "../diagrams/render.js";
+import { readCss } from "../adapters/render-html/css.js";
+import { codeStack, fontLinks, textStack, webPaletteVars } from "../adapters/render-html/stylesheets.js";
+import { basePath, metaTags } from "../adapters/render-html/site-meta.js";
+import { MarkedParser } from "../adapters/markdown/marked-parser.js";
+import { MermaidRenderer } from "../adapters/diagrams/mermaid-renderer.js";
+import { NoRemoteImages } from "../adapters/http/remote-image-store.js";
+import { renderChapterBody, type HtmlContext } from "../adapters/render-html/html-renderer.js";
+import { sourceToModel, type SourceDeps } from "../application/pipelines/source-to-model.js";
+import { assemble } from "../domain/services/assemble.js";
+import { applySmartTypography } from "../domain/values/smart-typography.js";
+import type { ChapterContext } from "../domain/model/chapter.js";
+
+export { highlightComments } from "../adapters/render-html/html-renderer.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const LAYOUT = path.join(ROOT, "_layouts", "default.html");
 
-/**
- * Wrap comment runs of a code block in `<span class="code-comment">`, leaving
- * the rest byte-for-byte as the plain escaped code block. The runs come from
- * {@link tokenizeCode}, which keeps strings out of them.
- */
-export function highlightComments(cfg: BookConfig, code: string, lang: string): string {
-  let out = "";
-  for (const { kind, text } of tokenizeCode(cfg.code, code, lang)) {
-    const escaped = escapeHtml(text);
-    out += kind === "comment" ? `<span class="code-comment">${escaped}</span>` : escaped;
-  }
-  return out;
+/** A standalone page: no chapter number, no sibling pages, bare slugs. */
+const STANDALONE: ChapterContext = { chapterId: 0, relBook: "", idOf: new Map() };
+
+/** A context for a page that links to nothing: hrefs and srcs stay as written. */
+function standaloneContext(cfg: BookConfig): HtmlContext {
+  return { code: cfg.code, href: (href) => href, src: (src) => src };
+}
+
+/** The ports a standalone render draws through: drawn fences, no remote cache. */
+function standaloneDeps(cfg: BookConfig): SourceDeps {
+  return {
+    markdown: new MarkedParser(cfg.markdown.breaks),
+    diagrams: new MermaidRenderer(cfg),
+    images: new NoRemoteImages(),
+    substitute: (source) => substituteContentPlaceholders(cfg, source),
+    smartTypography: cfg.markdown.smartTypography,
+    bookDir: cfg.bookDir,
+    diagramName: (index) => ({ id: `diagram-${index}`, name: `diagram-${index}` }),
+  };
 }
 
 function pageTitle(cfg: BookConfig, source: string): string {
@@ -57,18 +70,14 @@ function pageTitle(cfg: BookConfig, source: string): string {
   return title ? `${title} — ${cfg.title}` : cfg.title;
 }
 
-/** The body for a source whose placeholders are already filled and whose
- *  mermaid fences are already placeholders. `breaks` is passed here, not to
- *  `markedInstance`, so it reaches the website's renderer and not the printed
- *  edition's lexer or the remote-image walker. */
-export function renderPreparedBody(cfg: BookConfig, prepared: string): string {
-  const md = markedInstance(cfg);
-  return md.parse(prepared, { breaks: cfg.markdown.breaks }) as string;
-}
-
 /** The chapter body as HTML: headings carry slug ids, GFM is on. */
 export function renderBody(cfg: BookConfig, source: string): string {
-  return renderPreparedBody(cfg, substituteContentPlaceholders(cfg, source));
+  const nodes = new MarkedParser(cfg.markdown.breaks).lex(substituteContentPlaceholders(cfg, source));
+  if (cfg.markdown.smartTypography) {
+    applySmartTypography(nodes);
+  }
+  const chapter = assemble(nodes, STANDALONE, { bookDir: cfg.bookDir });
+  return renderChapterBody(chapter, standaloneContext(cfg));
 }
 
 export function wrapInLayout(cfg: BookConfig, title: string, bodyHtml: string): string {
@@ -88,7 +97,7 @@ export function wrapInLayout(cfg: BookConfig, title: string, bodyHtml: string): 
     .replace("{{ font-text }}", () => textStack(cfg))
     .replace("{{ font-code }}", () => codeStack(cfg))
     .replace("{{ palette }}", () => webPaletteVars(cfg))
-    .replace("{{ content-css }}", () => readCss(import.meta.url, "../lib/content.css"))
+    .replace("{{ content-css }}", () => readCss(import.meta.url, "../adapters/render-html/content.css"))
     .replace("{{ content }}", () => bodyHtml);
 }
 
@@ -102,13 +111,9 @@ export function renderStandaloneHtml(cfg: BookConfig, source: string): string {
  * per-page HTML previews, so a diagram looks identical in the site and the PDF.
  */
 export async function renderSourceToHtml(cfg: BookConfig, source: string): Promise<string> {
-  const { markdown, diagrams } = extractDiagrams(source);
-  const placeholder = renderBody(cfg, markdown);
-  const rendered = new Map<number, string>();
-  for (const [index, diagramSource] of diagrams) {
-    rendered.set(index, await renderMermaid(cfg, diagramSource, `diagram-${index}`));
-  }
-  return substituteDiagrams(placeholder, rendered);
+  const result = await sourceToModel(source, STANDALONE, standaloneDeps(cfg));
+  if (!result.ok) throw new Error(result.diagnostics[0].message);
+  return renderChapterBody(result.value, standaloneContext(cfg));
 }
 
 /** {@link renderStandaloneHtml} with mermaid fences rendered to SVG. */

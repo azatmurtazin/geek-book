@@ -16,7 +16,16 @@ import type { Align } from "../../domain/model/chapter.js";
 
 /** Lex Markdown with `marked`, into the neutral tree. */
 export class MarkedParser implements MarkdownParser {
-  private readonly marked = new Marked({ gfm: true });
+  private readonly marked: Marked;
+
+  /**
+   * `breaks` turns a single newline inside a paragraph into a line break. The
+   * website takes the book's `markdown.breaks`; the printed edition never does,
+   * because it lexes its own source and the option is a parse-time choice.
+   */
+  constructor(breaks = false) {
+    this.marked = new Marked({ gfm: true, breaks });
+  }
 
   lex(source: string): MdNode[] {
     return this.blocks(this.marked.lexer(source));
@@ -52,6 +61,7 @@ export class MarkedParser implements MarkdownParser {
           type: "list",
           ordered: t.ordered === true,
           start: Number(t.start || 1),
+          loose: t.loose === true,
           items: t.items.map((item) => this.blocks(item.tokens)),
         };
       }

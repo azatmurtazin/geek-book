@@ -150,6 +150,7 @@ describe("parseChapter — pictures", () => {
     const chapter = await parseChapter(cfg, "![A bird](images/bird.png)", chapterContext());
     expect(chapter.blocks[0]).toEqual({
       kind: "image",
+      src: "images/bird.png",
       ref: { file: path.join(cfg.bookDir, "chapters/01_start/images/bird.png"), name: "c3-i0.png" },
       alt: "A bird",
     });

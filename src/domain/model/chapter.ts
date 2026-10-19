@@ -78,6 +78,13 @@ export interface ListBlock {
   ordered: boolean;
   /** The first number, for a numbered list that does not start at 1. */
   start: number;
+  /**
+   * Whether the list's items are separated by blank lines. A loose list sets
+   * each item's paragraphs as blocks of their own; a tight one sets them as a
+   * run with no paragraph around it. The HTML renderer needs the distinction;
+   * LaTeX ignores it.
+   */
+  loose: boolean;
   /** Each item's blocks. */
   items: Block[][];
 }

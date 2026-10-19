@@ -1,8 +1,10 @@
-// The pure quote/dash engine moved from lib/smart-typography.ts. The token walk
-// stays at the legacy path and is covered by test/lib/smart-typography.test.ts.
+// The pure quote/dash engine and the walk over the neutral tree live here; the
+// legacy path is a shim over the string form and is checked by
+// test/lib/smart-typography.test.ts.
 
 import { describe, expect, it } from "vitest";
-import { run, smartTypography } from "../../../src/domain/values/smart-typography.js";
+import { applySmartTypography, run, smartTypography } from "../../../src/domain/values/smart-typography.js";
+import type { MdInline, MdNode } from "../../../src/domain/model/markdown.js";
 
 describe("smartTypography", () => {
   it("opens and closes a double quote around a phrase", () => {
@@ -52,5 +54,81 @@ describe("run", () => {
   it("reads the incoming character as the context for a leading quote", () => {
     expect(run('"', "word").text).toBe("\u201d");
     expect(run('"', " ").text).toBe("\u201c");
+  });
+});
+
+describe("applySmartTypography", () => {
+  const text = (body: string, verbatim = false): MdInline => ({ type: "text", text: body, verbatim });
+  const paragraph = (...inline: MdInline[]): MdNode => ({ type: "paragraph", inline });
+
+  /** The inline run of a paragraph node. */
+  const inlines = (node: MdNode): readonly MdInline[] =>
+    (node as unknown as { inline: readonly MdInline[] }).inline;
+
+  it("smartens text nodes in place", () => {
+    const node = paragraph(text('a "b" -- c'));
+    applySmartTypography([node]);
+    expect((inlines(node)[0] as { text: string }).text).toBe("a \u201cb\u201d \u2013 c");
+  });
+
+  it("carries the run across emphasis, so a wrapping pair still closes", () => {
+    const strong: MdInline = { type: "strong", children: [text("bold")] };
+    const node = paragraph(text('"'), strong, text('"'));
+    applySmartTypography([node]);
+    const kids = inlines(node);
+    expect((kids[0] as { text: string }).text).toBe("\u201c");
+    expect((kids[2] as { text: string }).text).toBe("\u201d");
+  });
+
+  it("starts a fresh run in each paragraph", () => {
+    const nodes = [paragraph(text('end of one"')), paragraph(text('next"'))];
+    applySmartTypography(nodes);
+    // Without a reset the trailing quote of the first paragraph would open here.
+    expect((inlines(nodes[1])[0] as { text: string }).text).toBe("next\u201d");
+  });
+
+  it("leaves code spans and raw HTML as written", () => {
+    const node = paragraph({ type: "code", text: '"code" -- x' }, { type: "html", text: '<span title="x">' });
+    applySmartTypography([node]);
+    const kids = inlines(node);
+    expect((kids[0] as { text: string }).text).toBe('"code" -- x');
+    expect((kids[1] as { text: string }).text).toBe('<span title="x">');
+  });
+
+  it("leaves backslash-escaped text as written", () => {
+    const node = paragraph(text('"\\"--x"', true));
+    applySmartTypography([node]);
+    expect((inlines(node)[0] as { text: string }).text).toBe('"\\"--x"');
+  });
+
+  it("smartens link text but never its target", () => {
+    const link: MdInline = { type: "link", href: 'https://example.com/"a"--b', children: [text('a "b"')] };
+    applySmartTypography([paragraph(link)]);
+    expect(((link as { children: readonly MdInline[] }).children[0] as { text: string }).text).toBe("a \u201cb\u201d");
+    expect((link as { href: string }).href).toBe('https://example.com/"a"--b');
+  });
+
+  it("starts a fresh run in each table cell", () => {
+    const table: MdNode = {
+      type: "table",
+      align: [null],
+      header: [[text('"h"')]],
+      rows: [[[text('"a" -- b')]]],
+    };
+    applySmartTypography([table]);
+    const t = table as unknown as { header: MdInline[][]; rows: MdInline[][][] };
+    expect((t.header[0][0] as { text: string }).text).toBe("\u201ch\u201d");
+    expect((t.rows[0][0][0] as { text: string }).text).toBe("\u201ca\u201d \u2013 b");
+  });
+
+  it("recurses into lists and blockquotes", () => {
+    const item: MdNode = paragraph(text('"a" -- b'));
+    const list: MdNode = { type: "list", ordered: false, start: 1, loose: false, items: [[item]] };
+    const quote: MdNode = { type: "blockquote", children: [paragraph(text('"c"'))] };
+    applySmartTypography([list, quote]);
+    const first = (list as unknown as { items: MdNode[][] }).items[0][0];
+    const second = (quote as unknown as { children: MdNode[] }).children[0];
+    expect((inlines(first)[0] as { text: string }).text).toBe("\u201ca\u201d \u2013 b");
+    expect((inlines(second)[0] as { text: string }).text).toBe("\u201cc\u201d");
   });
 });

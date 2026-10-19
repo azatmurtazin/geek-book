@@ -7,9 +7,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { main } from "../../src/build-web-book/cli.js";
-import { fixtureConfig } from "../helpers/config.js";
-import type { BookConfig } from "../../src/lib/book-config.js";
+import { main } from "../../../src/build-web-book/cli.js";
+import { fixtureConfig } from "../../helpers/config.js";
+import type { BookConfig } from "../../../src/lib/book-config.js";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "geek-book-site-"));
 afterAll(() => fs.rmSync(root, { recursive: true, force: true }));

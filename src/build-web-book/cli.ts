@@ -14,21 +14,80 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import type { BookConfig } from "../lib/book-config.js";
-import { escapeHtml } from "../lib/html.js";
+import { escapeHtml } from "../adapters/render-html/escape.js";
 import { parseSummary } from "../lib/summary.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
-import { renderPreparedBody } from "../md-to-html/render.js";
-import { substituteDiagrams } from "../diagrams/render.js";
 import { MarkedParser } from "../adapters/markdown/marked-parser.js";
 import { MermaidRenderer } from "../adapters/diagrams/mermaid-renderer.js";
 import { RemoteImageStore } from "../adapters/http/remote-image-store.js";
+import { renderChapterBody, type HtmlContext } from "../adapters/render-html/html-renderer.js";
 import { sourceToModel, type SourceDeps } from "../application/pipelines/source-to-model.js";
-import { assemblePage, rewriteImages, rewriteLinks, stylesheet, headHtml, type NavSlot } from "./site.js";
-import { outputRelFor, pageHref } from "./paths.js";
+import { assemblePage, stylesheet, headHtml, type NavSlot } from "../adapters/web/page-shell.js";
+import { assetHref, outputRelFor, pageHref } from "../adapters/web/paths.js";
+import { resolveImagePath } from "../lib/images.js";
 import { REMOTE_IMAGE_DIR, RemoteImages } from "../lib/remote-images.js";
 
 function usage(): void {
   process.stderr.write("usage: geek-book web [output-dir]\n");
+}
+
+/** Resolve a markdown-relative link target to a book-relative path. */
+function resolveLocal(fromRelBook: string, hrefPath: string): string {
+  const dir = path.posix.dirname(fromRelBook.replace(/\\/g, "/"));
+  return path.posix.normalize(path.posix.join(dir, hrefPath));
+}
+
+/**
+ * Rewrite `path.md` / `path.md#anchor` hrefs to links between the built pages.
+ * Resolving the target uses the source path (`fromRelBook`); the href itself is
+ * measured from the page's own output path (`fromOutputRel`), which is the
+ * directory a browser will actually resolve relative links against. A target
+ * that is not a written chapter, or not a `.md` at all, is left as written.
+ */
+function linkHref(
+  href: string,
+  fromRelBook: string,
+  fromOutputRel: string,
+  pages: Map<string, string>,
+  prettyUrls: boolean,
+): string {
+  const hash = href.indexOf("#");
+  const rawPath = hash === -1 ? href : href.slice(0, hash);
+  const anchor = hash === -1 ? "" : href.slice(hash);
+  const lower = rawPath.toLowerCase();
+  if (!lower.endsWith(".md") && !lower.endsWith(".md/")) {
+    return href;
+  }
+  const outputRel = pages.get(resolveLocal(fromRelBook, rawPath));
+  if (outputRel === undefined) {
+    return href; // leave unresolved links untouched
+  }
+  return `${pageHref(fromOutputRel, outputRel, prettyUrls)}${anchor}`;
+}
+
+/**
+ * Rewrite an `<img src>` to a path relative to the built page and record the
+ * book-relative source path, so the builder can copy the file into the output
+ * tree. A remote source points at the copy `remote` fetched into
+ * `images/remote/`, so the built site carries its pictures with it. Sources
+ * outside the book, and schemes nothing fetches, are left alone.
+ */
+function imageSrc(
+  src: string,
+  fromRelBook: string,
+  fromOutputRel: string,
+  remote: RemoteImages,
+  assets: string[],
+): string {
+  const bookRel = resolveImagePath(src, fromRelBook);
+  if (bookRel === null) {
+    const fetched = remote.nameFor(src);
+    return fetched === null ? src : assetHref(fromOutputRel, path.posix.join(REMOTE_IMAGE_DIR, fetched));
+  }
+  if (!assets.includes(bookRel)) {
+    assets.push(bookRel);
+  }
+  return assetHref(fromOutputRel, bookRel);
 }
 
 export async function main(cfg: BookConfig, args: string[]): Promise<number> {
@@ -126,7 +185,7 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
     path.relative(cfg.root, path.join(cfg.bookDir, relBook)).split(path.sep).join("/");
 
   // Remote images are fetched into the site, so a reader needs no other server.
-  const remote = new RemoteImages(cfg, path.join(outputDir, REMOTE_IMAGE_DIR), {
+  const remote = new RemoteImages(path.join(outputDir, REMOTE_IMAGE_DIR), {
     timeout: cfg.images.timeout,
     types: cfg.images.types,
   });
@@ -134,7 +193,7 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
   // The one source pipeline, with this edition's ports: the website draws a
   // fence under its own id and embeds the SVG, so the figure name is unused.
   const deps: SourceDeps = {
-    markdown: new MarkedParser(),
+    markdown: new MarkedParser(cfg.markdown.breaks),
     diagrams: new MermaidRenderer(cfg),
     images: new RemoteImageStore(remote),
     substitute: (source) => substituteContentPlaceholders(cfg, source),
@@ -186,20 +245,28 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
     return true;
   };
 
-  /** A page body: the shared pipeline, then links rewritten and images copied. */
+  /**
+   * A page body: the shared pipeline, then the links and pictures resolved for
+   * where the page sits in the output tree. `copyAsset` puts each book picture
+   * the page pointed at beside it.
+   */
   const renderPage = async (mdPath: string, relBook: string, outputRel: string): Promise<string | null> => {
     const markdown = fs.readFileSync(mdPath, "utf8");
     const ctx = { chapterId: idOf.get(relBook) ?? written.length, relBook, idOf };
     // Remote images have to be in the output before the page points at them.
-    const model = await sourceToModel(markdown, ctx, deps);
-    if (!model.ok) {
+    const result = await sourceToModel(markdown, ctx, deps);
+    if (!result.ok) {
       // A remote image the build could not fetch: the message says which URL.
-      process.stderr.write(`geek-book: ${model.diagnostics[0].message}\n`);
+      process.stderr.write(`geek-book: ${result.diagnostics[0].message}\n`);
       return null;
     }
-    const html = substituteDiagrams(renderPreparedBody(cfg, model.value.markdown), model.value.diagrams);
-    const linked = rewriteLinks(html, relBook, outputRel, pages, cfg.web.prettyUrls);
-    const { body, assets } = rewriteImages(linked, relBook, outputRel, remote);
+    const assets: string[] = [];
+    const htmlCtx: HtmlContext = {
+      code: cfg.code,
+      href: (href) => linkHref(href, relBook, outputRel, pages, cfg.web.prettyUrls),
+      src: (src) => imageSrc(src, relBook, outputRel, remote, assets),
+    };
+    const body = renderChapterBody(result.value, htmlCtx);
     for (const asset of assets) {
       if (!copyAsset(asset)) {
         return null;

@@ -1,10 +1,10 @@
 // The site's own metadata: the base path, the canonical address of a page and
 // the social card tags. Built from the config and a page's path, and shared by
-// the web book (build-web-book) and the standalone layout (md-to-html), so the
+// the web book (`adapters/web`) and the standalone layout (`md-to-html`), so the
 // two editions cannot describe the same book differently.
 
-import { escapeHtml } from "./html.js";
-import type { BookConfig } from "./book-config.js";
+import { escapeHtml } from "./escape.js";
+import type { BookConfig } from "../../lib/book-config.js";
 
 /**
  * The path the site is served under — `web.baseUrl`'s path — so the root links

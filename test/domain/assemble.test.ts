@@ -119,6 +119,7 @@ describe("assemble — pictures", () => {
     const chapter = build([{ type: "paragraph", inline: [{ type: "image", href: "images/bird.png", alt: "A bird" }] }]);
     expect(chapter.blocks[0]).toEqual({
       kind: "image",
+      src: "images/bird.png",
       ref: { file: path.join(cfg.bookDir, "chapters/01_start/images/bird.png"), name: "c3-i0.png" },
       alt: "A bird",
     });
@@ -199,10 +200,11 @@ describe("assemble — lists and tables", () => {
       [{ type: "paragraph", inline: [text("three")] }],
       [{ type: "paragraph", inline: [text("four")] }],
     ];
-    expect(build([{ type: "list", ordered: true, start: 3, items }]).blocks[0]).toEqual({
+    expect(build([{ type: "list", ordered: true, start: 3, loose: false, items }]).blocks[0]).toEqual({
       kind: "list",
       ordered: true,
       start: 3,
+      loose: false,
       items: [
         [{ kind: "paragraph", content: [{ kind: "text", text: "three" }] }],
         [{ kind: "paragraph", content: [{ kind: "text", text: "four" }] }],

@@ -14,6 +14,14 @@ export interface LinkNode {
 /** A picture: in the flow of a sentence, or standing alone as a block. */
 export interface ImageNode {
   kind: "image";
+  /**
+   * The source the Markdown spelled, before any resolution.
+   *
+   * The web edition links a picture by its source (a book file is copied beside
+   * the page, a remote one points at the build's fetched copy), so the renderer
+   * needs the spelling the author wrote, not only the copy the print build made.
+   */
+  src: string;
   /** The file to embed, or `null` when the source has no file — alt text then. */
   ref: ImageRef | null;
   /** The Markdown alt text: shown on the web, and the print fallback above. */

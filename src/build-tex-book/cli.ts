@@ -76,7 +76,7 @@ export async function main(cfg: BookConfig, args: string[]): Promise<number> {
   const texFile = path.join(buildDir, "book.tex");
   const figuresDir = path.join(buildDir, "figures");
   // Remote images land among the figures they will be embedded as.
-  const remote = new RemoteImages(cfg, figuresDir, {
+  const remote = new RemoteImages(figuresDir, {
     print: true,
     timeout: cfg.images.timeout,
     types: cfg.images.types,

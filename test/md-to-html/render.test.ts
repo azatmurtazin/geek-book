@@ -116,7 +116,7 @@ describe("renderBody — smart typography", () => {
 
 describe("highlightComments", () => {
   it("returns the escaped code byte-for-byte when the language has no comments", () => {
-    expect(highlightComments(cfg, "let a = 1 < 2;", "text")).toBe("let a = 1 &lt; 2;");
+    expect(highlightComments("let a = 1 < 2;", "text", cfg.code)).toBe("let a = 1 &lt; 2;");
   });
 });
 

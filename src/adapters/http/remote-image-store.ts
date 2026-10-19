@@ -5,13 +5,14 @@
 // cache the pipeline fetches through.
 
 import type { RemoteImages } from "../../lib/remote-images.js";
+import type { MdNode } from "../../domain/model/markdown.js";
 import type { ImageStore, StoredImage } from "../../application/ports/image-store.js";
 
 export class RemoteImageStore implements ImageStore {
   constructor(private readonly remote: RemoteImages) {}
 
-  collect(markdown: string): Promise<void> {
-    return this.remote.collect(markdown);
+  collect(nodes: readonly MdNode[]): Promise<void> {
+    return this.remote.collect(nodes);
   }
 
   lookup(url: string): StoredImage | null {

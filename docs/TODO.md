@@ -3,7 +3,7 @@
 Execution checklist for [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md).
 Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline: [`CURRENT_ARCHITECTURE.md`](./CURRENT_ARCHITECTURE.md).
 
-**Status:** in progress — P0 harness landed (PDF reference pending), P1–P4 done · one phase = one PR = one green baseline.
+**Status:** in progress — P0 harness landed (PDF reference pending), P1–P5 done · one phase = one PR = one green baseline.
 
 ## Invariants (every commit)
 
@@ -59,13 +59,14 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
   - [x] Both builders feed the pipeline (HTML still old renderer, via `renderPreparedBody` + `substituteDiagrams`)
   - [x] Tests: `source-to-model` with fake ports; `extract-diagrams`; `image-measurer`; real `book.tex`/diagram SVG byte-identical
 
-- [ ] **P5 — Pure HTML renderer** (L/High) ⚠ byte fidelity
-  - [ ] `adapters/render-html/*` (`renderChapterBody`, escape, site-meta, stylesheets, content.css, hrefFor/srcFor)
-  - [ ] `adapters/web/*` (page-shell, navigation, website-writer, site.css)
-  - [ ] Flip web build to `sourceToModel` + `renderChapterBody`; delete regex rewrites
-  - [ ] Delete `marked` hooks + `build-web-book/{page,nav,links,site}.ts`
-  - [ ] Watch: attribute order, whitespace/newlines, `<pre><code class>`, code-label wrapper, heading id
-  - [ ] Tests: `html-renderer`; parity rebuilt on model
+- [x] **P5 — Pure HTML renderer** (L/High) ⚠ byte fidelity
+  - [x] `adapters/render-html/*` (`renderChapterBody`, `escape`, `site-meta`, `stylesheets`, `css`, `content.css`; `hrefFor`/`srcFor` live beside the web build as `ctx.href`/`ctx.src`, since they need the page map and remote store)
+  - [x] `adapters/web/*` (page-shell, navigation, paths, site.css; `website-writer` deferred — the CLI keeps the thin fs calls)
+  - [x] Flip web build to `sourceToModel` + `renderChapterBody`; delete regex rewrites (`build-web-book/links.ts`)
+  - [x] Delete `marked` hooks; `sourceToModel` returns `Result<Chapter>`; `lib/markdown.ts`/`lib/smart-typography.ts` are shims (linter), `lib/html.ts`/`lib/web-palette.ts` deleted
+  - [x] Model: `ImageNode.src` and `ListBlock.loose` (+ neutral `loose`); `MarkedParser(breaks)`
+  - [x] Watch: heading id (strip `c<id>--`), attribute order, whitespace/newlines, `<pre><code class>`, code-label wrapper — `web.sha256` byte-identical
+  - [x] Tests: `html-renderer` (golden chapter + focused cases); `MARKED_ALLOWLIST` empty; `grep 'from "marked"' src` = 1 path
 
 - [ ] **P6 — Lint on the model** (M/Med)
   - [ ] `domain/services/anchor-index.ts` (single anchor authority)

@@ -45,7 +45,7 @@ export async function parseChapter(cfg: BookConfig, source: string, ctx: Chapter
   if (!result.ok) {
     throw new Error(result.diagnostics[0].message);
   }
-  return result.value.chapter;
+  return result.value;
 }
 
 /** The pipeline's ports for the printed edition. */

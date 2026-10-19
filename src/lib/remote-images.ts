@@ -16,8 +16,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { isRemoteImage } from "./images.js";
-import { markedInstance } from "./markdown.js";
-import type { BookConfig } from "./book-config.js";
+import type { MdInline, MdNode } from "../domain/model/markdown.js";
 
 /** Where remote images land inside a web build, relative to its root. */
 export const REMOTE_IMAGE_DIR = "images/remote";
@@ -63,7 +62,6 @@ export interface RemoteImageOptions {
  * by the time a renderer asks `nameFor` the file is already on disk.
  */
 export class RemoteImages {
-  private readonly cfg: BookConfig;
   private readonly dir: string;
   private readonly print: boolean;
   private readonly timeoutMs: number;
@@ -72,8 +70,7 @@ export class RemoteImages {
   private readonly files = new Map<string, string>();
   private downloads = 0;
 
-  constructor(cfg: BookConfig, dir: string, options: RemoteImageOptions = {}) {
-    this.cfg = cfg;
+  constructor(dir: string, options: RemoteImageOptions = {}) {
     this.dir = dir;
     this.print = options.print === true;
     this.timeoutMs = (options.timeout ?? 0) > 0 ? (options.timeout as number) * 1000 : 30_000;
@@ -99,19 +96,10 @@ export class RemoteImages {
     return name === undefined ? null : path.join(this.dir, name);
   }
 
-  /** Fetch every remote image `markdown` references, ignoring code samples. */
-  async collect(markdown: string): Promise<void> {
+  /** Fetch every remote image the neutral tree references, ignoring code samples. */
+  async collect(nodes: readonly MdNode[]): Promise<void> {
     const urls: string[] = [];
-    const md = markedInstance(this.cfg);
-    md.walkTokens(md.lexer(markdown), (token) => {
-      if (token.type !== "image") {
-        return;
-      }
-      const src = ((token as { href?: string }).href ?? "").trim();
-      if (isRemoteImage(src) && !urls.includes(src)) {
-        urls.push(src);
-      }
-    });
+    collectRemoteUrls(nodes, urls);
     for (const url of urls) {
       if (!this.files.has(url)) {
         await this.fetch(url);
@@ -163,5 +151,51 @@ export class RemoteImages {
       }
     }
     return null;
+  }
+}
+
+/** Every remote image URL the neutral tree references, in order, once each. */
+function collectRemoteUrls(nodes: readonly MdNode[], out: string[]): void {
+  for (const node of nodes) {
+    switch (node.type) {
+      case "heading":
+      case "paragraph":
+      case "text":
+        collectInlineUrls(node.inline, out);
+        break;
+      case "blockquote":
+        collectRemoteUrls(node.children, out);
+        break;
+      case "list":
+        for (const item of node.items) collectRemoteUrls(item, out);
+        break;
+      case "table":
+        for (const cell of node.header) collectInlineUrls(cell, out);
+        for (const row of node.rows) for (const cell of row) collectInlineUrls(cell, out);
+        break;
+      default:
+        // code, rule and html carry no pictures.
+        break;
+    }
+  }
+}
+
+function collectInlineUrls(nodes: readonly MdInline[], out: string[]): void {
+  for (const node of nodes) {
+    switch (node.type) {
+      case "image": {
+        const src = node.href.trim();
+        if (isRemoteImage(src) && !out.includes(src)) out.push(src);
+        break;
+      }
+      case "strong":
+      case "em":
+      case "del":
+      case "link":
+        collectInlineUrls(node.children, out);
+        break;
+      default:
+        break;
+    }
   }
 }

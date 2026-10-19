@@ -3,14 +3,13 @@
 // site's shared assets — the head HTML and the stylesheet.
 
 import fs from "node:fs";
-import { escapeHtml } from "../lib/html.js";
-import type { BookConfig } from "../lib/book-config.js";
-import { fontCssVars, fontLinks } from "../lib/fonts.js";
-import { readCss } from "../lib/css.js";
-import { webPaletteVars } from "../lib/web-palette.js";
-import { metaTags, pageUrl } from "../lib/site-meta.js";
-import { ui } from "../lib/ui-strings.js";
-import { footerHtml, sidebarHtml } from "./nav.js";
+import { escapeHtml } from "../render-html/escape.js";
+import type { BookConfig } from "../../lib/book-config.js";
+import { fontCssVars, fontLinks, webPaletteVars } from "../render-html/stylesheets.js";
+import { readCss } from "../render-html/css.js";
+import { metaTags, pageUrl } from "../render-html/site-meta.js";
+import { ui } from "../../lib/ui-strings.js";
+import { footerHtml, sidebarHtml } from "./navigation.js";
 import { assetHref, pageHref } from "./paths.js";
 
 export interface MappedChapter {
@@ -189,7 +188,7 @@ export function headHtml(cfg: BookConfig): string {
  *  own `web.css` last — four built-in sources pasted together here rather than
  *  at a CSS build step, with the book's file able to override any of them. */
 export function stylesheet(cfg: BookConfig): string {
-  const content = readCss(import.meta.url, "../lib/content.css");
+  const content = readCss(import.meta.url, "../render-html/content.css");
   const layout = readCss(import.meta.url, "site.css");
   const book = bookFile(cfg.web.css);
   return [fontCssVars(cfg), webPaletteVars(cfg), content, layout, book].filter(Boolean).join("\n\n");

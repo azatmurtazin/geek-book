@@ -147,20 +147,20 @@ describe("chapterTex — lists", () => {
   const item = (text: string): Block[][] => [[{ kind: "paragraph", content: [{ kind: "text", text }] }]];
 
   it("bullets use itemize", () => {
-    expect(tex({ kind: "list", ordered: false, start: 1, items: [...item("one"), ...item("two")] })).toBe(
+    expect(tex({ kind: "list", ordered: false, start: 1, loose: false, items: [...item("one"), ...item("two")] })).toBe(
       "\\begin{itemize}\n\\item one\n\\item two\n\\end{itemize}",
     );
   });
 
   it("counts an ordered list from where the Markdown says", () => {
-    expect(tex({ kind: "list", ordered: true, start: 3, items: item("three") })).toBe(
+    expect(tex({ kind: "list", ordered: true, start: 3, loose: false, items: item("three") })).toBe(
       "\\begin{enumerate}\n\\setcounter{enumi}{2}\n\\item three\n\\end{enumerate}",
     );
   });
 
   it("a nested list sets the inner counter", () => {
-    const inner: Block = { kind: "list", ordered: true, start: 2, items: item("b") };
-    expect(tex({ kind: "list", ordered: false, start: 1, items: [[inner]] })).toContain("\\setcounter{enumii}{1}");
+    const inner: Block = { kind: "list", ordered: true, start: 2, loose: false, items: item("b") };
+    expect(tex({ kind: "list", ordered: false, start: 1, loose: false, items: [[inner]] })).toContain("\\setcounter{enumii}{1}");
   });
 });
 
@@ -184,6 +184,7 @@ describe("chapterTex — tables", () => {
 describe("chapterTex — pictures", () => {
   const imageBlock = (file: string | null): Block => ({
     kind: "image",
+    src: "images/bird.png",
     ref: file === null ? null : { file, name: "c3-i0.png" },
     alt: "A bird",
   });
@@ -222,7 +223,7 @@ describe("chapterTex — pictures", () => {
         kind: "paragraph",
         content: [
           { kind: "text", text: "a " },
-          { kind: "image", ref: { file: path.join(imagesDir, "small.png"), name: "c3-i0.png" }, alt: "x" },
+          { kind: "image", src: "images/small.png", ref: { file: path.join(imagesDir, "small.png"), name: "c3-i0.png" }, alt: "x" },
         ],
       }),
     ).toBe("a \\includegraphics[width=10.58mm]{figures/c3-i0.png}");

@@ -728,6 +728,58 @@ identical.
 
 **Size.** L. **Risk.** High.
 
+**Outcome (landed).**
+
+- The HTML renderer is pure over the model. `adapters/render-html/html-renderer.ts`
+  reads `Block[]`/`Inline[]` and writes the body; it reaches links and pictures
+  through `ctx.href`/`ctx.src` callbacks, so where a page sits (the web build's
+  built-path map and remote store, or a standalone page's identity) stays outside
+  it. `marked`'s bytes are reproduced deliberately: a heading or code hook emits
+  **no** trailing `\n` (the old custom hooks, not `marked`'s defaults), while a
+  paragraph, list, table, quote and rule end with one; a figure is
+  `<div class="diagram">\n{svg}\n</div>\n`; `escapeMarked` keeps the entity rule
+  (prose leaves an `&` that opens an entity, code encodes every `&`); and
+  `cleanUrl` (`encodeURI`, `%25` left, `null` on throw) is reproduced so a link
+  renders its text and a picture its alt when the href cannot be encoded.
+- Web chrome moved. `site.css` and the `page-shell.ts`/`navigation.ts` pair live in
+  `adapters/web/`; `site-meta.ts`, `content.css`, `css.ts` and a merged
+  `stylesheets.ts` (fonts + palette) live in `adapters/render-html/`.
+  `build-web-book/cli.ts` keeps the orchestration (it still reads the SUMMARY,
+  writes the tree and copies assets); `build-web-book/{page,nav,paths,links,site}.ts`
+  are gone.
+- `MarkedParser(breaks)` puts `markdown.breaks` in the lexer, so the web model
+  carries `break` nodes and the printed edition keeps its soft newlines.
+  `sourceToModel` returns `Result<Chapter>`; Phase 4's `SourceModel` (prepared
+  markdown + diagrams) is gone and the order is substitute → extract → lex →
+  collect → smarten → draw → assemble.
+- Model additions, minimal and print-neutral: `ImageNode.src` (the author's
+  spelling — the web links and copies a picture by it, and `ref` alone cannot
+  reproduce a `ref === null` source; the printed edition ignores it) and
+  `ListBlock.loose` (with `loose` on the neutral list) so the renderer can set a
+  tight item's run bare; LaTeX ignores it.
+- Deviations from the plan's letter. **Heading id**: the plan said `anchors[0]`,
+  but a chapter title's `anchors[0]` is `c<id>` (the slug is the *second* anchor),
+  so the renderer strips the `c<id>--` prefix from the matching anchor and hangs
+  the bare slug — what `marked`'s hook produced. **`hrefFor`/`srcFor`**: they need
+  a page's built-path map and the build's remote store, so they live beside the
+  web build (`cli.ts`'s `linkHref`/`imageSrc`) and the renderer takes them as the
+  `ctx.href`/`ctx.src` callbacks; `links.ts` is deleted with no `domain/`
+  replacement. **Raw HTML**: the walk already collapsed raw HTML blocks and inline
+  tags to literal text (Phase 3), so the renderer emits none; the guide carries
+  none, so no bytes move. **`website-writer.ts`**: not extracted; the CLI keeps
+  the thin fs calls (Phase 7's use case). **`md-to-html/render.ts`**: stays in the
+  adapter (its layout reader is I/O, which the pure application layer may not do);
+  it consumes the model — `renderBody` is sync and non-diagram,
+  `renderSourceToHtml` runs the pipeline with `NoRemoteImages`.
+- `RemoteImages.collect(nodes)` walks the neutral tree and needs no `cfg`.
+- `lib/markdown.ts` and `lib/smart-typography.ts` are kept as shims (the linter
+  still names them); `lib/html.ts` and `lib/web-palette.ts` are deleted and
+  `lib/fonts.ts` is a shim.
+- Verified: `just verify` green (`web.sha256`, `lint.txt`, `config.json`,
+  `md.html` byte-identical); `grep -R 'from "marked"' src` returns one path
+  (`adapters/markdown/marked-parser.ts`); `MARKED_ALLOWLIST` is empty; 292 tests
+  over 29 files.
+
 ---
 
 ### Phase 6 — Lint on the model

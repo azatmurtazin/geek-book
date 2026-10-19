@@ -105,6 +105,7 @@ function blocksOf(nodes: readonly MdNode[], state: AssembleState): Block[] {
           kind: "list",
           ordered: node.ordered,
           start: node.start,
+          loose: node.loose,
           items: node.items.map((item) => blocksOf(item, state)),
         });
         break;
@@ -250,9 +251,9 @@ function plainInline(nodes: readonly MdInline[]): string {
   return out;
 }
 
-/** A picture's node: the file it points at (or none), and its alt text. */
+/** A picture's node: the source it spelled, the file it points at (or none), and its alt text. */
 function imageNode(href: string, alt: string, state: AssembleState): ImageNode {
-  return { kind: "image", ref: placeImage(href, state), alt: decodeEntities(alt) };
+  return { kind: "image", src: href, ref: placeImage(href, state), alt: decodeEntities(alt) };
 }
 
 /**

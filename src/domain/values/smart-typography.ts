@@ -2,10 +2,7 @@
 //
 // The string form here is what a reader that holds raw source uses — the
 // linter's headings, most of all — and the neutral-tree walk at the bottom is
-// what the printed edition calls for each run of prose. The web edition walks
-// `marked`'s own tokens (`lib/smart-typography.ts`) until it shares the neutral
-// tree; both call the one quote/dash engine here, so the two editions cannot
-// disagree.
+// what both editions call for each run of prose, so the two cannot disagree.
 //
 // The string form steps over an inline code span, so a heading that names a flag
 // in backticks still slugs the same on both sides. Pure: no imports outside

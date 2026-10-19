@@ -3,8 +3,8 @@
 // Both are assembled here rather than in the page template, so what a page has
 // around its body reads in one place.
 
-import { escapeHtml, brandHtml } from "../lib/html.js";
-import type { BookConfig } from "../lib/book-config.js";
+import { escapeHtml, brandHtml } from "../render-html/escape.js";
+import type { BookConfig } from "../../lib/book-config.js";
 import { pageHref } from "./paths.js";
 
 /** A footer link's target: `{path}` becomes the page's source path from the

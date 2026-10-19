@@ -63,6 +63,7 @@ describe("MarkedParser — source to the neutral tree", () => {
         type: "list",
         ordered: true,
         start: 3,
+        loose: false,
         items: [
           [{ type: "text", inline: [{ type: "text", text: "three" }] }],
           [{ type: "text", inline: [{ type: "text", text: "four" }] }],
@@ -112,8 +113,13 @@ describe("MarkedParser — source to the neutral tree", () => {
       type: "list",
       ordered: false,
       start: 1,
+      loose: false,
       items: [[{ type: "text", inline: [{ type: "image", href: "x.png", alt: "alt" }] }]],
     });
+  });
+
+  it("marks a list whose items are blank-line separated as loose", () => {
+    expect(parser.lex("- one\n\n- two\n")[0]).toMatchObject({ type: "list", loose: true });
   });
 
   it("carries a fence's language lower-cased for the walk to fold", () => {
