@@ -115,3 +115,19 @@ export function resolve(base: string, value: string): string {
   const normalized = normalize(combined);
   return normalized.length > 1 ? normalized.replace(/\/+$/, "") : normalized;
 }
+
+/**
+ * The path from `from` to `to`, both absolute and forward-slashed. `""` when
+ * they are the same, as `path.relative` answers; the caller adds the `.` the
+ * printed config uses.
+ */
+export function relative(from: string, to: string): string {
+  const fromParts = normalize(from).split("/").filter((piece) => piece !== "" && piece !== ".");
+  const toParts = normalize(to).split("/").filter((piece) => piece !== "" && piece !== ".");
+  let shared = 0;
+  while (shared < fromParts.length && shared < toParts.length && fromParts[shared] === toParts[shared]) {
+    shared += 1;
+  }
+  const up = fromParts.slice(shared).map(() => "..");
+  return [...up, ...toParts.slice(shared)].join("/");
+}

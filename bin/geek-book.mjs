@@ -3,7 +3,7 @@
 //
 // The engine ships as TypeScript source, so the launcher registers tsx and then
 // imports the CLI. Everything after the binary name is a geek-book command; the
-// CLI parses process.argv itself, exactly as if node had run src/cli.ts.
+// CLI parses process.argv itself, exactly as if node had run src/cli/main.ts.
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,4 +11,4 @@ import { tsImport } from "tsx/esm/api";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-await tsImport(path.join(here, "..", "src", "cli.ts"), import.meta.url);
+await tsImport(path.join(here, "..", "src", "cli", "main.ts"), import.meta.url);
