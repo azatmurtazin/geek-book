@@ -21,4 +21,6 @@ export interface PdfToolchain {
   svgToPdf(svgFile: string, pdfFile: string): Result<void>;
   /** The page count of a finished PDF. */
   pageCount(pdfFile: string): Promise<Result<number>>;
+  /** The raw `pdfinfo` report for a PDF, for `geek-book pdf-info`. */
+  info(pdfFile: string): Result<string>;
 }

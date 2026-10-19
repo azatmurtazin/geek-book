@@ -5,7 +5,7 @@ import { config } from "./config.js";
 import { lint } from "./lint.js";
 import { md } from "./md.js";
 import { pdf } from "./pdf.js";
-import { pdfInfo } from "./pdf-info.js";
+import { pdfInfoCommand } from "./pdf-info.js";
 import { serve } from "./serve.js";
 import { web } from "./web.js";
 
@@ -15,6 +15,6 @@ export const COMMANDS: Record<string, Command> = {
   serve,
   lint,
   md,
-  "pdf-info": pdfInfo,
+  "pdf-info": pdfInfoCommand,
   config,
 };

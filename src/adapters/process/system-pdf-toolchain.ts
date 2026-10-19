@@ -84,6 +84,25 @@ export class SystemPdfToolchain implements PdfToolchain {
     return ok(pages);
   }
 
+  info(pdfFile: string): Result<string> {
+    const run = this.runner.run(PDFINFO, [pdfFile]);
+    if (run.kind === "missing") {
+      return fail({
+        severity: "error",
+        code: "pdfinfo/tool-missing",
+        message: `${PDFINFO}: not found — install poppler (brew install poppler)`,
+      });
+    }
+    if (run.kind === "failed") {
+      return fail({
+        severity: "error",
+        code: "pdfinfo/failed",
+        message: run.stderr.trim() || run.message,
+      });
+    }
+    return ok(run.stdout);
+  }
+
   /**
    * Run `command`, trying the known install paths after the bare name, and
    * answer the failure message — or `null` on success. When `logFile` names a
