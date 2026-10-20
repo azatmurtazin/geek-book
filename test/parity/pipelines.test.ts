@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { renderBody } from "../../src/adapters/web/standalone-page.js";
-import { parseChapter } from "../../src/build-tex-book/parse.js";
+import { printChapter } from "../helpers/print-chapter.js";
 import { chapterTex } from "../../src/adapters/render-tex/tex.js";
 import { fixtureConfig } from "../helpers/config.js";
 import { chapterContext } from "../helpers/chapter.js";
@@ -42,7 +42,7 @@ describe("parity — same heading anchors", () => {
   it("the HTML id and TeX labels share the same slug suffix", async () => {
     const md = await goldenMd();
     const html = renderBody(cfg, md);
-    const chapter = await parseChapter(cfg, md, chapterContext());
+    const chapter = await printChapter(cfg, md, chapterContext());
     const tex = chapterTex(cfg, chapter);
     const ids = htmlIds(html);
     const slugs = texLabels(tex).map(slugOf);
@@ -56,7 +56,7 @@ describe("parity — same placeholders", () => {
   it("both pipelines see the same substituted strings in prose", async () => {
     const md = await goldenMd();
     const html = renderBody(cfg, md);
-    const chapter = await parseChapter(cfg, md, chapterContext());
+    const chapter = await printChapter(cfg, md, chapterContext());
     const tex = chapterTex(cfg, chapter);
     expect(html).toContain("1.2.3 and Fixture Book");
     expect(tex).toContain("1.2.3 and Fixture Book");
@@ -67,7 +67,7 @@ describe("parity — same fence label", () => {
   it("a configured language's label appears in HTML and in TeX", async () => {
     const md = await goldenMd();
     const html = renderBody(cfg, md);
-    const chapter = await parseChapter(cfg, md, chapterContext());
+    const chapter = await printChapter(cfg, md, chapterContext());
     const tex = chapterTex(cfg, chapter);
     expect(html).toContain("Rust");
     expect(tex).toContain("Rust");
@@ -78,8 +78,8 @@ describe("parity — markdown.breaks is website-only", () => {
   it("leaves the printed edition's single newlines soft", async () => {
     const md = "one line\nwrapped here";
     const broken: BookSettings = { ...cfg, markdown: { ...cfg.markdown, breaks: true } };
-    const soft = await parseChapter(cfg, md, chapterContext());
-    const withBreaks = await parseChapter(broken, md, chapterContext());
+    const soft = await printChapter(cfg, md, chapterContext());
+    const withBreaks = await printChapter(broken, md, chapterContext());
     expect(chapterTex(broken, withBreaks)).toBe(chapterTex(cfg, soft));
   });
 });
@@ -88,7 +88,7 @@ describe("parity — golden fixture round-trips", () => {
   /** The fresh rendering of the golden chapter, both targets. */
   async function render(): Promise<{ html: string; tex: string }> {
     const md = await goldenMd();
-    const chapter = await parseChapter(cfg, md, chapterContext());
+    const chapter = await printChapter(cfg, md, chapterContext());
     return { html: renderBody(cfg, md), tex: chapterTex(cfg, chapter) };
   }
 

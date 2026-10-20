@@ -7,9 +7,9 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import type { BookConfig } from "../../lib/book-config.js";
+import type { BookSettings } from "../../application/settings.js";
 import { splitLines } from "../../domain/values/text.js";
-import { parseSummary } from "../../lib/summary.js";
+import { parseSummary } from "../../domain/services/summary.js";
 import type { Reporter } from "./reporter.js";
 import { hasMarkdown, markdownFilesUnder } from "./paths.js";
 import {
@@ -21,7 +21,7 @@ import {
 } from "./lines.js";
 
 /** The prose directory as SUMMARY.md writes it, relative to the book directory. */
-function chaptersRel(cfg: BookConfig): string {
+function chaptersRel(cfg: BookSettings): string {
   return path.relative(cfg.bookDir, cfg.chapters).split(path.sep).join("/");
 }
 
@@ -30,7 +30,7 @@ function chaptersRel(cfg: BookConfig): string {
 // ---------------------------------------------------------------------------
 
 /** Every chapter path listed in SUMMARY.md, relative to `cfg.bookDir`. */
-export function summaryLinks(cfg: BookConfig, reporter: Reporter): string[] {
+export function summaryLinks(cfg: BookSettings, reporter: Reporter): string[] {
   if (!fs.existsSync(cfg.summary)) {
     reporter.errors.push(`${path.relative(cfg.root, cfg.summary)}: missing`);
     return [];
@@ -45,7 +45,7 @@ export function summaryLinks(cfg: BookConfig, reporter: Reporter): string[] {
 
 /** A chapter is open while a top-level item has been seen; indented sections
  *  must come after it. The parsed SUMMARY tree makes that order visible. */
-function checkSummaryStructure(cfg: BookConfig, reporter: Reporter): void {
+function checkSummaryStructure(cfg: BookSettings, reporter: Reporter): void {
   if (!fs.existsSync(cfg.summary)) {
     return;
   }
@@ -69,7 +69,7 @@ function checkSummaryStructure(cfg: BookConfig, reporter: Reporter): void {
 }
 
 /** The chapter tree against the prose that actually exists. */
-export function checkTree(cfg: BookConfig, reporter: Reporter, planned: string[]): void {
+export function checkTree(cfg: BookSettings, reporter: Reporter, planned: string[]): void {
   checkSummaryStructure(cfg, reporter);
 
   if (!fs.existsSync(cfg.chapters)) {
@@ -117,7 +117,7 @@ export function checkTree(cfg: BookConfig, reporter: Reporter, planned: string[]
 // ---------------------------------------------------------------------------
 
 /** Structural checks for a single chapter file. */
-export function checkChapter(cfg: BookConfig, reporter: Reporter, file: string): void {
+export function checkChapter(cfg: BookSettings, reporter: Reporter, file: string): void {
   const raw = fs.readFileSync(file, "utf8");
 
   if (raw && !raw.endsWith("\n")) {
@@ -206,7 +206,7 @@ export function checkChapter(cfg: BookConfig, reporter: Reporter, file: string):
  * A URL destination or a pasted identifier is the usual reason, and there is
  * nothing in the line for the writer to cut.
  */
-function hasUnbreakableRun(cfg: BookConfig, line: string): boolean {
+function hasUnbreakableRun(cfg: BookSettings, line: string): boolean {
   return line.split(/\s+/).some((run) => run.length > cfg.lint.proseWidth);
 }
 

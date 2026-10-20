@@ -7,13 +7,13 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import type { BookConfig } from "../../lib/book-config.js";
+import type { BookSettings } from "../../application/settings.js";
 import { splitLines } from "../../domain/values/text.js";
 import { assemble } from "../../domain/services/assemble.js";
 import { indexAnchors, type AnchorIndex } from "../../domain/services/anchor-index.js";
 import { MarkedParser } from "../markdown/marked-parser.js";
-import { substituteContentPlaceholders } from "../../lib/content-placeholders.js";
-import { isRemoteImage, resolveImagePath } from "../../lib/images.js";
+import { substituteContentPlaceholders } from "../../application/pipelines/content-placeholders.js";
+import { isRemoteImage, resolveImage } from "../../domain/services/resolve-images.js";
 import type { Reporter } from "./reporter.js";
 import {
   imageTargets,
@@ -29,7 +29,7 @@ import {
  * the anchors here are the ones the renderers actually emit: `c3` on a title,
  * `c3--a-slug` below, smartened exactly as the book asks.
  */
-export function anchorIndexOf(cfg: BookConfig, files: readonly string[]): AnchorIndex {
+export function anchorIndexOf(cfg: BookSettings, files: readonly string[]): AnchorIndex {
   const parser = new MarkedParser(cfg.markdown.breaks);
   const relBooks = files.map((file) => path.relative(cfg.bookDir, file).split(path.sep).join("/"));
   const idOf = new Map(relBooks.map((rel, id) => [rel, id]));
@@ -53,7 +53,7 @@ export function anchorIndexOf(cfg: BookConfig, files: readonly string[]): Anchor
  * its chapter paths are always written from there, wherever the file itself
  * lives. */
 export function checkLinks(
-  cfg: BookConfig,
+  cfg: BookSettings,
   reporter: Reporter,
   file: string,
   index: AnchorIndex,
@@ -126,7 +126,7 @@ export function checkLinks(
         if (/^[a-z][a-z0-9+.-]*:/i.test(src) || src.startsWith("//")) {
           continue;
         }
-        const relBook = resolveImagePath(src, fromRelBook);
+        const relBook = resolveImage(src, fromRelBook);
         if (relBook === null) {
           reporter.error(file, i, `image is outside the book: ${src}`);
           continue;

@@ -1,17 +1,17 @@
 // The site's own metadata: the base path, the canonical address of a page and
 // the social card tags. Built from the config and a page's path, and shared by
-// the web book (`adapters/web`) and the standalone layout (`md-to-html`), so the
+// the web book (`adapters/web`) and the standalone page (`standalone-page.ts`), so the
 // two editions cannot describe the same book differently.
 
 import { escapeHtml } from "./escape.js";
-import type { BookConfig } from "../../lib/book-config.js";
+import type { BookSettings } from "../../application/settings.js";
 
 /**
  * The path the site is served under — `web.baseUrl`'s path — so the root links
  * (the brand and the standalone page's Home link) land on the site rather than
  * on the host's root. `/` when no base URL is set, which is the common case.
  */
-export function basePath(cfg: BookConfig): string {
+export function basePath(cfg: BookSettings): string {
   const base = cfg.web.baseUrl;
   if (!base) return "/";
   if (base.startsWith("/")) return base;
@@ -28,7 +28,7 @@ export function basePath(cfg: BookConfig): string {
  * With `prettyUrls` a page's output path ends in `/index.html`, and the
  * canonical is the directory it names.
  */
-export function pageUrl(cfg: BookConfig, outputRel: string, prettyUrls: boolean): string {
+export function pageUrl(cfg: BookSettings, outputRel: string, prettyUrls: boolean): string {
   const base = cfg.web.baseUrl;
   if (!base || base.startsWith("/")) return "";
   if (outputRel === "index.html") return base;
@@ -43,7 +43,7 @@ export function pageUrl(cfg: BookConfig, outputRel: string, prettyUrls: boolean)
  * base URL is known, and the Open Graph and Twitter card tags social sites read.
  * `url` is "" for a page with no absolute address (the standalone layout).
  */
-export function metaTags(cfg: BookConfig, opts: { title: string; url: string }): string {
+export function metaTags(cfg: BookSettings, opts: { title: string; url: string }): string {
   const description = cfg.web.description;
   const lines: string[] = [];
   if (description) {

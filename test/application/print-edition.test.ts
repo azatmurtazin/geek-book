@@ -1,33 +1,32 @@
-// The Markdown → tree stage (see src/build-tex-book/ir.ts). `parseChapter` is
-// the seam: give it a config, a chapter's Markdown and a context, and it hands
-// back the blocks every page is spelled from — decoded text, resolved links,
-// registered pictures. The fixture book stands in for a real one; no chapter
-// under `book/` is read.
+// The Markdown → tree stage through the printed edition's pipeline.
+// `printChapter` is the seam: give it settings, a chapter's Markdown and a
+// context, and it hands back the blocks every page is spelled from — decoded
+// text, resolved links, registered pictures. The fixture book stands in for a
+// real one; no chapter under `book/` is read.
 
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseChapter, tokensToIr } from "../../src/build-tex-book/parse.js";
 import type {
   Block,
   ChapterContext,
-  ImageNode,
-  Inline,
-  LinkNode,
   ListBlock,
   TableBlock,
-} from "../../src/build-tex-book/ir.js";
+} from "../../src/domain/model/chapter.js";
+import type { ImageNode, Inline, LinkNode } from "../../src/domain/model/inline.js";
 import { fixtureConfig } from "../helpers/config.js";
 import { chapterContext } from "../helpers/chapter.js";
+import { printChapter, walkMarkdown } from "../helpers/print-chapter.js";
 
 const cfg = fixtureConfig();
 
 /** The blocks a chapter's Markdown parses to. */
 async function blocks(source: string, ctx?: ChapterContext): Promise<Block[]> {
-  return (await parseChapter(cfg, source, ctx ?? chapterContext())).blocks;
+  return (await printChapter(cfg, source, ctx ?? chapterContext())).blocks;
 }
 
-describe("parseChapter — headings and their anchors", () => {
-  it("a chapter title wears the chapter id and its own slug", async () => {    expect((await blocks("# Hello, World!"))[0]).toEqual({
+describe("printChapter — headings and their anchors", () => {
+  it("a chapter title wears the chapter id and its own slug", async () => {
+    expect((await blocks("# Hello, World!"))[0]).toEqual({
       kind: "heading",
       depth: 1,
       text: [{ kind: "text", text: "Hello, World!" }],
@@ -50,7 +49,7 @@ describe("parseChapter — headings and their anchors", () => {
   });
 });
 
-describe("parseChapter — prose", () => {
+describe("printChapter — prose", () => {
   it("carries inline content in order", async () => {
     expect((await blocks("plain **bold** and *em* and `code`"))[0]).toEqual({
       kind: "paragraph",
@@ -91,7 +90,7 @@ describe("parseChapter — prose", () => {
   });
 });
 
-describe("parseChapter — blocks", () => {
+describe("printChapter — blocks", () => {
   it("a fence keeps its language (lower-cased) and its code", async () => {
     expect((await blocks("```Rust\nfn main() {}\n```"))[0]).toEqual({
       kind: "code",
@@ -112,7 +111,7 @@ describe("parseChapter — blocks", () => {
   });
 });
 
-describe("parseChapter — lists", () => {
+describe("printChapter — lists", () => {
   it("records whether a list is ordered and where it starts", async () => {
     expect((await blocks("3. three\n4. four"))[0]).toMatchObject({ kind: "list", ordered: true, start: 3 });
     expect((await blocks("1. one\n2. two"))[0]).toMatchObject({ kind: "list", ordered: true, start: 1 });
@@ -128,7 +127,7 @@ describe("parseChapter — lists", () => {
   });
 });
 
-describe("parseChapter — tables", () => {
+describe("printChapter — tables", () => {
   it("records the alignment each column asks for, and the rows", async () => {
     const table = (await blocks("| a | b | c |\n| :-- | :-: | --: |\n| 1 | 2 | 3 |"))[0] as TableBlock;
     expect(table).toEqual({
@@ -145,9 +144,9 @@ describe("parseChapter — tables", () => {
   });
 });
 
-describe("parseChapter — pictures", () => {
+describe("printChapter — pictures", () => {
   it("a picture alone in a paragraph becomes an image block, and registers a copy", async () => {
-    const chapter = await parseChapter(cfg, "![A bird](images/bird.png)", chapterContext());
+    const chapter = await printChapter(cfg, "![A bird](images/bird.png)", chapterContext());
     expect(chapter.blocks[0]).toEqual({
       kind: "image",
       src: "images/bird.png",
@@ -175,7 +174,7 @@ describe("parseChapter — pictures", () => {
   });
 });
 
-describe("parseChapter — where a link points", () => {
+describe("printChapter — where a link points", () => {
   /** The `target` of the one link in `[t](href)`. */
   async function targetOf(href: string, ctx?: ChapterContext): Promise<string | null> {
     const block = (await blocks(`[t](${href})`, ctx))[0] as { content: Inline[] };
@@ -209,22 +208,22 @@ describe("parseChapter — where a link points", () => {
   });
 });
 
-describe("tokensToIr — the pure walk", () => {
+describe("walkMarkdown — the pure walk", () => {
   it("is synchronous: a chapter's tree, with no I/O", () => {
-    const chapter = tokensToIr(cfg, "# Hello\n\nA paragraph.", chapterContext());
+    const chapter = walkMarkdown(cfg, "# Hello\n\nA paragraph.", chapterContext());
     expect(chapter).not.toBeInstanceOf(Promise);
     expect(chapter.blocks[0]).toMatchObject({ kind: "heading", depth: 1, anchors: ["c3", "c3--hello"] });
   });
 
-  it("agrees with parseChapter on a chapter with nothing to fetch or draw", async () => {
+  it("agrees with printChapter on a chapter with nothing to fetch or draw", async () => {
     const md = "# Title\n\n## Sec\n\nA paragraph with ![alt](images/bird.png).\n\n- one\n\n```js\nx;\n```";
-    const pure = tokensToIr(cfg, md, chapterContext());
-    const wrapped = await parseChapter(cfg, md, chapterContext());
+    const pure = walkMarkdown(cfg, md, chapterContext());
+    const wrapped = await printChapter(cfg, md, chapterContext());
     expect(pure).toEqual(wrapped);
   });
 });
 
-describe("parseChapter — smart typography", () => {
+describe("printChapter — smart typography", () => {
   /** A config with the key on; the fixture keeps it off. */
   const smart = { ...cfg, markdown: { ...cfg.markdown, smartTypography: true } };
 
@@ -236,7 +235,7 @@ describe("parseChapter — smart typography", () => {
   });
 
   it("smartens the printed prose too", async () => {
-    const chapter = await parseChapter(smart, 'He said "hi" -- then', chapterContext());
+    const chapter = await printChapter(smart, 'He said "hi" -- then', chapterContext());
     expect(chapter.blocks[0]).toEqual({
       kind: "paragraph",
       content: [{ kind: "text", text: "He said \u201chi\u201d \u2013 then" }],
@@ -244,12 +243,12 @@ describe("parseChapter — smart typography", () => {
   });
 
   it("gives a heading the same slug the web id carries", async () => {
-    const chapter = await parseChapter(smart, "## A -- B", chapterContext());
+    const chapter = await printChapter(smart, "## A -- B", chapterContext());
     expect(chapter.blocks[0]).toMatchObject({ kind: "heading", anchors: ["c3--a--b"] });
   });
 
   it("leaves a code span as written", async () => {
-    const chapter = await parseChapter(smart, '`"x" -- y`', chapterContext());
+    const chapter = await printChapter(smart, '`"x" -- y`', chapterContext());
     expect(chapter.blocks[0]).toEqual({
       kind: "paragraph",
       content: [{ kind: "code", text: '"x" -- y' }],

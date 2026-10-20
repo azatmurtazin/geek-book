@@ -6,7 +6,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { load } from "../../../src/lib/book-config.js";
+import { loadFrom } from "../../helpers/config.js";
 import { Reporter } from "../../../src/adapters/lint/reporter.js";
 import { anchorIndexOf, checkLinks } from "../../../src/adapters/lint/link-checks.js";
 import { fixtureConfig } from "../../helpers/config.js";
@@ -38,7 +38,7 @@ function bookWithLink(link: string) {
     "# Two\n\n## A Section\n",
   );
 
-  const cfg = load(root);
+  const cfg = loadFrom(root);
   const written = [
     path.join(cfg.bookDir, "chapters", "one.md"),
     path.join(cfg.bookDir, "chapters", "two.md"),

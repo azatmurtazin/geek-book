@@ -4,7 +4,7 @@
 // around its body reads in one place.
 
 import { escapeHtml, brandHtml } from "../render-html/escape.js";
-import type { BookConfig } from "../../lib/book-config.js";
+import type { BookSettings } from "../../application/settings.js";
 import { pageHref } from "./paths.js";
 
 /** A footer link's target: `{path}` becomes the page's source path from the
@@ -14,7 +14,7 @@ function linkHref(href: string, sourcePath: string | null, url: string): string 
 }
 
 /** The footer: the book's name and version, then the book's own links. */
-export function footerHtml(cfg: BookConfig, sourcePath: string | null, url: string): string {
+export function footerHtml(cfg: BookSettings, sourcePath: string | null, url: string): string {
   const head = `${escapeHtml(cfg.title)} ${escapeHtml(cfg.version)}`;
   const text = cfg.tagline ? `${head} — ${escapeHtml(cfg.tagline)}` : head;
   const links = cfg.web.links
@@ -31,7 +31,7 @@ export function footerHtml(cfg: BookConfig, sourcePath: string | null, url: stri
  * heading stay in the open.
  */
 export function sidebarHtml(
-  cfg: BookConfig,
+  cfg: BookSettings,
   items: { kind: "group" | "entry"; label: string; relBook?: string; indent?: number }[],
   pages: Map<string, string>,
   activeOutputRel: string | null,

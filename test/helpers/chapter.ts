@@ -1,9 +1,10 @@
-// The `ChapterContext` a chapter's Markdown is parsed against (see ir.ts):
-// where the chapter sits, and which paths its links resolve against. The
-// defaults describe a chapter under `chapters/01_start/`, with one sibling
-// registered in the book's chapter map, so a link test has something to hit.
+// The `ChapterContext` a chapter's Markdown is parsed against (see
+// `domain/model/chapter.ts`): where the chapter sits, and which paths its links
+// resolve against. The defaults describe a chapter under `chapters/01_start/`,
+// with one sibling registered in the book's chapter map, so a link test has
+// something to hit.
 
-import type { ChapterContext } from "../../src/build-tex-book/ir.js";
+import type { ChapterContext } from "../../src/domain/model/chapter.js";
 
 /** The chapter id the default context parses as. */
 export const CHAPTER_ID = 3;

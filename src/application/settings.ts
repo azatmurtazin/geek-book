@@ -158,7 +158,7 @@ export interface MarkdownConfig {
 /**
  * The themes a diagram may be drawn in. `auto` — the default — builds the
  * palette from `tex.colors`, so a diagram follows the book; every other value
- * is one of Mermaid's own themes, used as it is (see `src/diagrams/theme.ts`).
+ * is one of Mermaid's own themes, used as it is (see `adapters/diagrams/theme.ts`).
  */
 export const DIAGRAM_THEMES = [
   "auto",
@@ -235,7 +235,7 @@ export interface BookSettings {
    * attribute and, for a language the engine knows, the PDF's babel. */
   language: string;
   /** Overrides for the fixed interface labels (English by default); see
-   * `lib/ui-strings.ts` for the keys. */
+   * `domain/values/ui-strings.ts` for the keys. */
   strings: Record<string, string>;
   /** Absolute path of the Markdown sources (default `<root>/book`). */
   bookDir: string;

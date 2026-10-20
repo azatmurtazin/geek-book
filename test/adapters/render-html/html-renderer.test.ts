@@ -14,7 +14,7 @@ import {
   type HtmlContext,
 } from "../../../src/adapters/render-html/html-renderer.js";
 import { MarkedParser } from "../../../src/adapters/markdown/marked-parser.js";
-import { substituteContentPlaceholders } from "../../../src/lib/content-placeholders.js";
+import { substituteContentPlaceholders } from "../../../src/application/pipelines/content-placeholders.js";
 import { assemble } from "../../../src/domain/services/assemble.js";
 import type { Block, Chapter, ChapterContext } from "../../../src/domain/model/chapter.js";
 import type { Inline } from "../../../src/domain/model/inline.js";

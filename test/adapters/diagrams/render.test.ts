@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest";
 import { renderMermaid } from "../../../src/adapters/diagrams/render.js";
 import { extractDiagrams } from "../../../src/domain/services/extract-diagrams.js";
 import { renderSourceToHtml } from "../../../src/adapters/web/standalone-page.js";
-import { parseChapter } from "../../../src/build-tex-book/parse.js";
+import { printChapter } from "../../helpers/print-chapter.js";
 import { chapterTex } from "../../../src/adapters/render-tex/tex.js";
 import { fixtureConfig } from "../../helpers/config.js";
 import { chapterContext } from "../../helpers/chapter.js";
@@ -64,7 +64,7 @@ describe("the golden diagram — one source, both editions", () => {
   });
 
   it("registers one sized figure for the printed edition", async () => {
-    const chapter = await parseChapter(cfg, diagramMd, chapterContext());
+    const chapter = await printChapter(cfg, diagramMd, chapterContext());
     expect(chapter.figures).toHaveLength(1);
     const figure = chapter.figures[0];
     expect(figure.name).toBe("c3-d1.pdf");
@@ -75,7 +75,7 @@ describe("the golden diagram — one source, both editions", () => {
   });
 
   it("places that figure in the LaTeX", async () => {
-    const chapter = await parseChapter(cfg, diagramMd, chapterContext());
+    const chapter = await printChapter(cfg, diagramMd, chapterContext());
     const tex = chapterTex(cfg, chapter);
     expect(tex).toContain("\\includegraphics");
     expect(tex).toContain("figures/c3-d1.pdf");

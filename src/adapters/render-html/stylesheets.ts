@@ -19,21 +19,22 @@
 // stripe — stay in the stylesheets, and the reader's night palette is the
 // engine's own, in `adapters/web/site.css`.
 
-import type { BookConfig, ColorKey } from "../../lib/book-config.js";
+import type { BookSettings } from "../../application/settings.js";
+import type { ColorKey } from "../../domain/values/palette.js";
 import { escapeHtml } from "./escape.js";
 
 /** CSS stack for the prose, headings and navigation. */
-export function textStack(cfg: BookConfig) {
+export function textStack(cfg: BookSettings) {
   return `"${cfg.fonts.text}", "Iowan Old Style", Georgia, "Times New Roman", serif`;
 }
 
 /** CSS stack for code, inline and block alike. */
-export function codeStack(cfg: BookConfig) {
+export function codeStack(cfg: BookSettings) {
   return `"${cfg.fonts.code}", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
 }
 
 /** `font-family` for diagrams: the text family, then a face the image has. */
-export function diagramFamily(cfg: BookConfig) {
+export function diagramFamily(cfg: BookSettings) {
   return `${cfg.fonts.text}, 'DejaVu Serif', serif`;
 }
 
@@ -42,7 +43,7 @@ export function diagramFamily(cfg: BookConfig) {
  * preconnects suit a Google Fonts stylesheet and are harmless in front of any
  * other.
  */
-export function fontLinks(cfg: BookConfig) {
+export function fontLinks(cfg: BookSettings) {
   return cfg.fonts.web
     ? `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,7 +56,7 @@ export function fontLinks(cfg: BookConfig) {
  * stylesheet opens with, since the values come from the book's config and so
  * cannot live in the .css file itself.
  */
-export function fontCssVars(cfg: BookConfig) {
+export function fontCssVars(cfg: BookSettings) {
   return `:root {
   --font-sans: ${textStack(cfg)};
   --font-mono: ${codeStack(cfg)};
@@ -80,7 +81,7 @@ const WEB_VARS: ReadonlyArray<[ColorKey, string]> = [
  * printed edition's, so a book that names `tex.colors` repaints the website
  * too; the site-only properties around it stay in the stylesheets.
  */
-export function webPaletteVars(cfg: BookConfig) {
+export function webPaletteVars(cfg: BookSettings) {
   return [
     ":root {",
     ...WEB_VARS.map(([key, name]) => `  ${name}: ${cfg.tex.colors[key]};`),

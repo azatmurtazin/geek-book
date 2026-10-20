@@ -4,8 +4,7 @@
 // same runs. Strings are kept inside the code runs so `//` and `#` inside them
 // are not mistaken for comments.
 //
-// Pure: imports nothing outside `domain/`. The legacy path `lib/code-tokens.ts`
-// re-exports it.
+// Pure: imports nothing outside `domain/`.
 
 import type { CodeTable } from "../values/code-language.js";
 import { commentStyle } from "../values/code-language.js";

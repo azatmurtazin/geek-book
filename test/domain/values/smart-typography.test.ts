@@ -1,6 +1,5 @@
 // The pure quote/dash engine and the walk over the neutral tree live here; the
-// legacy path is a shim over the string form and is checked by
-// test/lib/smart-typography.test.ts.
+// two editions and the linter read the string form through `smartTypography`.
 
 import { describe, expect, it } from "vitest";
 import { applySmartTypography, run, smartTypography } from "../../../src/domain/values/smart-typography.js";
@@ -39,6 +38,20 @@ describe("smartTypography", () => {
 
   it("leaves an unmatched backtick as written", () => {
     expect(smartTypography("a ` b")).toBe("a ` b");
+  });
+
+  it("pairs single quotes as quotes", () => {
+    expect(smartTypography("'quoted'")).toBe("\u2018quoted\u2019");
+  });
+
+  it("pairs a single quote around a double quote", () => {
+    expect(smartTypography("'\"quote\"'")).toBe("\u2018\u201cquote\u201d\u2019");
+  });
+
+  it("reads a numeric range as an en dash and leaves a lone hyphen", () => {
+    expect(smartTypography("1990--2000")).toBe("1990\u20132000");
+    expect(smartTypography("well-known")).toBe("well-known");
+    expect(smartTypography("a - b")).toBe("a - b");
   });
 });
 

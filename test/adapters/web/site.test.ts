@@ -11,7 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildWebsite } from "../../../src/application/usecases/build-website.js";
 import { composeContext } from "../../../src/cli/context.js";
 import { fixtureConfig } from "../../helpers/config.js";
-import type { BookConfig } from "../../../src/lib/book-config.js";
+import type { BookSettings } from "../../../src/application/settings.js";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "geek-book-site-"));
 afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -19,13 +19,13 @@ afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
 const base = fixtureConfig("site");
 
 /** The real adapters, with the reporters silenced. */
-function context(cfg: BookConfig) {
+function context(cfg: BookSettings) {
   return composeContext(cfg, { report: () => {} }, { info: () => {} });
 }
 
 /** Build the fixture to a fresh directory with `web` overrides, and return it. */
-async function build(name: string, web: Partial<BookConfig["web"]> = {}): Promise<string> {
-  const cfg: BookConfig = { ...base, web: { ...base.web, ...web } };
+async function build(name: string, web: Partial<BookSettings["web"]> = {}): Promise<string> {
+  const cfg: BookSettings = { ...base, web: { ...base.web, ...web } };
   const out = path.join(root, name);
   expect((await buildWebsite(context(cfg), out)).ok).toBe(true);
   return out;
@@ -106,7 +106,7 @@ describe("web build — pretty URLs", () => {
 
 describe("web build — pretty URLs without a README", () => {
   it("redirects the home page to the first chapter's directory", async () => {
-    const cfg: BookConfig = {
+    const cfg: BookSettings = {
       ...base,
       web: { ...base.web, prettyUrls: true },
       readme: path.join(base.bookDir, "no-such-readme.md"),

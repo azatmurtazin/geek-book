@@ -4,11 +4,11 @@
 
 import fs from "node:fs";
 import { escapeHtml } from "../render-html/escape.js";
-import type { BookConfig } from "../../lib/book-config.js";
+import type { BookSettings } from "../../application/settings.js";
 import { fontCssVars, fontLinks, webPaletteVars } from "../render-html/stylesheets.js";
 import { readCss } from "../render-html/css.js";
 import { metaTags, pageUrl } from "../render-html/site-meta.js";
-import { ui } from "../../lib/ui-strings.js";
+import { label } from "../../domain/values/ui-strings.js";
 import { footerHtml, sidebarHtml } from "./navigation.js";
 import { assetHref, pageHref } from "./paths.js";
 
@@ -77,7 +77,7 @@ const SITE_SCRIPT = `(() => {
   });
 })();`;
 
-function pageDocument(cfg: BookConfig, opts: {
+function pageDocument(cfg: BookSettings, opts: {
   title: string;
   content: string;
   sidebar: string;
@@ -94,10 +94,10 @@ function pageDocument(cfg: BookConfig, opts: {
   head: string;
 }): string {
   const prevNav = opts.prev
-    ? `<div class="prev"><span class="nav-label">${escapeHtml(ui(cfg, "previous"))}</span><a href="${opts.prev.href}">${escapeHtml(opts.prev.label)}</a></div>`
+    ? `<div class="prev"><span class="nav-label">${escapeHtml(label(cfg.strings, "previous"))}</span><a href="${opts.prev.href}">${escapeHtml(opts.prev.label)}</a></div>`
     : "";
   const nextNav = opts.next
-    ? `<div class="next"><span class="nav-label">${escapeHtml(ui(cfg, "next"))}</span><a href="${opts.next.href}">${escapeHtml(opts.next.label)}</a></div>`
+    ? `<div class="next"><span class="nav-label">${escapeHtml(label(cfg.strings, "next"))}</span><a href="${opts.next.href}">${escapeHtml(opts.next.label)}</a></div>`
     : "";
   const favicon = opts.faviconHref ? `<link rel="icon" href="${opts.faviconHref}">\n` : "";
   return `<!DOCTYPE html>
@@ -114,17 +114,17 @@ ${opts.head}
 <noscript><style>.theme-toggle { display: none; }</style></noscript>
 </head>
 <body>
-<input type="checkbox" id="sidebar-toggle" aria-label="${escapeHtml(ui(cfg, "toggle-navigation"))}">
+<input type="checkbox" id="sidebar-toggle" aria-label="${escapeHtml(label(cfg.strings, "toggle-navigation"))}">
 ${opts.sidebar}
 <div class="page-wrapper">
   <header class="book-header">
-    <label for="sidebar-toggle" class="menu-toggle" title="${escapeHtml(ui(cfg, "toggle-navigation"))}">&#9776;</label>
+    <label for="sidebar-toggle" class="menu-toggle" title="${escapeHtml(label(cfg.strings, "toggle-navigation"))}">&#9776;</label>
     <span class="header-title">${escapeHtml(opts.headerTitle)}</span>
     <span class="header-nav">
-      ${opts.prev ? `<a href="${opts.prev.href}">&#8592; ${escapeHtml(ui(cfg, "previous"))}</a>` : ""}
-      ${opts.next ? `<a href="${opts.next.href}">${escapeHtml(ui(cfg, "next"))} &#8594;</a>` : ""}
+      ${opts.prev ? `<a href="${opts.prev.href}">&#8592; ${escapeHtml(label(cfg.strings, "previous"))}</a>` : ""}
+      ${opts.next ? `<a href="${opts.next.href}">${escapeHtml(label(cfg.strings, "next"))} &#8594;</a>` : ""}
     </span>
-    <button class="theme-toggle" type="button" aria-pressed="false" aria-label="${escapeHtml(ui(cfg, "toggle-theme"))}" title="${escapeHtml(ui(cfg, "toggle-theme"))}">
+    <button class="theme-toggle" type="button" aria-pressed="false" aria-label="${escapeHtml(label(cfg.strings, "toggle-theme"))}" title="${escapeHtml(label(cfg.strings, "toggle-theme"))}">
       <span class="theme-icon-sun" aria-hidden="true">&#9728;</span>
       <span class="theme-icon-moon" aria-hidden="true">&#9790;</span>
     </button>
@@ -137,7 +137,7 @@ ${opts.sidebar}
 </html>`;
 }
 
-export function assemblePage(cfg: BookConfig, opts: {
+export function assemblePage(cfg: BookSettings, opts: {
   title: string;
   content: string;
   items: { kind: "group" | "entry"; label: string; relBook?: string; indent?: number }[];
@@ -179,7 +179,7 @@ function bookFile(file: string): string {
 }
 
 /** The book's own `<head>` HTML (`web.head`), injected into every page, or "". */
-export function headHtml(cfg: BookConfig): string {
+export function headHtml(cfg: BookSettings): string {
   return bookFile(cfg.web.head);
 }
 
@@ -187,7 +187,7 @@ export function headHtml(cfg: BookConfig): string {
  *  rules shared with the standalone layout, the layout itself, and the book's
  *  own `web.css` last — four built-in sources pasted together here rather than
  *  at a CSS build step, with the book's file able to override any of them. */
-export function stylesheet(cfg: BookConfig): string {
+export function stylesheet(cfg: BookSettings): string {
   const content = readCss(import.meta.url, "../render-html/content.css");
   const layout = readCss(import.meta.url, "site.css");
   const book = bookFile(cfg.web.css);

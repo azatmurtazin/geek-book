@@ -14,8 +14,8 @@
 import { fail, ok, type Result } from "../../domain/diagnostics.js";
 import type { ChapterContext } from "../../domain/model/chapter.js";
 import { basename, dirname, extname, join, relative } from "../../domain/values/posix-path.js";
-import { substituteContentPlaceholders } from "../pipelines/content-placeholders.js";
-import { sourceToModel, type SourceDeps } from "../pipelines/source-to-model.js";
+import { printSourceDeps } from "../pipelines/print-edition.js";
+import { sourceToModel } from "../pipelines/source-to-model.js";
 import type { DiagramRenderer } from "../ports/diagram-renderer.js";
 import type { FileSystem } from "../ports/file-system.js";
 import type { ImageStore } from "../ports/image-store.js";
@@ -93,7 +93,14 @@ export async function buildPdf(deps: BuildPdfDeps, outputPdf: string): Promise<R
       continue;
     }
     const ctx: ChapterContext = { chapterId, relBook: item.relBook, idOf };
-    const model = await sourceToModel(markdown, ctx, pipeline(deps, ctx, images));
+    const model = await sourceToModel(
+      markdown,
+      ctx,
+      printSourceDeps(
+        { settings, markdown: deps.markdown, diagrams: deps.diagrams, images },
+        ctx,
+      ),
+    );
     if (!model.ok) {
       // A remote image the build could not fetch: the message says which URL.
       return model;
@@ -164,22 +171,6 @@ export async function buildPdf(deps: BuildPdfDeps, outputPdf: string): Promise<R
   }
   deps.logger.info(`geek-book: ${relative(settings.root, outputPdf)} (${chapters.length} chapters, ${counted.value} pages)`);
   return ok({ chapters: chapters.length, pages: counted.value, fetched: images.fetched });
-}
-
-/** The pipeline's ports for the printed edition: drawings become PDF figures. */
-function pipeline(deps: BuildPdfDeps, ctx: ChapterContext, images: ImageStore): SourceDeps {
-  return {
-    markdown: deps.markdown,
-    diagrams: deps.diagrams,
-    images,
-    substitute: (source) => substituteContentPlaceholders(deps.settings, source),
-    smartTypography: deps.settings.markdown.smartTypography,
-    bookDir: deps.settings.bookDir,
-    diagramName: (index) => ({
-      id: `tex-dgm-${ctx.chapterId}-${index}`,
-      name: `c${ctx.chapterId}-d${index}.pdf`,
-    }),
-  };
 }
 
 /**
