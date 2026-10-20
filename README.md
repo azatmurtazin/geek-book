@@ -87,7 +87,7 @@ contract.
 just html     # build build/html/
 just pdf      # build build/book.pdf
 just serve    # preview build/html/ on http://localhost:4000
-just lint     # type-check the engine, then lint the guide
+just lint     # type-check, lint the guide, check the architectural boundaries
 ```
 
 The same build runs in Docker with no host setup beyond Docker itself:
@@ -104,22 +104,26 @@ build, release, link check). See
 
 ## Layout
 
-| Path              | What lives there                                                                   |
-| ----------------- | ---------------------------------------------------------------------------------- |
-| `bin/`            | The `geek-book` launcher (registers tsx, imports `src/cli.ts`).                    |
-| `src/lib/`        | Shared pieces: config, paths, Markdown, HTML, code tokenizer, images, stylesheets. |
-| `src/build-*`     | The two edition builders (website, LaTeX/PDF).                                     |
-| `src/lint/`       | Structural checks for the sources.                                                 |
-| `src/md-to-html/` | The Markdown→HTML renderer, and a one-file CLI.                                    |
-| `_layouts/`       | The standalone HTML shell (previews and `geek-book md`).                           |
-| `docker/`         | The build image: Node + LuaLaTeX + the fonts.                                      |
-| `templates/`      | Book-side scaffolding (config, Justfile, CI) for a new book repo.                  |
-| `book/`           | The user's guide, its `images/` and its cover.                                     |
+The engine is one dependency rule deep: `domain` knows nothing outside itself,
+`application` knows `domain`, adapters implement the application's ports, and
+`cli` assembles the adapters. `.dependency-cruiser.cjs` enforces it.
 
-CSS and the printed preamble are plain files beside the code that reads them
-(`src/build-web-book/site.css`, `src/lib/content.css`,
-`src/build-tex-book/preamble.tex`) and are pasted in at build time, so neither
-has a build step.
+| Path               | What lives there                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| `bin/`             | The `geek-book` launcher (registers tsx, imports `src/cli/main.ts`).                              |
+| `src/domain/`      | The pure core: the document model, values (paths, fonts, palettes, slugs) and services (assemble, links, images, summary, anchors). No `node:` and no third-party imports. |
+| `src/application/` | Ports, use cases, pipelines and settings. `BookSettings` and the lenient readers; one use case per command. |
+| `src/adapters/`    | The outside world behind the ports: `markdown/` (marked), `diagrams/` (mermaid + jsdom), `render-html/`, `render-tex/`, `web/`, `http/`, `fs/`, `process/`, `config/`, `lint/`, `templates/`, `images/`, `reporting/`. |
+| `src/cli/`         | The composition root (`main.ts`, `context.ts`) and one thin command per subcommand.               |
+| `docker/`          | The build image: Node + LuaLaTeX + the fonts.                                                     |
+| `templates/`       | Book-side scaffolding (config, Justfile, CI) for a new book repo.                                 |
+| `book/`            | The user's guide, its `images/` and its cover.                                                    |
+
+Plain assets sit beside the reader that opens them: the standalone layout and
+the LaTeX preamble (`src/adapters/templates/default-layout.html`,
+`src/adapters/render-tex/preamble.tex`) and the two stylesheets
+(`src/adapters/render-html/content.css`, `src/adapters/web/site.css`). They are
+pasted in at build time, so neither has a build step.
 
 ## License
 

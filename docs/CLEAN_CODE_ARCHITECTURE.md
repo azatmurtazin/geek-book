@@ -1,11 +1,13 @@
-# Clean Code Architecture — proposed target
+# Clean Code Architecture — the target
 
-> This is a **proposal**, not a description of the code today. For the current
-> shape see [`CURRENT_ARCHITECTURE.md`](./CURRENT_ARCHITECTURE.md). This document
-> defines an ideal arrangement of the same engine — one that keeps every
-> behaviour, every config key and every output byte-for-byte compatible, while
-> making the dependencies point in one direction and the domain independent of
-> `marked`, jsdom, the filesystem, the network and LuaLaTeX.
+> This describes the target architecture, and the refactoring that reached it is
+> complete (Phases 0–8 of
+> [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md)). The
+> code now follows this shape; where it deliberately differs from this sketch,
+> the phase's "Outcome (landed)" section records the deviation. The refactor kept
+> every behaviour, every config key and every output byte-for-byte compatible,
+> while making the dependencies point in one direction and the domain independent
+> of `marked`, jsdom, the filesystem, the network and LuaLaTeX.
 >
 > It is deliberately opinionated. Section 17 lists what it deliberately does
 > **not** do, so the ambition stays honest.

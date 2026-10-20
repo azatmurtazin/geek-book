@@ -1,4 +1,15 @@
-# Current Architecture
+# Current Architecture — historical
+
+> **Historical.** This document describes the engine **before** the architecture
+> refactoring, and is kept as the baseline the refactor started from. The code
+> no longer looks like this: `src/lib/`, `src/build-*`, `src/diagrams/`,
+> `src/md-to-html/` and `src/lint/` are gone, and the module map below names
+> files that no longer exist. For the shape that replaced it see
+> [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) and the
+> "Outcome (landed)" sections of
+> [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md).
+
+---
 
 > A snapshot of how `geek-book` is put together today: its modules, its data
 > flows, its invariants and its extension points. It describes the code as it

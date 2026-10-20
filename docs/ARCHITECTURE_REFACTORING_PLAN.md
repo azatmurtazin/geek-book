@@ -16,7 +16,7 @@
 
 | Field | Value |
 | --- | --- |
-| State | In progress: P0–P7 landed; Phase 8 (collapse, assets, enforcement) remains |
+| State | Complete: P0–P8 landed |
 | Target | `docs/CLEAN_CODE_ARCHITECTURE.md` |
 | Baseline | `docs/CURRENT_ARCHITECTURE.md` |
 | Phases | 9 (0–8), each an independently shippable PR |
@@ -1084,6 +1084,72 @@ both fail on a dangling import; the compiler is the safety net.
 
 **Size.** M. **Risk.** Low.
 
+**Outcome (landed).**
+
+- **`src/lib/` is gone.** Every importer names the module that owns the code:
+  settings from `application/settings.ts`, placeholders from
+  `application/pipelines/content-placeholders.ts`, values and lookups from
+  `domain/` (`code-language`, `code-tokenizer`, `resolve-images`, `summary`,
+  `ui-strings`, `anchor`, `text`, `smart-typography`), stylesheet helpers from
+  `adapters/render-html/stylesheets.ts`. `BookConfig` is spelled `BookSettings`
+  everywhere.
+- **The legacy print stage is gone.** `build-tex-book/parse.ts` and `ir.ts` are
+  deleted. The printed edition's pipeline configuration moved to
+  `application/pipelines/print-edition.ts` (`printSourceDeps`), which
+  `build-pdf` now uses instead of its private copy, so the use case and the
+  tests share one definition. The Markdown → tree coverage survives in
+  `test/helpers/print-chapter.ts` (`printChapter`, `walkMarkdown`).
+- **Modules moved beside their adapters.**
+  `diagrams/{render,theme,fixup,shims}.ts` → `adapters/diagrams/`;
+  `md-to-html/render.ts` → `adapters/web/standalone-page.ts`;
+  `build-tex-book/{tex,escape,figures,preamble,front-matter}.ts` and
+  `preamble.tex` → `adapters/render-tex/`; `lib/image-size.ts` →
+  `adapters/images/image-size.ts`; `_layouts/default.html` →
+  `adapters/templates/default-layout.html`. The standalone page no longer reads
+  the layout off disk: it takes it as a parameter, and `LayoutStandaloneRenderer`
+  asks the `TemplateStore`, so `TemplateStore.layout()` has its consumer.
+- **Assets** sit beside their readers. `content.css` (P5) and `site.css` (P2)
+  were already there; this phase moved the layout and the preamble and updated
+  the store. `package.json` no longer ships `_layouts`, and
+  `docker/Docker.book` no longer copies it.
+- **Tests follow their modules.** `test/diagrams/*` →
+  `test/adapters/diagrams/*`; the TeX suites → `test/adapters/render-tex/*`;
+  the standalone suite → `test/adapters/web/standalone-page.test.ts`;
+  `test/build-tex-book/parse.test.ts` → `test/application/print-edition.test.ts`;
+  `test/lib/book-config.test.ts` → `test/application/settings/readers.test.ts`
+  (through `loadFrom`, the file adapter + `loadSettings`). `test/lib/` is gone:
+  `markdown.test.ts` and `smart-typography.test.ts` duplicated domain suites, and
+  the three quote/range cases only they covered moved into
+  `test/domain/values/smart-typography.test.ts`.
+- **Enforcement.** Every `.dependency-cruiser.cjs` rule is `severity: "error"`,
+  with two new single-importer rules (`jsdom`, `mermaid` → `adapters/diagrams`
+  only). `just lint` runs `just boundaries` after `tsc` and the guide lint, so
+  the pre-commit hook inherits it; CI drops its report-only step and
+  `continue-on-error`. `test/architecture.test.ts` asserts the final rule set,
+  zero violations, and that `marked`/`jsdom`/`mermaid` are imported from exactly
+  the adapter that owns them (non-vacuously).
+- **Docs.** `README.md`'s layout table describes the new tree and the dependency
+  rule; `CURRENT_ARCHITECTURE.md` is marked historical; the target doc says it
+  has landed; `CONTRIBUTING.md` records the dependency rule, the "output is the
+  contract" rule and where new code goes.
+- **Deviations from the letter.**
+  - The diagrams modules keep their names (`render.ts`, `theme.ts`, `fixup.ts`,
+    `shims.ts`) rather than the sketch's `mermaid-renderer`/`mermaid-theme`/
+    `svg-fixup`: the move, not the rename, is what removes the old layer.
+  - `jsdom-shim.d.ts` stays at `src/`, as §14 of the target doc asks.
+  - `_layouts` and `src/lib` were already emptied by earlier phases; the
+    standalone layout is emitted verbatim, so its `src/lib/content.css` comment
+    cannot be rewritten without changing `md.html` — the baseline keeps the
+    sentence.
+  - The CSS moves the step lists under "Move assets" had already landed in P2
+    (site) and P5 (content), so this phase only re-reads them.
+- **Clean up.** `tsc --noUnusedLocals --noUnusedParameters` is clean; `Marked`
+  is only the parser adapter's own import and `TOOL_FALLBACKS` is live, so
+  nothing was left to delete.
+- **Verified.** `just lint` (tsc + guide lint + boundaries), `just test`
+  (356 tests over 44 files) and `just verify` green on the host, with
+  `book.txt`/`book.info` compared in the pinned image; `depcruise src` exits 0.
+
 ---
 
 ## 9. The verification harness
@@ -1274,6 +1340,9 @@ Run on a clean checkout of the final commit:
 
 When this list passes, the engine matches `CLEAN_CODE_ARCHITECTURE.md` and the
 plan is done.
+
+**Status:** every item passes on the final commit; the details are in Phase 8's
+outcome.
 
 ---
 

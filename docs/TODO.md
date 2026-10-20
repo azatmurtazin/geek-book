@@ -3,7 +3,7 @@
 Execution checklist for [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md).
 Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline: [`CURRENT_ARCHITECTURE.md`](./CURRENT_ARCHITECTURE.md).
 
-**Status:** in progress — P0 baseline complete, P1–P6 done · one phase = one PR = one green baseline.
+**Status:** complete — P0–P8 done · one phase = one PR = one green baseline.
 
 ## Invariants (every commit)
 
@@ -12,7 +12,7 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
 - [ ] Exit codes, config keys, CLI flags unchanged
 - [ ] `just lint && just test && just html && just pdf` green
 - [ ] `just verify` green
-- [ ] New `dependency-cruiser` rules stay `warn` until Phase 8
+- [x] `dependency-cruiser` rules stay report-only (`warn`) until Phase 8, then `error`
 - [ ] `tsc --noEmit` clean (strict + `verbatimModuleSyntax`)
 - [ ] Never regenerate baseline/goldens to make a phase pass
 
@@ -21,7 +21,7 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
 - [x] **pre-P0 — Diagram guard** (done)
   - [x] `test/fixtures/golden/diagram.md` + `test/diagrams/render.test.ts`
   - [x] Isolated, structural jsdom/Mermaid integration test (no SVG bytes frozen)
-  - [ ] Moves to `test/adapters/diagrams/` in P8
+  - [x] Moved to `test/adapters/diagrams/` in P8
 
 - [x] **P0 — Baseline + guardrails** (S/Low) — done
   - [x] `tools/baseline/` + `just baseline`/`just verify`; `test/baseline/*` (web, lint, config, md)
@@ -75,28 +75,30 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
   - [x] `application/usecases/lint-book.ts` → `Diagnostic[]`: **deferred to P7** (needs the `FileSystem` port; `application/` may not import adapters)
   - [x] Tests: `anchor-index`; `link-checks` anchor parity; `lint.txt` byte-identical
 
-- [ ] **P7 — Use cases + composition root** (L/Med)
-  - [ ] Ports: `file-system`, `http-client`, `process-runner`, `pdf-toolchain`, `template-store`, `config-source`
-  - [ ] Adapters: `fs`, `http`, `process`, `templates`, `config`
-  - [ ] `application/usecases/*` returning `Result`; settings → `BookSettings` (incl. `lint-book`, deferred from P6)
-  - [ ] `cli/main.ts` composition root + thin `cli/commands/*`; delete `cli.ts`
-  - [ ] Tests: `build-website`, `build-pdf` with in-memory fs + fake toolchain
+- [x] **P7 — Use cases + composition root** (L/Med)
+  - [x] Ports: `file-system`, `http-client`, `process-runner`, `pdf-toolchain`, `template-store`, `config-source`, plus `WebsiteRenderer`, `LatexRenderer`, `StandaloneRenderer`, `SiteServer`, `LintChecks` (deviation recorded in the plan)
+  - [x] Adapters: `fs`, `http` (client, site server, remote images), `process`, `templates`, `config`
+  - [x] `application/usecases/*` returning `Result`; settings → `BookSettings`; all eight use cases (`plan-book`, `build-website`, `build-pdf`, `render-standalone`, `serve-site`, `pdf-info`, `show-config`, `lint-book`)
+  - [x] `cli/main.ts` composition root + thin `cli/commands/*`; `cli.ts` deleted
+  - [x] `RemoteImages` takes `HttpClient` + `FileSystem` and implements `ImageStore` (`RemoteImageStore` wrapper gone)
+  - [x] Tests: application tests for every use case; `build-website`/`build-pdf` with in-memory fs + fake toolchain
 
-- [ ] **P8 — Collapse, assets, enforce** (M/Low)
-  - [ ] Delete all shims + `src/lib`
-  - [ ] Move assets beside readers (layouts, CSS, preamble.tex)
-  - [ ] All `dependency-cruiser` rules → `error`; `boundaries` in `lint`/CI
-  - [ ] Update `README` + architecture docs; remove dead code
+- [x] **P8 — Collapse, assets, enforce** (M/Low)
+  - [x] Delete all shims + `src/lib`; delete `build-tex-book/{parse,ir}.ts` (`print-edition.ts` + the test helper carry the stage)
+  - [x] Move assets beside readers (`default-layout.html`, `preamble.tex`; CSS already moved in P2/P5); move `src/diagrams`, `src/md-to-html` under `adapters/`
+  - [x] All `dependency-cruiser` rules → `error` (+ `jsdom`/`mermaid` single-importer rules); `boundaries` part of `lint`, pre-commit and CI
+  - [x] `test/architecture.test.ts` asserts the final rules and the single-importer properties
+  - [x] Update `README` + architecture docs (`CONTRIBUTING.md`); dead code check clean
 
 ## Graduation
 
-- [ ] `depcruise src` = 0 with all rules at `error`
-- [ ] `grep 'from "marked"' src` → 1 path (`adapters/markdown/marked-parser.ts`)
-- [ ] `jsdom`/`mermaid` → `adapters/diagrams/*` only
-- [ ] `grep 'node:' src/domain src/application` → empty
-- [ ] `src/{lib,build-web-book,build-tex-book,diagrams,md-to-html}` gone (`src/lint` done in P6)
-- [ ] `just verify` + `just test` + `just docker-book` green
-- [ ] Docs describe the new layout; CI enforces boundaries + verify
+- [x] `depcruise src` = 0 with all rules at `error`
+- [x] `grep 'from "marked"' src` → 1 path (`adapters/markdown/marked-parser.ts`)
+- [x] `jsdom`/`mermaid` → `adapters/diagrams/*` only
+- [x] `grep 'node:' src/domain src/application` → empty
+- [x] `src/{lib,build-web-book,build-tex-book,diagrams,md-to-html,lint}` gone
+- [x] `just verify` + `just test` + `just docker-book` green
+- [x] Docs describe the new layout; CI enforces boundaries + verify
 
 ## Escape hatches
 
