@@ -33,7 +33,7 @@ geek-book is a build engine for books. You write the prose in Markdown, keep it 
 directory, and the engine produces two editions from the same sources: a static website you can
 serve from any file host, and a print-ready PDF you can send to a printer or a reader.
 There is no database, no templating language and no separate build tool. A book is a directory of
-text files, and the engine is the program that reads them. This guide documents version 0.1.3.
+text files, and the engine is the program that reads them. This guide documents version 0.1.4.
 
 
 The two editions
