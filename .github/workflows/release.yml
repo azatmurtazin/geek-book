@@ -19,6 +19,10 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # Re-publish an existing release without moving its tag:
+  #   gh workflow run release.yml -r v0.1.4
+  # The tag/package check below still runs, so a dispatch on a branch fails.
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -61,10 +65,14 @@ jobs:
       # The `book` service drops to the image's `node` user (uid 1000) but the
       # GitHub workspace is owned by uid 1001, so hand it to 1000 first, then
       # back to the runner so the steps below can read and write `build/`.
-      - name: Build the guide
+      # `just verify` runs while the workspace is still 1000-owned: it captures
+      # into build/, and a published tag must be the verified tree — a stale
+      # baseline must fail here, before anything is uploaded.
+      - name: Build and verify the guide
         run: |
           sudo chown -R 1000:1000 .
           docker compose run --rm book
+          docker compose run --rm book just verify
           sudo chown -R "$(id -u):$(id -g)" .
 
       - name: Pack the website and the engine
