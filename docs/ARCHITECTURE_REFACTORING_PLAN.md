@@ -16,7 +16,7 @@
 
 | Field | Value |
 | --- | --- |
-| State | In progress: P0 harness landed (PDF reference pending), P1–P2 landed |
+| State | In progress: P0–P7 landed; Phase 8 (collapse, assets, enforcement) remains |
 | Target | `docs/CLEAN_CODE_ARCHITECTURE.md` |
 | Baseline | `docs/CURRENT_ARCHITECTURE.md` |
 | Phases | 9 (0–8), each an independently shippable PR |
@@ -963,6 +963,78 @@ returns only `adapters/process/*`.
   lenient readers unchanged.
 
 **Size.** L. **Risk.** Med.
+
+**Outcome (landed).**
+
+- **Ports and adapters.** The six environment ports landed as planned —
+  `file-system`, `http-client`, `process-runner`, `pdf-toolchain`,
+  `template-store`, `config-source` — each with a Node adapter
+  (`adapters/{fs,http,process,templates,config}/*`). `RemoteImages` moved out of
+  `src/lib/` into `adapters/http/remote-images.ts`, takes the `HttpClient` and
+  `FileSystem` ports, and implements `ImageStore` itself; the pass-through
+  `RemoteImageStore` is gone, `NoRemoteImages` sits beside it, and
+  `NodeHttpClient` has its one consumer.
+- **More ports than the plan listed.** Three renderers, the preview server and
+  the linter needed seams too, because `application/` may not import an adapter:
+  `WebsiteRenderer` (`adapters/web/html-website-renderer.ts`),
+  `LatexRenderer` (`adapters/render-tex/tex-renderer.ts`),
+  `StandaloneRenderer` (`adapters/web/standalone-renderer.ts`), `SiteServer`
+  (`adapters/http/node-site-server.ts`) and `LintChecks`
+  (`adapters/lint/book-checks.ts`).
+- **Settings.** `application/settings.ts` (`BookConfig` → `BookSettings`) with
+  the pure assembly in `application/usecases/load-settings.ts`; `lib/book-config.ts`
+  is a shim re-exporting `BookSettings as BookConfig`.
+- **All eight use cases.** `plan-book` (the shared SUMMARY plan both editions
+  read: ids, labels, indents, files), `build-website` (`{chapters, fetched}`),
+  `build-pdf` (`{chapters, pages, fetched}`; the unresolved-reference check is
+  one `Diagnostic` whose multi-line message is the lines the CLI used to print),
+  `render-standalone`, `serve-site`, `pdf-info`, `show-config`, `lint-book`
+  (`{chapters, errors, warnings, notes}`). Diagnostics, never throws, across the
+  application layer.
+- **Composition root.** `src/cli/main.ts` parses `--config`, reports load
+  diagnostics, builds `AppContext` through `composeContext`
+  (`src/cli/context.ts`), and dispatches to thin `cli/commands/*` wrappers that
+  own only the usage lines, stream choices and exit codes. Deleted:
+  `src/cli.ts`, `build-web-book/cli.ts`, `build-tex-book/cli.ts`,
+  `md-to-html/cli.ts`, `serve/`, `pdf-info/`, `adapters/lint/cli.ts`.
+- **Deviations from the plan's letter.**
+  - **Lenient readers live in `application/settings/`**, not
+    `adapters/config/lenient-readers.ts`: they are pure, and `application/` may
+    not import an adapter. Only `FileConfigSource` (which uses `FileSystem`) is
+    in `adapters/config/`.
+  - **`lint-book` returns `LintReport`, not `Diagnostic[]`.** The linter's
+    output is three kinds of line (`warning:`/`error:`/`note:`) with notes
+    counted by kind and a closing summary; turning them into `Diagnostic`s
+    would lose the buckets and change every byte of `lint.txt`. The CLI formats
+    the report; the checks still speak `Reporter` strings.
+  - **Failures keep the `geek-book: <message>` stderr prefix.** Use cases return
+    `Result`; commands print the message themselves rather than through
+    `Reporter`, which would spell it `error:`. This preserves the bytes the
+    build's failure paths have always written.
+  - **`pdf-info` captures `pdfinfo`'s report** through a new
+    `PdfToolchain.info` instead of streaming it with `stdio: inherit` — the same
+    bytes on success; a missing file or tool still exits 2.
+  - **`md` stops crashing on a render failure.** The old path let the renderer's
+    throw escape; the use case reports it under `geek-book: ` with exit 2. The
+    success path (and `md.html`) is unchanged.
+  - **`serve` keeps its loose arguments and its own line.** A number is the
+    port, anything else the directory; the missing-directory failure stays
+    `serve: … (run 'geek-book web' first)` with exit 1.
+  - **Build progress is back on stdout.** The context's logger writes to stdout
+    (as `console.log` did) and the usage/help text has its own stderr logger.
+  - **`LintChecks` is coarse** — one method per family — for the reason Phase 6
+    recorded: the checks are raw-line analysis whose messages carry line
+    numbers, and `Block[]` carries none.
+- **Tests.** Application tests drive `plan-book`, `build-website`, `build-pdf`,
+  `render-standalone`, `serve-site`, `lint-book`, `show-config` and
+  `load-settings`; the two builders run against `MemoryFileSystem` with a stub
+  toolchain/renderer — no temp directory, network or LaTeX. Adapter tests cover
+  the ports, including `remote-images` (naming, caching, timeout, refusals).
+  372 tests over 46 files.
+- **Verified.** `just verify` green on the host and in the pinned image (all six
+  artifacts, `book.txt`/`book.info` included); `grep -R 'node:' src/application`
+  empty; `just boundaries` clean; `tsc --noEmit` clean. `mermaid`'s render test
+  is occasionally timing-flaky under jsdom; it passes on re-run.
 
 ---
 
