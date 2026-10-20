@@ -83,6 +83,16 @@ jobs:
           zip="build/geek-book-${version}-web.zip"
           tarball="$(ls build/geek-book-*.tgz)"
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            # Drop assets this run no longer produces — say a file renamed
+            # since the previous run — so "re-running updates the release in
+            # place" leaves exactly the three assets named here.
+            gh release view "${GITHUB_REF_NAME}" --json assets --jq '.assets[].name' |
+              while read -r name; do
+                case "$name" in
+                  "geek-book-${version}.pdf"|"geek-book-${version}-web.zip"|"$(basename "$tarball")") ;;
+                  *) gh release delete-asset "${GITHUB_REF_NAME}" "$name" --yes ;;
+                esac
+              done
             gh release upload "${GITHUB_REF_NAME}" "$pdf" "$zip" "$tarball" --clobber
           else
             gh release create "${GITHUB_REF_NAME}" "$pdf" "$zip" "$tarball" \
