@@ -1,19 +1,25 @@
 # Changelog
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
-tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`); the top section is the unreleased
-work on `main`, then each released version. Short commit hashes are given in
+tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`); the section at the top
+collects everything released as **0.1.4**. Short commit hashes are given in
 parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
-| Unreleased          | —          |
+| 0.1.4               | 2026-10-20 |
 | 0.1.3               | 2026-10-17 |
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
 
-## [Unreleased]
+## [0.1.4] — 2026-10-20
+
+This release rebuilds the engine around a clean architecture without changing
+what it produces: with the new keys left off, the website, PDF, lint findings
+and rendered Markdown are byte-identical to 0.1.3. Two opt-in settings join the
+configuration — `markdown.breaks` and `web.prettyUrls` — and the website is now
+rendered from the same document model as the printed edition.
 
 ### Added
 
