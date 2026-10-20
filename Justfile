@@ -125,7 +125,8 @@ lint:
     "{{npm}}" run lint
     just boundaries
 
-# run the unit tests (the two Markdown pipelines and the shared helpers).
+# run the unit tests: the domain, the use cases, the adapters and the
+# cross-pipeline parity suite.
 test:
     #!/usr/bin/env bash
     set -euo pipefail

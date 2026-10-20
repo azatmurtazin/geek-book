@@ -1,12 +1,13 @@
 name: CI
 
-# Lint the engine and the guide, then build both editions — website
-# (build/html/) and print PDF (build/book.pdf) — in the engine's own Docker
-# image, the same service the `just docker-book` recipe runs, with the image
-# layers cached between runs. The book exists so that the engine is proven to
-# build a book end to end on every change. `just verify` then diffs that build
-# against the committed baseline. `just lint` also runs the architectural boundary
-# rules (.dependency-cruiser.cjs), which are enforced.
+# Run the unit tests on every supported Node release, lint the engine and the
+# guide, then build both editions — website (build/html/) and print PDF
+# (build/book.pdf) — in the engine's own Docker image, the same service the
+# `just docker-book` recipe runs, with the image layers cached between runs.
+# The book exists so that the engine is proven to build a book end to end on
+# every change. `just verify` then diffs that build against the committed
+# baseline. `just lint` also runs the architectural boundary rules
+# (.dependency-cruiser.cjs), which are enforced.
 
 on:
   push:
@@ -22,6 +23,28 @@ permissions:
   contents: read
 
 jobs:
+  test:
+    name: Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # `engines` promises >=20; the image runs 26. Cover both ends and the
+        # LTS in between, so a runtime API that is newer than the promise fails
+        # here rather than in a consumer's checkout.
+        node: ["20", "22", "26"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: extractions/setup-just@v4
+        with:
+          just-version: "1.58.0"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: just test
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -39,7 +62,7 @@ jobs:
 
   book:
     name: Build the book (website + PDF)
-    needs: lint
+    needs: [lint, test]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
