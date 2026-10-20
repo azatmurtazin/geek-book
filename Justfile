@@ -133,6 +133,14 @@ test:
     [[ -d node_modules ]] || "{{npm}}" install
     "{{npm}}" run test
 
+# the same suite with a coverage report (coverage/index.html) and the floors
+# from vitest.config.ts
+coverage:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [[ -d node_modules ]] || "{{npm}}" install
+    "{{npm}}" run test:coverage
+
 # --- housekeeping -----------------------------------------------------------
 
 # cleaning up
