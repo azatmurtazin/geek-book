@@ -1,7 +1,7 @@
 // The single-file render, driven against an in-memory disk with a stub renderer:
 // the use case reads the source, asks for the page and writes it, creating the
 // output's directory. The drawing itself is the renderer's business and is
-// covered by test/md-to-html/render.test.ts.
+// covered by test/adapters/web/standalone-page.test.ts.
 
 import { describe, expect, it } from "vitest";
 import type { StandaloneRenderer } from "../../../src/application/ports/standalone-renderer.js";

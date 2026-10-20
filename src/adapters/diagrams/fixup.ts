@@ -4,13 +4,13 @@
 // geometry — and native SVG <text> in place of the <foreignObject> labels that
 // rsvg-convert will not reliably draw.
 
-import { diagramFamily } from "../lib/fonts.js";
-import type { BookConfig } from "../lib/book-config.js";
+import { diagramFamily } from "../render-html/stylesheets.js";
+import type { BookSettings } from "../../application/settings.js";
 
 const LABEL_FILL = "#202020";
 
 /** Turn one <foreignObject> label into a centered native <text>. */
-export function foreignObjectToText(cfg: BookConfig, attrs: string, inner: string): string {
+export function foreignObjectToText(cfg: BookSettings, attrs: string, inner: string): string {
   const x = /x="(-?[\d.]+)"/.exec(attrs)?.[1] ?? "0";
   const y = /y="(-?[\d.]+)"/.exec(attrs)?.[1] ?? "0";
   const width = /width="([\d.]+)"/.exec(attrs)?.[1] ?? "0";

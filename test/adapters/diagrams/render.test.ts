@@ -1,6 +1,6 @@
 // The diagram pipeline: a ```mermaid``` fence drawn once and placed in both
 // editions. This is the one suite that boots jsdom and Mermaid (see
-// `src/diagrams/shims.ts`), so it lives in its own file — the shims install
+// `src/adapters/diagrams/shims.ts`), so it lives in its own file — the shims install
 // global browser APIs that must not leak into the pure suites (render, parse,
 // lint), and keeping the two apart is what makes the leak impossible.
 //
@@ -14,17 +14,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { renderMermaid } from "../../src/diagrams/render.js";
-import { extractDiagrams } from "../../src/domain/services/extract-diagrams.js";
-import { renderSourceToHtml } from "../../src/md-to-html/render.js";
-import { parseChapter } from "../../src/build-tex-book/parse.js";
-import { chapterTex } from "../../src/adapters/render-tex/tex.js";
-import { fixtureConfig } from "../helpers/config.js";
-import { chapterContext } from "../helpers/chapter.js";
+import { renderMermaid } from "../../../src/adapters/diagrams/render.js";
+import { extractDiagrams } from "../../../src/domain/services/extract-diagrams.js";
+import { renderSourceToHtml } from "../../../src/adapters/web/standalone-page.js";
+import { parseChapter } from "../../../src/build-tex-book/parse.js";
+import { chapterTex } from "../../../src/adapters/render-tex/tex.js";
+import { fixtureConfig } from "../../helpers/config.js";
+import { chapterContext } from "../../helpers/chapter.js";
 
 const cfg = fixtureConfig();
 const here = path.dirname(fileURLToPath(import.meta.url));
-const diagramMd = fs.readFileSync(path.resolve(here, "..", "fixtures", "golden", "diagram.md"), "utf8");
+const diagramMd = fs.readFileSync(path.resolve(here, "..", "..", "fixtures", "golden", "diagram.md"), "utf8");
 
 const SOURCE = "flowchart LR\n  a[Alpha] --> b[Beta]";
 

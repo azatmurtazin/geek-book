@@ -4,12 +4,12 @@
 // follows `tex.colors` on the page and on paper alike. A book that wants
 // another look names a Mermaid theme under `diagrams.theme` instead.
 
-import { diagramFamily } from "../lib/fonts.js";
-import type { BookConfig, ColorsConfig } from "../lib/book-config.js";
+import { diagramFamily } from "../render-html/stylesheets.js";
+import type { BookSettings, ColorsConfig } from "../../application/settings.js";
 import type { MermaidConfig } from "mermaid";
 
 // Build mermaid theme variables from the book's printed palette so diagrams follow `tex.colors`.
-export function themeVariables(cfg: BookConfig) {
+export function themeVariables(cfg: BookSettings) {
   const colors: ColorsConfig = cfg.tex.colors;
 
   return {
@@ -66,7 +66,7 @@ export function themeVariables(cfg: BookConfig) {
  * Kept apart from the loader in `render.ts` so it needs no DOM and can be read
  * on its own.
  */
-export function diagramOptions(cfg: BookConfig): MermaidConfig {
+export function diagramOptions(cfg: BookSettings): MermaidConfig {
   const theme = cfg.diagrams.theme;
   const derived = theme === "auto";
   const fontFamily = diagramFamily(cfg);

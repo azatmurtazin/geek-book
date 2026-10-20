@@ -2,14 +2,14 @@
 // `render.ts` hands Mermaid, so its shape is the contract both editions share.
 
 import { describe, expect, it } from "vitest";
-import { diagramOptions, themeVariables } from "../../src/diagrams/theme.js";
-import type { BookConfig } from "../../src/lib/book-config.js";
-import { fixtureConfig } from "../helpers/config.js";
+import { diagramOptions, themeVariables } from "../../../src/adapters/diagrams/theme.js";
+import type { BookSettings } from "../../../src/application/settings.js";
+import { fixtureConfig } from "../../helpers/config.js";
 
 const cfg = fixtureConfig();
 
 /** The fixture with one `diagrams` override. */
-function withDiagrams(overrides: Partial<BookConfig["diagrams"]>): BookConfig {
+function withDiagrams(overrides: Partial<BookSettings["diagrams"]>): BookSettings {
   return { ...cfg, diagrams: { ...cfg.diagrams, ...overrides } };
 }
 

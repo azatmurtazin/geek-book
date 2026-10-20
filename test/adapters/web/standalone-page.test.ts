@@ -1,16 +1,23 @@
 // The Markdown → HTML pipeline: `renderBody` (the chapter body) and
-// `renderStandaloneHtml` (the body wrapped in `_layouts/default.html`). Both
-// take the book config, so the fixture under `test/fixtures/minimal/` stands in
-// for a real book and the engine's own config is never read.
+// `renderStandaloneHtml` (the body wrapped in the standalone layout, read from
+// the template store). Both take the book settings, so the fixture under
+// `test/fixtures/minimal/` stands in for a real book and the engine's own
+// config is never read.
 
 import { describe, expect, it } from "vitest";
-import { highlightComments, renderBody, renderStandaloneHtml } from "../../src/md-to-html/render.js";
-import { slugify } from "../../src/lib/markdown.js";
-import { smartTypography } from "../../src/lib/smart-typography.js";
-import type { BookConfig } from "../../src/lib/book-config.js";
-import { fixtureConfig } from "../helpers/config.js";
+import {
+  highlightComments,
+  renderBody,
+  renderStandaloneHtml,
+} from "../../../src/adapters/web/standalone-page.js";
+import { AssetTemplateStore } from "../../../src/adapters/templates/asset-template-store.js";
+import type { BookSettings } from "../../../src/application/settings.js";
+import { slugify } from "../../../src/domain/values/anchor.js";
+import { smartTypography } from "../../../src/domain/values/smart-typography.js";
+import { fixtureConfig } from "../../helpers/config.js";
 
 const cfg = fixtureConfig();
+const layout = new AssetTemplateStore().layout();
 
 describe("renderBody — headings", () => {
   it("gives a heading a slug id, at any depth", () => {
@@ -35,12 +42,12 @@ describe("renderBody — line breaks", () => {
   });
 
   it("breaks a single newline when the book asks for it", () => {
-    const broken: BookConfig = { ...cfg, markdown: { ...cfg.markdown, breaks: true } };
+    const broken: BookSettings = { ...cfg, markdown: { ...cfg.markdown, breaks: true } };
     expect(renderBody(broken, "one line\nwrapped here")).toBe("<p>one line<br>wrapped here</p>\n");
   });
 
   it("still honours a GFM hard break with the key on", () => {
-    const broken: BookConfig = { ...cfg, markdown: { ...cfg.markdown, breaks: true } };
+    const broken: BookSettings = { ...cfg, markdown: { ...cfg.markdown, breaks: true } };
     expect(renderBody(broken, "one line  \nforced")).toContain("<br>");
   });
 
@@ -79,7 +86,7 @@ describe("renderBody — code fences", () => {
 
 describe("renderBody — smart typography", () => {
   /** A config that turns the key on; the fixture itself keeps it off. */
-  const smart: BookConfig = { ...cfg, markdown: { ...cfg.markdown, smartTypography: true } };
+  const smart: BookSettings = { ...cfg, markdown: { ...cfg.markdown, smartTypography: true } };
 
   it("is off by default, straight and flat", () => {
     expect(renderBody(cfg, 'a "b" -- c')).toContain('a &quot;b&quot; -- c');
@@ -137,36 +144,36 @@ describe("renderBody — placeholders", () => {
 
 describe("renderStandaloneHtml — the page", () => {
   it("takes the <title> from the first H1", () => {
-    expect(renderStandaloneHtml(cfg, "# My Chapter\n\nbody")).toContain(
+    expect(renderStandaloneHtml(cfg, "# My Chapter\n\nbody", layout)).toContain(
       "<title>My Chapter — Fixture Book</title>",
     );
   });
 
   it("falls back to the book title when there is no H1", () => {
-    expect(renderStandaloneHtml(cfg, "just prose")).toContain("<title>Fixture Book</title>");
+    expect(renderStandaloneHtml(cfg, "just prose", layout)).toContain("<title>Fixture Book</title>");
   });
 
   it("strips inline markup from the title", () => {
-    expect(renderStandaloneHtml(cfg, "# Use `code` and *emphasis*")).toContain(
+    expect(renderStandaloneHtml(cfg, "# Use `code` and *emphasis*", layout)).toContain(
       "<title>Use code and emphasis — Fixture Book</title>",
     );
   });
 
   it("fills every layout slot", () => {
-    const html = renderStandaloneHtml(cfg, "# T\n\nbody");
+    const html = renderStandaloneHtml(cfg, "# T\n\nbody", layout);
     expect(html).not.toMatch(/\{\{\s*[a-z-]+\s*\}\}/);
     expect(html).toContain('lang="en"');
   });
 
   it("escapes the tagline and the book title", () => {
-    const special: BookConfig = { ...cfg, title: "A & B", tagline: "a & b <script>" };
-    const html = renderStandaloneHtml(special, "# T");
+    const special: BookSettings = { ...cfg, title: "A & B", tagline: "a & b <script>" };
+    const html = renderStandaloneHtml(special, "# T", layout);
     expect(html).toContain("a &amp; b &lt;script&gt;");
     expect(html).toContain("<span>A &amp; B</span>");
   });
 
   it("escapes the page title in <title>", () => {
-    const html = renderStandaloneHtml(cfg, "# A & B <script>");
+    const html = renderStandaloneHtml(cfg, "# A & B <script>", layout);
     expect(html).toContain("<title>A &amp; B &lt;script&gt; — Fixture Book</title>");
   });
 });

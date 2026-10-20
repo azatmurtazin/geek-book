@@ -5,7 +5,7 @@
 // `c<id>--slug`.
 
 import { describe, expect, it } from "vitest";
-import { renderBody, renderStandaloneHtml } from "../../src/md-to-html/render.js";
+import { renderBody } from "../../src/adapters/web/standalone-page.js";
 import { parseChapter } from "../../src/build-tex-book/parse.js";
 import { chapterTex } from "../../src/adapters/render-tex/tex.js";
 import { fixtureConfig } from "../helpers/config.js";

@@ -1,4 +1,4 @@
-// The mermaid adapter: the pipeline's `DiagramRenderer` over `src/diagrams`.
+// The mermaid adapter: the pipeline's `DiagramRenderer` over the drawing modules beside it.
 //
 // Taking the fences out of a chapter is pure string work and lives in the
 // domain (`domain/services/extract-diagrams.ts`); this adapter only draws one,
@@ -6,13 +6,13 @@
 // about a diagram it cannot lay out. A drawing with no viewBox keeps a `null`
 // size, and the serializer places it as it sees fit.
 
-import { renderMermaid } from "../../diagrams/render.js";
-import type { BookConfig } from "../../lib/book-config.js";
+import { renderMermaid } from "./render.js";
+import type { BookSettings } from "../../application/settings.js";
 import type { DiagramRenderer } from "../../application/ports/diagram-renderer.js";
 import type { Figure } from "../../domain/model/assets.js";
 
 export class MermaidRenderer implements DiagramRenderer {
-  constructor(private readonly cfg: BookConfig) {}
+  constructor(private readonly cfg: BookSettings) {}
 
   async render(source: string, id: string, name: string): Promise<Figure> {
     const svg = await renderMermaid(this.cfg, source, id);

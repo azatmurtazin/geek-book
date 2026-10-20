@@ -17,14 +17,14 @@
 // embed it inline with no client-side JavaScript, and the book build gets the
 // identical diagram.
 
-import type { BookConfig } from "../lib/book-config.js";
+import type { BookSettings } from "../../application/settings.js";
 import { diagramOptions } from "./theme.js";
 import { installBrowserShims } from "./shims.js";
 import { fixViewBox, foreignObjectToText } from "./fixup.js";
 
 let mermaidPromise: Promise<typeof import("mermaid")> | null = null;
 
-async function mermaid(cfg: BookConfig): Promise<typeof import("mermaid")> {
+async function mermaid(cfg: BookSettings): Promise<typeof import("mermaid")> {
   if (mermaidPromise === null) {
     // The DOM must exist before mermaid's dependencies (dompurify, d3) load,
     // so the module is imported dynamically, after the globals are installed.
@@ -39,7 +39,7 @@ async function mermaid(cfg: BookConfig): Promise<typeof import("mermaid")> {
 /**
  * Standalone <svg> with mermaid's <foreignObject> labels as SVG <text>.
  */
-export async function renderMermaid(cfg: BookConfig, source: string, id: string): Promise<string> {
+export async function renderMermaid(cfg: BookSettings, source: string, id: string): Promise<string> {
   const mod = await mermaid(cfg);
   const { svg } = await mod.default.render(id, source);
   const start = svg.indexOf("<svg");

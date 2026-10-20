@@ -72,16 +72,17 @@ export function composeContext(
   logger: Logger,
   fs: FileSystem = new NodeFileSystem(),
 ): AppContext {
+  const templates = new AssetTemplateStore();
   return {
     settings,
     fs,
-    templates: new AssetTemplateStore(),
+    templates,
     reporter,
     logger,
     markdown: new MarkedParser(settings.markdown.breaks),
     diagrams: new MermaidRenderer(settings),
     renderer: new HtmlWebsiteRenderer(),
-    standalone: new LayoutStandaloneRenderer(settings),
+    standalone: new LayoutStandaloneRenderer(settings, templates),
     latex: new SystemLatexRenderer(),
     tools: new SystemPdfToolchain(new NodeProcessRunner(), fs),
     server: new NodeSiteServer(),
