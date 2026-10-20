@@ -2,7 +2,8 @@ name: Release
 
 # On a version tag (v*), build both editions of the guide with the engine's own
 # Docker image and publish them as assets on the GitHub Release: the print PDF
-# (book.pdf), the website packed as a zip (geek-book-<version>-web.zip), and the
+# (geek-book-<version>.pdf), the website packed as a zip
+# (geek-book-<version>-web.zip), and the
 # engine package itself (geek-book-<version>.tgz, from `npm pack`), so a book
 # repo can pin a built engine instead of a git checkout. Downloads then live
 # with the tag instead of expiring with a workflow run; re-running the workflow
@@ -70,6 +71,7 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           ( cd build/html && zip -qr "${GITHUB_WORKSPACE}/build/geek-book-${version}-web.zip" . )
+          cp build/book.pdf "build/geek-book-${version}.pdf"
           npm pack --pack-destination build
 
       - name: Publish the release
@@ -77,12 +79,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="${GITHUB_REF_NAME#v}"
+          pdf="build/geek-book-${version}.pdf"
           zip="build/geek-book-${version}-web.zip"
           tarball="$(ls build/geek-book-*.tgz)"
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" build/book.pdf "$zip" "$tarball" --clobber
+            gh release upload "${GITHUB_REF_NAME}" "$pdf" "$zip" "$tarball" --clobber
           else
-            gh release create "${GITHUB_REF_NAME}" build/book.pdf "$zip" "$tarball" \
+            gh release create "${GITHUB_REF_NAME}" "$pdf" "$zip" "$tarball" \
               --title "geek-book ${version}" \
               --generate-notes
           fi
