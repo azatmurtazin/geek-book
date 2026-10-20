@@ -2,16 +2,16 @@
 // serializer, the preamble and the front matter.
 //
 // It implements the application's `LatexRenderer` port. The serializer
-// (`build-tex-book/tex.ts`) is pure over the model; the preamble and the front
+// (`tex.ts`) is pure over the model; the preamble and the front
 // matter read the book's own files, so those two live here and answer with a
 // failure rather than a throw when a named file is missing.
 
 import fs from "node:fs";
 import { fail, ok, type Result } from "../../domain/diagnostics.js";
 import { relative } from "../../domain/values/posix-path.js";
-import { frontMatterTex } from "../../build-tex-book/front-matter.js";
-import { preambleTex } from "../../build-tex-book/preamble.js";
-import { chapterTex, texEscape } from "../../build-tex-book/tex.js";
+import { frontMatterTex } from "./front-matter.js";
+import { preambleTex } from "./preamble.js";
+import { chapterTex, texEscape } from "./tex.js";
 import type { Chapter } from "../../domain/model/chapter.js";
 import type { BookSettings } from "../../application/settings.js";
 import type { ChapterTexOptions, LatexRenderer } from "../../application/ports/latex-renderer.js";

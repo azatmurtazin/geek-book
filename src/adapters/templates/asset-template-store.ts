@@ -4,8 +4,9 @@
 //
 // The engine files are located relative to this module (`import.meta.url`), so
 // the store works wherever the package is installed; a book's own files are read
-// from the absolute path the settings resolved. Phase 8 will move the plain
-// assets next to this reader.
+// from the absolute path the settings resolved. Each plain asset sits beside its
+// reader: the layout here, the stylesheets under `render-html/` and `web/`, and
+// the LaTeX preamble under `render-tex/`.
 
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -28,7 +29,7 @@ function bookFile(path: string): string {
 
 export class AssetTemplateStore implements TemplateStore {
   layout(): string {
-    return asset("../../../_layouts/default.html");
+    return asset("default-layout.html");
   }
 
   contentCss(): string {
@@ -40,7 +41,7 @@ export class AssetTemplateStore implements TemplateStore {
   }
 
   texPreamble(): string {
-    return asset("../../build-tex-book/preamble.tex");
+    return asset("../render-tex/preamble.tex");
   }
 
   bookCss(path: string): string {

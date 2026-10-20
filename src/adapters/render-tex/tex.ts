@@ -1,21 +1,30 @@
-// The book's tree written as LaTeX (see ir.ts; parse.ts builds the tree).
+// The book's tree written as LaTeX (see domain/model/; the application pipeline
+// builds the tree).
 //
 // This is the only module that spells LaTeX: it escapes text, picks commands and
 // environments, measures pictures and lays panels out. It never sees Markdown —
 // when the page should read differently the change belongs here, and when the
-// book means something else it belongs in parse.ts.
+// book means something else it belongs in the pipeline.
 //
 // The standalone pieces live beside it: `escape.ts` (text and code escaping) and
 // `figures.ts` (picture measuring and sizing). What remains here is the
 // serializer proper — the block, inline and table commands and environments,
 // which call one another and so stay together.
 
-import { codeLabel } from "../lib/code-meta.js";
-import { tokenizeCode } from "../lib/code-tokens.js";
+import { codeLabel } from "../../domain/values/code-language.js";
+import { tokenizeCode } from "../../domain/services/code-tokenizer.js";
 import { texEscape, texEscapeCode } from "./escape.js";
 import { figureTex, imageTex } from "./figures.js";
-import type { BookConfig } from "../lib/book-config.js";
-import type { Block, Chapter, HeadingBlock, Inline, LinkNode, ListBlock, TableBlock, TableRow } from "./ir.js";
+import type { BookSettings } from "../../application/settings.js";
+import type {
+  Block,
+  Chapter,
+  HeadingBlock,
+  ListBlock,
+  TableBlock,
+  TableRow,
+} from "../../domain/model/chapter.js";
+import type { Inline, LinkNode } from "../../domain/model/inline.js";
 
 export { texEscape };
 
@@ -28,17 +37,17 @@ export interface TexOptions {
 }
 
 /** One chapter's LaTeX body. */
-export function chapterTex(cfg: BookConfig, chapter: Chapter, options: TexOptions = {}): string {
+export function chapterTex(cfg: BookSettings, chapter: Chapter, options: TexOptions = {}): string {
   return blocksTex(cfg, chapter.blocks, options, 0);
 }
 
 /** The whole chapter as one LaTeX run, its blocks spaced as the web edition spaces them. */
-function blocksTex(cfg: BookConfig, nodes: Block[], options: TexOptions, listDepth: number): string {
+function blocksTex(cfg: BookSettings, nodes: Block[], options: TexOptions, listDepth: number): string {
   return nodes.map((node) => blockTex(cfg, node, options, listDepth)).join("\n\n");
 }
 
 /** `listDepth` counts the lists an item sits inside, which numbers their counters. */
-function blockTex(cfg: BookConfig, node: Block, options: TexOptions, listDepth: number): string {
+function blockTex(cfg: BookSettings, node: Block, options: TexOptions, listDepth: number): string {
   switch (node.kind) {
     case "rule":
       return "\\par\\medskip\\noindent{\\color{rule}\\rule{\\linewidth}{0.5pt}}\\par\\medskip";
@@ -69,7 +78,7 @@ function blockTex(cfg: BookConfig, node: Block, options: TexOptions, listDepth: 
  * entries (sections of a part) get TOC indentation, and the running head carries
  * the plain SUMMARY label.
  */
-function headingTex(cfg: BookConfig, node: HeadingBlock, options: TexOptions): string {
+function headingTex(cfg: BookSettings, node: HeadingBlock, options: TexOptions): string {
   const title = inlineTex(cfg, node.text, "heading");
   const labels = node.anchors.map((anchor) => `\\label{${anchor}}`).join("");
   if (node.depth !== 1) {
@@ -101,7 +110,7 @@ function headingCommand(depth: number): string {
  * `listDepth` picks the counter to set — `enumi` at the top level, `enumii`
  * within it — which is LaTeX's business, not the tree's.
  */
-function listTex(cfg: BookConfig, node: ListBlock, options: TexOptions, listDepth: number): string {
+function listTex(cfg: BookSettings, node: ListBlock, options: TexOptions, listDepth: number): string {
   const open = node.ordered ? "\\begin{enumerate}" : "\\begin{itemize}";
   const close = node.ordered ? "\\end{enumerate}" : "\\end{itemize}";
   let head = open;
@@ -120,7 +129,7 @@ function listTex(cfg: BookConfig, node: ListBlock, options: TexOptions, listDept
  * muted header, and a thin grey rule under every body row (including the last).
  * colortbl's `\hline` honours `\arrayrulecolor`, unlike booktabs' rules.
  */
-function tableTex(cfg: BookConfig, node: TableBlock): string {
+function tableTex(cfg: BookSettings, node: TableBlock): string {
   const specs = node.align.map((align) => {
     if (align === "center") return ">{\\centering\\arraybackslash}X";
     if (align === "right") return ">{\\raggedleft\\arraybackslash}X";
@@ -144,7 +153,7 @@ function tableTex(cfg: BookConfig, node: TableBlock): string {
 }
 
 /** One body row, cells joined and the thin rule every one of them wears. */
-function bodyRowTex(cfg: BookConfig, row: TableRow): string {
+function bodyRowTex(cfg: BookSettings, row: TableRow): string {
   return `${row.map((cell) => inlineTex(cfg, cell, "body")).join(" & ")} \\\\ \\hline`;
 }
 
@@ -152,7 +161,7 @@ function bodyRowTex(cfg: BookConfig, row: TableRow): string {
  * A code panel: tinted, hairline border, language label on top, comments in the
  * muted color the web edition gives them.
  */
-function codePanel(cfg: BookConfig, lang: string, code: string): string {
+function codePanel(cfg: BookSettings, lang: string, code: string): string {
   const label = codeLabel(cfg.code, lang);
   const labelLine = label
     ? `{\\hfill\\fontsize{6}{7}\\selectfont\\ttfamily\\color{codecomment}${texEscape(label)}}\\vspace{0pt}\n`
@@ -174,7 +183,7 @@ type InlineMode = "body" | "heading";
  * code wears in the web edition. It follows the inline content down, so emphasis
  * inside a heading is title code too.
  */
-function inlineTex(cfg: BookConfig, nodes: Inline[], mode: InlineMode): string {
+function inlineTex(cfg: BookSettings, nodes: Inline[], mode: InlineMode): string {
   let out = "";
   for (const node of nodes) {
     switch (node.kind) {
@@ -222,7 +231,7 @@ function inlineTex(cfg: BookConfig, nodes: Inline[], mode: InlineMode): string {
  * reads the anchor out of the previous pass's `.aux`, which resolves links in
  * either direction.
  */
-function linkTex(cfg: BookConfig, node: LinkNode, mode: InlineMode): string {
+function linkTex(cfg: BookSettings, node: LinkNode, mode: InlineMode): string {
   const inner = `\\uplink{${inlineTex(cfg, node.content, mode)}}`;
   if (node.target !== null) {
     return `\\hyperref[${node.target}]{${inner}}`;

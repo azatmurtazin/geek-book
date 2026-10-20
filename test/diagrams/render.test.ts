@@ -18,7 +18,7 @@ import { renderMermaid } from "../../src/diagrams/render.js";
 import { extractDiagrams } from "../../src/domain/services/extract-diagrams.js";
 import { renderSourceToHtml } from "../../src/md-to-html/render.js";
 import { parseChapter } from "../../src/build-tex-book/parse.js";
-import { chapterTex } from "../../src/build-tex-book/tex.js";
+import { chapterTex } from "../../src/adapters/render-tex/tex.js";
 import { fixtureConfig } from "../helpers/config.js";
 import { chapterContext } from "../helpers/chapter.js";
 

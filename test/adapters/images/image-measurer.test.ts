@@ -1,6 +1,6 @@
 // The printed edition's picture measurer: a png's own pixel size, and `null` for
 // anything it cannot read. Reading a header is all this adapter does; the
-// fixture images are the same ones `test/build-tex-book/tex.test.ts` sizes.
+// fixture images are the same ones `test/adapters/render-tex/tex.test.ts` sizes.
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";

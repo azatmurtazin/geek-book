@@ -1,15 +1,16 @@
-// The tree → LaTeX stage (see src/build-tex-book/tex.ts). The tests build IR
+// The tree → LaTeX stage (see src/adapters/render-tex/tex.ts). The tests build IR
 // blocks directly — that is the seam's point: the serializer never sees
 // Markdown, so a test can hand it exactly the shape it wants. Picture sizing
 // reads crafted PNG headers under `test/fixtures/images/` (see the format note
-// in lib/image-size.ts: only the signature and the IHDR size fields matter).
+// in adapters/images/image-size.ts: only the signature and the IHDR size fields matter).
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { chapterTex, texEscape } from "../../src/build-tex-book/tex.js";
-import type { Block, Chapter, Figure, HeadingBlock } from "../../src/build-tex-book/ir.js";
-import { fixtureConfig } from "../helpers/config.js";
+import { chapterTex, texEscape } from "../../../src/adapters/render-tex/tex.js";
+import type { Block, Chapter, HeadingBlock } from "../../../src/domain/model/chapter.js";
+import type { Figure } from "../../../src/domain/model/assets.js";
+import { fixtureConfig } from "../../helpers/config.js";
 
 const cfg = fixtureConfig();
 
@@ -17,7 +18,7 @@ const chapterOf = (...blocks: Block[]): Chapter => ({ blocks, figures: [], image
 /** One chapter's LaTeX, from IR blocks. */
 const tex = (...blocks: Block[]): string => chapterTex(cfg, chapterOf(...blocks));
 
-const imagesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "images");
+const imagesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "fixtures", "images");
 
 describe("texEscape", () => {
   it("gives each special character its control sequence", () => {

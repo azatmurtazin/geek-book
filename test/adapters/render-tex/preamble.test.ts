@@ -1,4 +1,4 @@
-// The printed edition's preamble (see src/build-tex-book/preamble.ts): the
+// The printed edition's preamble (see src/adapters/render-tex/preamble.ts): the
 // built-in LaTeX with its `<< … >>` placeholders filled from the book config,
 // then a book's own preamble appended. The fixture book stands in for a real
 // one; a couple of variants show that the `tex` block and the language reach
@@ -8,9 +8,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { preambleTex } from "../../src/build-tex-book/preamble.js";
-import type { BookConfig } from "../../src/lib/book-config.js";
-import { fixtureConfig } from "../helpers/config.js";
+import { preambleTex } from "../../../src/adapters/render-tex/preamble.js";
+import type { BookSettings } from "../../../src/application/settings.js";
+import { fixtureConfig } from "../../helpers/config.js";
 
 const cfg = fixtureConfig();
 
@@ -62,14 +62,14 @@ describe("preambleTex — the book's own values", () => {
 
 describe("preambleTex — the book's choices", () => {
   it("reads the tex block for class, side and TOC depth", () => {
-    const book: BookConfig = { ...cfg, tex: { ...cfg.tex, class: "report", side: "twoside", tocDepth: 2 } };
+    const book: BookSettings = { ...cfg, tex: { ...cfg.tex, class: "report", side: "twoside", tocDepth: 2 } };
     const tex = preambleTex(book);
     expect(tex).toContain("\\documentclass[11pt,a4paper,twoside]{report}");
     expect(tex).toContain("\\setcounter{tocdepth}{2}");
   });
 
   it("recolours the palette", () => {
-    const book: BookConfig = { ...cfg, tex: { ...cfg.tex, colors: { ...cfg.tex.colors, fg: "#112233" } } };
+    const book: BookSettings = { ...cfg, tex: { ...cfg.tex, colors: { ...cfg.tex.colors, fg: "#112233" } } };
     expect(preambleTex(book)).toContain("\\definecolor{fg}{HTML}{112233}");
   });
 
@@ -85,13 +85,13 @@ describe("preambleTex — the book's choices", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "geek-book-test-"));
     const file = path.join(dir, "extra.tex");
     fs.writeFileSync(file, "\\usepackage{foo}\n");
-    const book: BookConfig = { ...cfg, tex: { ...cfg.tex, preamble: file } };
+    const book: BookSettings = { ...cfg, tex: { ...cfg.tex, preamble: file } };
     expect(preambleTex(book)).toMatch(/\\usepackage\{foo\}$/);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
   it("names the file when a book's tex.preamble is missing", () => {
-    const book: BookConfig = { ...cfg, tex: { ...cfg.tex, preamble: path.join(os.tmpdir(), "nope.tex") } };
+    const book: BookSettings = { ...cfg, tex: { ...cfg.tex, preamble: path.join(os.tmpdir(), "nope.tex") } };
     expect(() => preambleTex(book)).toThrow(/tex\.preamble file is missing/);
   });
 });

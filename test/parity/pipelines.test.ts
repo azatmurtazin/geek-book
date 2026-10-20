@@ -7,10 +7,10 @@
 import { describe, expect, it } from "vitest";
 import { renderBody, renderStandaloneHtml } from "../../src/md-to-html/render.js";
 import { parseChapter } from "../../src/build-tex-book/parse.js";
-import { chapterTex } from "../../src/build-tex-book/tex.js";
+import { chapterTex } from "../../src/adapters/render-tex/tex.js";
 import { fixtureConfig } from "../helpers/config.js";
 import { chapterContext } from "../helpers/chapter.js";
-import type { BookConfig } from "../../src/lib/book-config.js";
+import type { BookSettings } from "../../src/application/settings.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -77,7 +77,7 @@ describe("parity — same fence label", () => {
 describe("parity — markdown.breaks is website-only", () => {
   it("leaves the printed edition's single newlines soft", async () => {
     const md = "one line\nwrapped here";
-    const broken: BookConfig = { ...cfg, markdown: { ...cfg.markdown, breaks: true } };
+    const broken: BookSettings = { ...cfg, markdown: { ...cfg.markdown, breaks: true } };
     const soft = await parseChapter(cfg, md, chapterContext());
     const withBreaks = await parseChapter(broken, md, chapterContext());
     expect(chapterTex(broken, withBreaks)).toBe(chapterTex(cfg, soft));

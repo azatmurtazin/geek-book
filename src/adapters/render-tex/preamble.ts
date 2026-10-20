@@ -15,8 +15,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PAPERS, type BookConfig, type ColorKey } from "../lib/book-config.js";
-import { UI_DEFAULTS } from "../lib/ui-strings.js";
+import type { BookSettings } from "../../application/settings.js";
+import { PAPERS } from "../../domain/values/geometry.js";
+import type { ColorKey } from "../../domain/values/palette.js";
+import { UI_DEFAULTS } from "../../domain/values/ui-strings.js";
 import { texEscape } from "./tex.js";
 
 /** The Tex name of each configured colour, and the order they are defined in. */
@@ -40,7 +42,7 @@ const COLORS: ReadonlyArray<[ColorKey, string]> = [
 const UPPERCASE = ["rule", "codebg", "codefg"];
 
 /** The colour block: the configured palette, then the aliases above. */
-function colorsTex(cfg: BookConfig): string {
+function colorsTex(cfg: BookSettings): string {
   const hex = new Map(COLORS.map(([key, tex]) => [tex, cfg.tex.colors[key].replace(/^#/, "")]));
   const lines = COLORS.map(([, tex]) => `\\definecolor{${tex}}{HTML}{${hex.get(tex)}}`);
   lines.push(
@@ -113,7 +115,7 @@ function babelPreamble(language: string): string {
  * language pack's caption — except in English, which loads no babel and whose
  * LaTeX default is "Contents", where the engine supplies its own name.
  */
-function contentsLine(cfg: BookConfig, babel: string): string {
+function contentsLine(cfg: BookSettings, babel: string): string {
   const override = cfg.strings.contents;
   if (override === undefined && babel !== "") return "";
   const name = override ?? UI_DEFAULTS.contents;
@@ -121,7 +123,7 @@ function contentsLine(cfg: BookConfig, babel: string): string {
 }
 
 /** Every value preamble.tex names, from the book's config. */
-function placeholders(cfg: BookConfig): Record<string, string> {
+function placeholders(cfg: BookSettings): Record<string, string> {
   const { geometry, type } = cfg.tex;
   const babel = babelPreamble(cfg.language);
   return {
@@ -170,7 +172,7 @@ const PLACEHOLDER = /<<\s*([a-z][a-z0-9-]*)\s*>>/g;
  *
  * A book's `tex.preamble` file, when named, is appended after all of it.
  */
-export function preambleTex(cfg: BookConfig): string {
+export function preambleTex(cfg: BookSettings): string {
   const values = placeholders(cfg);
   const base = readPreamble()
     .replace(PLACEHOLDER, (whole, key: string) => values[key] ?? whole)
@@ -185,7 +187,7 @@ function readPreamble(): string {
 }
 
 /** Extra LaTeX a book supplies, with a message that names the file if missing. */
-function readLatex(cfg: BookConfig, file: string): string {
+function readLatex(cfg: BookSettings, file: string): string {
   if (!fs.existsSync(file)) {
     throw new Error(`the tex.preamble file is missing: ${path.relative(cfg.root, file)}`);
   }

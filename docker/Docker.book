@@ -45,7 +45,6 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY bin ./bin
 COPY src ./src
-COPY _layouts ./_layouts
 RUN npm link && rm -rf /root/.npm
 
 # compose mounts node_modules in a named volume (fresh volumes are root-owned);

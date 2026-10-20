@@ -7,7 +7,7 @@
 // path, so nothing downstream needs to know where a template lives.
 
 export interface TemplateStore {
-  /** `_layouts/default.html`: the standalone page shell. */
+  /** The standalone page shell: `adapters/templates/default-layout.html`. */
   layout(): string;
   /** The built-in stylesheet the website and a standalone page share. */
   contentCss(): string;

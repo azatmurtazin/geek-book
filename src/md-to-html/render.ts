@@ -3,9 +3,10 @@
 // The body is rendered from the same document tree the printed edition uses
 // (`domain/services/assemble.ts` → `adapters/render-html`), so heading ids come
 // from the same slugifier the linter checks and a page needs no second HTML
-// pipeline. The tree is wrapped in _layouts/default.html, which carries the
-// fonts and styles. The layout leaves a placeholder for the content CSS shared
-// with the web book ({{ content-css }}, from
+// pipeline. The tree is wrapped in the standalone layout
+// (`adapters/templates/default-layout.html`, through the `TemplateStore`), which
+// carries the fonts and styles. The layout leaves a placeholder for the content
+// CSS shared with the web book ({{ content-css }}, from
 // `adapters/render-html/content.css`) and for the book's own typefaces and
 // palette ({{ font-links }}, {{ font-text }}, {{ font-code }}, {{ palette }}),
 // filled here from `adapters/render-html/stylesheets.ts` so the two targets
@@ -14,7 +15,6 @@
 // Shared by the web-book build and the md-to-html CLI.
 
 import fs from "node:fs";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
 import { escapeHtml, brandHtml } from "../adapters/render-html/escape.js";
@@ -34,8 +34,7 @@ import type { ChapterContext } from "../domain/model/chapter.js";
 
 export { highlightComments } from "../adapters/render-html/html-renderer.js";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const LAYOUT = path.join(ROOT, "_layouts", "default.html");
+const LAYOUT = fileURLToPath(new URL("../adapters/templates/default-layout.html", import.meta.url));
 
 /** A standalone page: no chapter number, no sibling pages, bare slugs. */
 const STANDALONE: ChapterContext = { chapterId: 0, relBook: "", idOf: new Map() };

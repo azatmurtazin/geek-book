@@ -6,11 +6,11 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { load } from "../../src/lib/book-config.js";
-import type { BookConfig } from "../../src/lib/book-config.js";
+import type { BookSettings } from "../../src/application/settings.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /** The configuration of the fixture book `name` under `test/fixtures/`. */
-export function fixtureConfig(name = "minimal"): BookConfig {
+export function fixtureConfig(name = "minimal"): BookSettings {
   return load(path.resolve(here, "..", "fixtures", name));
 }
