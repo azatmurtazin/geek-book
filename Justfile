@@ -4,9 +4,9 @@
 #   just pdf          build/book.pdf
 #   just docker-book  build/html/ + build/book.pdf inside Docker
 #   just serve        preview build/html/ on http://localhost:4000
-#   just lint         type-check the engine, then lint the guide
+#   just lint         type-check the engine, lint the guide, check boundaries
 #   just test         run the unit tests
-#   just boundaries   report the architectural boundary rules
+#   just boundaries   check the architectural boundary rules
 #   just verify       rebuild and diff against the reference baseline
 #   just clean        remove build/
 #   just install-tools  report the toolchain
@@ -107,8 +107,7 @@ verify:
     "{{node}}" tools/baseline/baseline.mjs capture "$scratch"
     "{{node}}" tools/baseline/baseline.mjs compare test/baseline "$scratch"
 
-# report the architectural boundary rules (report-only until the refactor's
-# final phase turns them into errors; see .dependency-cruiser.cjs).
+# report the architectural boundary rules. They are errors: a violation fails.
 boundaries:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -117,12 +116,14 @@ boundaries:
 
 # --- checks -----------------------------------------------------------------
 
-# type-check the engine, then lint the guide.
+# type-check the engine, lint the guide, then check the architectural
+# boundaries (the rule set in .dependency-cruiser.cjs).
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
     [[ -d node_modules ]] || "{{npm}}" install
     "{{npm}}" run lint
+    just boundaries
 
 # run the unit tests (the two Markdown pipelines and the shared helpers).
 test:

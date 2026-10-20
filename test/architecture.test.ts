@@ -1,19 +1,14 @@
 // The architectural boundaries, asserted as code.
 //
-// `.dependency-cruiser.cjs` is the same rule set `just boundaries` runs; this
-// test drives it through dependency-cruiser's API so a violation fails `just
-// test` too (docs/ARCHITECTURE_REFACTORING_PLAN.md §9.3). The rules are
-// report-only during the refactor, so the test encodes the two things that can
-// be asserted *now*:
+// `.dependency-cruiser.cjs` is the same rule set `just boundaries` (and so
+// `just lint`) runs; this test drives it through dependency-cruiser's API so a
+// violation fails `just test` too (docs/ARCHITECTURE_REFACTORING_PLAN.md §9.3).
+// The refactor is complete, so the rules are errors and the tree must satisfy
+// all of them.
 //
-//   1. the rules that already hold stay clean (domain purity, layering, no node:
-//      builtins in the pure layers — vacuously true until those folders exist);
-//   2. the `marked` importers are exactly a known allowlist that shrank each
-//      phase and is empty from Phase 5: `marked` is reached only through
-//      `src/adapters/markdown/`, which the rule allows by path.
-//
-// When a phase moves a consumer, the allowlist shrinks in the same PR — that
-// edit is the record of the progress, and a stray new importer fails here.
+// Besides "no violations", the third test pins the single-importer properties:
+// `marked`, `jsdom` and `mermaid` are reached from exactly the adapter that owns
+// them, and the assertion is not vacuous — each list must be non-empty.
 
 import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
@@ -22,16 +17,22 @@ import { cruise, type ICruiseResult, type ICruiseOptions, type IConfiguration } 
 const require = createRequire(import.meta.url);
 const config = require("../.dependency-cruiser.cjs") as IConfiguration;
 
-/** Rules that the current tree already satisfies and the refactor must keep. */
-const ENFORCED_NOW = [
-  "domain-is-pure",
-  "application-depends-on-domain-only",
-  "adapters-avoid-cli",
-  "no-node-builtins-in-domain-or-application",
+/** The third-party libraries each adapter alone may reach. */
+const SINGLE_IMPORTERS: ReadonlyArray<readonly [string, readonly string[]]> = [
+  ["marked", ["src/adapters/markdown/marked-parser.ts"]],
+  ["jsdom", ["src/adapters/diagrams/shims.ts"]],
+  ["mermaid", ["src/adapters/diagrams/render.ts", "src/adapters/diagrams/theme.ts"]],
 ];
 
-/** The legacy `marked` importers the web path still needs. Empty since Phase 5. */
-const MARKED_ALLOWLIST = new Set<string>([]);
+/** The slice of dependency-cruiser's module shape these assertions read. */
+interface Dependency {
+  readonly module?: string;
+  readonly resolved?: string;
+}
+interface Module {
+  readonly source: string;
+  readonly dependencies?: readonly Dependency[];
+}
 
 /** Run the committed rule set over `src`, the same way `just boundaries` does. */
 async function doCruise(): Promise<ICruiseResult> {
@@ -53,28 +54,32 @@ function cruiseSrc(): Promise<ICruiseResult> {
 }
 
 describe("architecture — boundaries", () => {
-  it("keeps the rules report-only until the refactor's final phase", () => {
+  it("enforces every rule", () => {
     expect(config.forbidden?.length).toBeGreaterThan(0);
     for (const rule of config.forbidden ?? []) {
-      expect(rule.severity, rule.name).toBe("warn");
+      expect(rule.severity, rule.name).toBe("error");
     }
   });
 
-  it("already satisfies the rules that hold today", async () => {
+  it("has no boundary violations", async () => {
     const result = await cruiseSrc();
-    const violations = result.summary.violations.filter((v) =>
-      ENFORCED_NOW.includes(v.rule.name),
-    );
-    expect(violations.map((v) => `${v.rule.name}: ${v.from} → ${v.to}`)).toEqual([]);
+    const violations = result.summary.violations.map((v) => `${v.rule.name}: ${v.from} → ${v.to}`);
+    expect(violations).toEqual([]);
   }, 30_000);
 
-  it("imports marked from exactly the legacy allowlist", async () => {
+  it("reaches marked, jsdom and mermaid only through their adapters", async () => {
     const result = await cruiseSrc();
-    const importers = new Set(
-      result.summary.violations
-        .filter((v) => v.rule.name === "marked-only-in-its-adapter")
-        .map((v) => v.from),
-    );
-    expect([...importers].sort()).toEqual([...MARKED_ALLOWLIST].sort());
+    const modules = result.modules as unknown as readonly Module[];
+
+    for (const [name, expected] of SINGLE_IMPORTERS) {
+      const importers = [
+        ...new Set(
+          modules
+            .filter((m) => (m.dependencies ?? []).some((d) => d.module === name))
+            .map((m) => m.source),
+        ),
+      ].sort();
+      expect(importers, name).toEqual([...expected]);
+    }
   }, 30_000);
 });

@@ -1,10 +1,9 @@
 // .dependency-cruiser.cjs — the architectural boundaries, as rules.
 //
 // These mirror docs/CLEAN_CODE_ARCHITECTURE.md §13 and the invariants of
-// docs/ARCHITECTURE_REFACTORING_PLAN.md §3. They are **report-only** (severity:
-// "warn") until the refactor's final phase, which flips them to "error" once the
-// tree satisfies them; enabling a rule before the code meets it would only train
-// everyone to ignore the output.
+// docs/ARCHITECTURE_REFACTORING_PLAN.md §3. They are **enforced** (severity:
+// "error"): the refactor has landed, `just boundaries` is part of `just lint`,
+// and every violation fails the build.
 //
 // Run with `just boundaries`. `test/architecture.test.ts` asserts the same rules
 // programmatically, so a violation also fails `just test`.
@@ -17,7 +16,7 @@ module.exports = {
   forbidden: [
     {
       name: "domain-is-pure",
-      severity: "warn",
+      severity: "error",
       comment:
         "domain/ is the pure core: it imports nothing outside domain/ — no node:, " +
         "no third-party, no outer layer.",
@@ -26,7 +25,7 @@ module.exports = {
     },
     {
       name: "application-depends-on-domain-only",
-      severity: "warn",
+      severity: "error",
       comment:
         "application/ holds use cases and ports; it may import application/ and " +
         "domain/ only, never an adapter or the CLI.",
@@ -35,24 +34,41 @@ module.exports = {
     },
     {
       name: "adapters-avoid-cli",
-      severity: "warn",
+      severity: "error",
       comment: "adapters/ implement ports and never reach up into the composition root.",
       from: { path: "^src/adapters" },
       to: { path: "^src/cli" },
     },
     {
       name: "marked-only-in-its-adapter",
-      severity: "warn",
+      severity: "error",
       comment:
         "The Markdown parser is an adapter detail: only src/adapters/markdown may " +
-        "import marked. Today the allowlist is the legacy pipeline; it shrinks " +
-        "each phase (tracked in test/architecture.test.ts).",
+        "import marked.",
       from: { pathNot: "^src/adapters/markdown" },
       to: { path: "^node_modules/marked" },
     },
     {
+      name: "jsdom-only-in-its-adapter",
+      severity: "error",
+      comment:
+        "jsdom exists only to give Mermaid a browser to draw in: only " +
+        "src/adapters/diagrams may import it.",
+      from: { pathNot: "^src/adapters/diagrams" },
+      to: { path: "^node_modules/jsdom" },
+    },
+    {
+      name: "mermaid-only-in-its-adapter",
+      severity: "error",
+      comment:
+        "Mermaid is a drawing library: only src/adapters/diagrams may import it, " +
+        "and the rest of the engine sees a Figure.",
+      from: { pathNot: "^src/adapters/diagrams" },
+      to: { path: "^node_modules/mermaid" },
+    },
+    {
       name: "no-node-builtins-in-domain-or-application",
-      severity: "warn",
+      severity: "error",
       comment:
         "The pure layers never import a node: builtin; I/O reaches them through " +
         "ports implemented in adapters/.",

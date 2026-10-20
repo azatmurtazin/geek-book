@@ -5,8 +5,8 @@ name: CI
 # image, the same service the `just docker-book` recipe runs, with the image
 # layers cached between runs. The book exists so that the engine is proven to
 # build a book end to end on every change. `just verify` then diffs that build
-# against the committed baseline; `just boundaries` reports the architectural
-# rules and is non-failing until the refactor's final phase.
+# against the committed baseline. `just lint` also runs the architectural boundary
+# rules (.dependency-cruiser.cjs), which are enforced.
 
 on:
   push:
@@ -36,11 +36,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: just lint
-
-      # Report-only until the refactor's final phase; never fails CI yet.
-      - name: Architectural boundaries (report-only)
-        continue-on-error: true
-        run: just boundaries
 
   book:
     name: Build the book (website + PDF)
