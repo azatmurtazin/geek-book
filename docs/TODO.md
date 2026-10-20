@@ -5,16 +5,16 @@ Target: [`CLEAN_CODE_ARCHITECTURE.md`](./CLEAN_CODE_ARCHITECTURE.md) · Baseline
 
 **Status:** complete — P0–P8 done · one phase = one PR = one green baseline.
 
-## Invariants (every commit)
+## Invariants (held on every commit)
 
-- [ ] Output byte-identical: web (sha256), PDF (text + pages + size), `config`, `md`
-- [ ] Lint findings identical (messages, order, severity)
-- [ ] Exit codes, config keys, CLI flags unchanged
-- [ ] `just lint && just test && just html && just pdf` green
-- [ ] `just verify` green
-- [x] `dependency-cruiser` rules stay report-only (`warn`) until Phase 8, then `error`
-- [ ] `tsc --noEmit` clean (strict + `verbatimModuleSyntax`)
-- [ ] Never regenerate baseline/goldens to make a phase pass
+- [x] Output byte-identical: web (sha256), PDF (text + pages + size), `config`, `md`
+- [x] Lint findings identical (messages, order, severity)
+- [x] Exit codes, config keys, CLI flags unchanged
+- [x] `just lint && just test && just html && just pdf` green
+- [x] `just verify` green
+- [x] `dependency-cruiser` rules stayed report-only (`warn`) until Phase 8, then `error`
+- [x] `tsc --noEmit` clean (strict + `verbatimModuleSyntax`)
+- [x] Never regenerate baseline/goldens to make a phase pass
 
 ## Phases
 

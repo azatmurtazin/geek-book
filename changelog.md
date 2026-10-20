@@ -27,6 +27,33 @@ parentheses for traceability.
   follows the new shape, and the preview server redirects a directory request
   that lacks its trailing slash.
 
+### Under the hood
+
+- Rebuilt the engine around a clean-architecture layout with no observable
+  change: `domain/` (model and pure values), `application/` (ports, use cases,
+  pipelines), `adapters/` (Markdown, Mermaid, HTTP, filesystem, reporting,
+  rendering) and `cli/` as the composition root (`9d88dd1`, `7bce348`,
+  `fdfa992`).
+- One source pipeline now feeds both editions: a `MarkdownParser` port replaces
+  the separate `marked` walks, and the website is rendered from the same model
+  as the printed edition (`5ec91db`, `5bd4a89`, `63e8eb7`).
+- Build, lint, serve, standalone and `pdf-info` became use cases driven from
+  `cli/main.ts`, with Node behind environment ports and reporting behind its own
+  ports (`e0529bf`, `1ea5990`, `008d145`).
+- Added baseline tooling: `just baseline` records the website hash, lint
+  messages, config and rendered Markdown, and the pinned Docker image records
+  the book's text and page count; `just verify` compares all six
+  (`9d88dd1`, `f1c2f86`).
+- `dependency-cruiser` now enforces the layer boundaries as part of `just lint`
+  (`just boundaries`: `54b8fa6`); the old `src/lib/` shims and the legacy
+  `parse` stage are gone (`0355afd`).
+
+### Documentation
+
+- `CONTRIBUTING.md` and the README describe the new layout, the dependency rule
+  and where new code belongs; `CURRENT_ARCHITECTURE.md` is marked historical and
+  the refactoring plan records each phase's outcome (`bb363a2`).
+
 ## [0.1.3] — 2026-10-17
 
 This release is mostly configuration: almost everything a book might want to
