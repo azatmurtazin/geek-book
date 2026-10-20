@@ -116,7 +116,7 @@ export function checkLinks(
         if (!src) {
           continue;
         }
-        // Remote images are fetched at build time (src/lib/remote-images.ts):
+        // Remote images are fetched at build time (src/adapters/http/remote-images.ts):
         // not an offline check's business, but the build then needs the network.
         if (isRemoteImage(src)) {
           reporter.notes.push(`remote image, fetched at build time: ${src}`);

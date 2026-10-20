@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import { FileConfigSource } from "../../../src/adapters/config/file-config-source.js";
-import { NoRemoteImages } from "../../../src/adapters/http/remote-image-store.js";
+import { NoRemoteImages } from "../../../src/adapters/http/remote-images.js";
 import { MarkedParser } from "../../../src/adapters/markdown/marked-parser.js";
 import { buildPdf } from "../../../src/application/usecases/build-pdf.js";
 import type { LatexRenderer } from "../../../src/application/ports/latex-renderer.js";

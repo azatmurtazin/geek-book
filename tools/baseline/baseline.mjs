@@ -43,7 +43,7 @@ const goldenMd = "test/fixtures/golden/chapter.md";
 // Remote images are fetched from someone else's server and written under the
 // site root. Their bytes are not the engine's output, and re-fetching a moved
 // upstream file must not fail the baseline; the HTML hash still freezes every
-// reference to them. See src/lib/remote-images.ts (REMOTE_IMAGE_DIR).
+// reference to them. See src/adapters/http/remote-images.ts (REMOTE_IMAGE_DIR).
 const FETCHED_IMAGE_DIR = "images/remote/";
 
 const BYTE_EXACT = ["web.sha256", "lint.txt", "config.json", "md.html"];

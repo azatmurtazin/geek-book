@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { FileConfigSource } from "../../../src/adapters/config/file-config-source.js";
-import { NoRemoteImages } from "../../../src/adapters/http/remote-image-store.js";
+import { NoRemoteImages } from "../../../src/adapters/http/remote-images.js";
 import { MarkedParser } from "../../../src/adapters/markdown/marked-parser.js";
 import { AssetTemplateStore } from "../../../src/adapters/templates/asset-template-store.js";
 import { HtmlWebsiteRenderer } from "../../../src/adapters/web/html-website-renderer.js";

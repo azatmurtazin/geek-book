@@ -9,7 +9,7 @@
 // renders in: pixels, one to the inch's ninety-sixth.
 //
 // Only png and jpeg are read, the two formats the printed edition can embed
-// (see lib/remote-images.ts). Anything else — or a file that is missing, or
+// (see adapters/http/remote-images.ts). Anything else — or a file that is missing, or
 // corrupt — comes back `null`, and the caller falls back on its own default.
 
 import fs from "node:fs";

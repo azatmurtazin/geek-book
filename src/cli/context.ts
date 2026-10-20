@@ -9,12 +9,13 @@
 
 import { MermaidRenderer } from "../adapters/diagrams/mermaid-renderer.js";
 import { NodeFileSystem } from "../adapters/fs/node-file-system.js";
-import { RemoteImageStore } from "../adapters/http/remote-image-store.js";
+import { NodeHttpClient } from "../adapters/http/node-http-client.js";
+import { NodeSiteServer } from "../adapters/http/node-site-server.js";
+import { RemoteImages } from "../adapters/http/remote-images.js";
 import { BookLintChecks } from "../adapters/lint/book-checks.js";
 import { MarkedParser } from "../adapters/markdown/marked-parser.js";
 import { NodeProcessRunner } from "../adapters/process/node-process-runner.js";
 import { SystemPdfToolchain } from "../adapters/process/system-pdf-toolchain.js";
-import { NodeSiteServer } from "../adapters/http/node-site-server.js";
 import { SystemLatexRenderer } from "../adapters/render-tex/tex-renderer.js";
 import { AssetTemplateStore } from "../adapters/templates/asset-template-store.js";
 import { HtmlWebsiteRenderer } from "../adapters/web/html-website-renderer.js";
@@ -33,7 +34,6 @@ import type { StandaloneRenderer } from "../application/ports/standalone-rendere
 import type { TemplateStore } from "../application/ports/template-store.js";
 import type { WebsiteRenderer } from "../application/ports/website-renderer.js";
 import type { BookSettings } from "../application/settings.js";
-import { RemoteImages } from "../lib/remote-images.js";
 
 /** The adapters and settings a command may use, built once by the root. */
 export interface AppContext {
@@ -87,13 +87,11 @@ export function composeContext(
     server: new NodeSiteServer(),
     checks: new BookLintChecks(),
     openImages: (dir, print) =>
-      new RemoteImageStore(
-        new RemoteImages(dir, {
-          print,
-          timeout: settings.images.timeout,
-          types: settings.images.types,
-        }),
-      ),
+      new RemoteImages(dir, new NodeHttpClient(), fs, {
+        print,
+        timeout: settings.images.timeout,
+        types: settings.images.types,
+      }),
   };
 }
 

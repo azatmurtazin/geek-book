@@ -2,7 +2,7 @@
 //
 // A store fetches every remote image a chapter references and then answers
 // where a URL's copy is and what it was saved as; fetching is an adapter's
-// business (see `adapters/http/remote-image-store.ts`).
+// business (see `adapters/http/remote-images.ts`).
 
 import type { MdNode } from "../../domain/model/markdown.js";
 

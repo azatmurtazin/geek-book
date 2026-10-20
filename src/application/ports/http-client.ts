@@ -2,7 +2,7 @@
 //
 // A response carries its status, its content type and its bytes; deciding what
 // a 404 means, and which content types are pictures, is the caller's business
-// (see `adapters/http/remote-image-store.ts`). The adapter
+// (see `adapters/http/remote-images.ts`). The adapter
 // (`adapters/http/node-http-client.ts`) wraps the global `fetch`; a test hands
 // in a canned response.
 

@@ -11,15 +11,18 @@
 // Files are named after the source URL: `<sha1 of the url><extension>`, the
 // extension taken from the server's content type. Names are stable across
 // builds, and one URL used in several chapters is fetched once.
+//
+// The network and the disk arrive as ports (`HttpClient`, `FileSystem`), so
+// this adapter decides only what a status, a content type and an extension
+// mean; the digest is the one thing it does itself.
 
 import { createHash } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
-import { isRemoteImage } from "./images.js";
-import type { MdInline, MdNode } from "../domain/model/markdown.js";
-
-/** Where remote images land inside a web build, relative to its root. */
-export const REMOTE_IMAGE_DIR = "images/remote";
+import { isRemoteImage } from "../../domain/services/resolve-images.js";
+import { extname, join } from "../../domain/values/posix-path.js";
+import type { MdInline, MdNode } from "../../domain/model/markdown.js";
+import type { FileSystem } from "../../application/ports/file-system.js";
+import type { HttpClient } from "../../application/ports/http-client.js";
+import type { ImageStore, StoredImage } from "../../application/ports/image-store.js";
 
 /** Extension for each content type a server may label an image with. */
 const CONTENT_TYPES: Record<string, string> = {
@@ -61,8 +64,10 @@ export interface RemoteImageOptions {
  * `collect` is called with a chapter's Markdown before it is rendered, so that
  * by the time a renderer asks `nameFor` the file is already on disk.
  */
-export class RemoteImages {
+export class RemoteImages implements ImageStore {
   private readonly dir: string;
+  private readonly http: HttpClient;
+  private readonly fs: FileSystem;
   private readonly print: boolean;
   private readonly timeoutMs: number;
   private readonly types: Record<string, string>;
@@ -70,14 +75,16 @@ export class RemoteImages {
   private readonly files = new Map<string, string>();
   private downloads = 0;
 
-  constructor(dir: string, options: RemoteImageOptions = {}) {
+  constructor(dir: string, http: HttpClient, fs: FileSystem, options: RemoteImageOptions = {}) {
     this.dir = dir;
+    this.http = http;
+    this.fs = fs;
     this.print = options.print === true;
-    this.timeoutMs = (options.timeout ?? 0) > 0 ? (options.timeout as number) * 1000 : 30_000;
+    this.timeoutMs = (options.timeout ?? 0) > 0 ? (options.timeout as number) * 1000 : DEFAULT_TIMEOUT_S * 1000;
     // An empty map is the engine's own: a book only names types to narrow or
     // extend what a fetch accepts.
     this.types = options.types && Object.keys(options.types).length > 0 ? options.types : CONTENT_TYPES;
-    this.extensions = new Set([...Object.values(this.types), ".jpeg", ".tiff"]);
+    this.extensions = new Set([...Object.values(this.types), ...EXTRA_IMAGE_EXTENSIONS]);
   }
 
   /** How many files this build fetched; repeats of a URL do not count again. */
@@ -93,7 +100,14 @@ export class RemoteImages {
   /** The absolute path a URL was fetched to, or `null` when this build has not. */
   fileFor(url: string): string | null {
     const name = this.files.get(url.trim());
-    return name === undefined ? null : path.join(this.dir, name);
+    return name === undefined ? null : join(this.dir, name);
+  }
+
+  /** Where a URL's fetched copy is, or `null` when this build did not fetch it. */
+  lookup(url: string): StoredImage | null {
+    const name = this.nameFor(url);
+    const file = this.fileFor(url);
+    return name === null || file === null ? null : { file, name };
   }
 
   /** Fetch every remote image the neutral tree references, ignoring code samples. */
@@ -108,20 +122,16 @@ export class RemoteImages {
   }
 
   private async fetch(url: string): Promise<void> {
-    let response: Response;
+    let response;
     try {
-      response = await fetch(url, {
-        redirect: "follow",
-        headers: { "user-agent": "geek-book" },
-        signal: AbortSignal.timeout(this.timeoutMs),
-      });
+      response = await this.http.get(url, { timeoutMs: this.timeoutMs });
     } catch (error) {
       throw new Error(`cannot fetch image ${url}: ${(error as Error).message}`);
     }
     if (!response.ok) {
       throw new Error(`cannot fetch image ${url}: HTTP ${response.status}`);
     }
-    const type = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+    const type = response.contentType.split(";")[0].trim().toLowerCase();
     const ext = this.extensionFor(type, url);
     if (ext === null) {
       throw new Error(`not an image: ${url} (served ${type || "no content type"})`);
@@ -129,10 +139,9 @@ export class RemoteImages {
     if (this.print && !PRINT_EXTENSIONS.has(ext)) {
       throw new Error(`the printed edition cannot embed ${url} (${type}); it reads png and jpeg`);
     }
-    const bytes = Buffer.from(await response.arrayBuffer());
     const name = `${createHash("sha1").update(url).digest("hex").slice(0, 12)}${ext}`;
-    fs.mkdirSync(this.dir, { recursive: true });
-    fs.writeFileSync(path.join(this.dir, name), bytes);
+    this.fs.makeDirs(this.dir);
+    this.fs.writeBytes(join(this.dir, name), response.body);
     this.files.set(url, name);
     this.downloads += 1;
   }
@@ -145,13 +154,25 @@ export class RemoteImages {
       return byType;
     }
     if (UNLABELED.has(contentType)) {
-      const ext = path.posix.extname(new URL(url).pathname).toLowerCase();
+      const ext = extname(new URL(url).pathname).toLowerCase();
       if (this.extensions.has(ext)) {
         return ext;
       }
     }
     return null;
   }
+}
+
+/** An `ImageStore` for a chapter with no remote cache: fetches nothing, finds
+ *  nothing. The pure walk and the fixture chapters use it. */
+export class NoRemoteImages implements ImageStore {
+  async collect(_nodes: readonly MdNode[]): Promise<void> {}
+
+  lookup(_url: string): StoredImage | null {
+    return null;
+  }
+
+  readonly fetched = 0;
 }
 
 /** Every remote image URL the neutral tree references, in order, once each. */

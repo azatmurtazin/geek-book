@@ -195,7 +195,7 @@ export interface DiagramsConfig {
 export type CodeLangConfig = CodeLanguage;
 
 /** Remote images the build fetches into the output, so neither edition sends
- *  the reader to the origin (see `lib/remote-images.ts`). */
+ *  the reader to the origin (see `adapters/http/remote-images.ts`). */
 export interface ImagesConfig {
   /** Seconds one fetch may take before it fails (default 30), so a slow host
    *  stalls the build for a bounded time. */

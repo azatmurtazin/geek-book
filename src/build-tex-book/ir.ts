@@ -5,7 +5,7 @@
 // domain's with the remote-image cache the print build fetches through, which
 // the domain itself must not know.
 
-import type { RemoteImages } from "../lib/remote-images.js";
+import type { RemoteImages } from "../adapters/http/remote-images.js";
 import type { ChapterContext as BaseChapterContext } from "../domain/model/chapter.js";
 
 export type { Figure, ImageAsset, PixelSize } from "../domain/model/assets.js";
@@ -23,6 +23,6 @@ export type {
 
 /** Where a chapter sits in the book, and what its links resolve against. */
 export interface ChapterContext extends BaseChapterContext {
-  /** Remote images already fetched for this build (see lib/remote-images.ts). */
+  /** Remote images already fetched for this build (see adapters/http/remote-images.ts). */
   remote?: RemoteImages;
 }

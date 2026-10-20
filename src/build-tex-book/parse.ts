@@ -15,7 +15,7 @@ import type { BookConfig } from "../lib/book-config.js";
 import { substituteContentPlaceholders } from "../lib/content-placeholders.js";
 import { MarkedParser } from "../adapters/markdown/marked-parser.js";
 import { MermaidRenderer } from "../adapters/diagrams/mermaid-renderer.js";
-import { NoRemoteImages, RemoteImageStore } from "../adapters/http/remote-image-store.js";
+import { NoRemoteImages } from "../adapters/http/remote-images.js";
 import { sourceToModel, type SourceDeps } from "../application/pipelines/source-to-model.js";
 import { assemble } from "../domain/services/assemble.js";
 import type { Chapter, ChapterContext } from "./ir.js";
@@ -53,7 +53,7 @@ function printDeps(cfg: BookConfig, ctx: ChapterContext): SourceDeps {
   return {
     markdown: parser,
     diagrams: new MermaidRenderer(cfg),
-    images: ctx.remote ? new RemoteImageStore(ctx.remote) : new NoRemoteImages(),
+    images: ctx.remote ?? new NoRemoteImages(),
     substitute: (source) => substituteContentPlaceholders(cfg, source),
     smartTypography: cfg.markdown.smartTypography,
     bookDir: cfg.bookDir,
