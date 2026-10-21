@@ -33,16 +33,14 @@ function makeBook(config: Record<string, unknown> = {}, withCover = false): { cf
 }
 
 describe("frontMatterTex", () => {
-  it("is just the page style and the contents when nothing optional is set", () => {
+  it("gives a book without a cover image a typographic cover", () => {
     const { cfg, buildDir } = makeBook();
-    expect(frontMatterTex(cfg, buildDir)).toBe(
-      [
-        "\\pagestyle{empty}",
-        "\\tableofcontents",
-        "\\clearpage",
-        "\\pecnumberedplain",
-      ].join("\n\n"),
-    );
+    const tex = frontMatterTex(cfg, buildDir);
+
+    expect(tex).toContain("\\begin{titlepage}");
+    expect(tex).toContain("Untitled book");
+    expect(tex).not.toContain("includegraphics");
+    expect(tex.indexOf("\\begin{titlepage}")).toBeLessThan(tex.indexOf("\\tableofcontents"));
   });
 
   it("adds a cover page that points into the build directory", () => {
@@ -51,11 +49,22 @@ describe("frontMatterTex", () => {
     expect(tex).toContain(
       "\\noindent\\includegraphics[width=\\linewidth,height=\\textheight,keepaspectratio]{./cover.jpg}\n\\clearpage",
     );
+    expect(tex).not.toContain("\\begin{titlepage}");
   });
 
-  it("leaves the cover out when the file does not exist", () => {
+  it("falls back to the typographic cover when the file does not exist", () => {
     const { cfg, buildDir } = makeBook({ cover: "build/missing.jpg" });
-    expect(frontMatterTex(cfg, buildDir)).not.toContain("includegraphics");
+    const tex = frontMatterTex(cfg, buildDir);
+
+    expect(tex).not.toContain("includegraphics");
+    expect(tex).toContain("\\begin{titlepage}");
+  });
+
+  it("does not repeat the textual cover as a title page", () => {
+    const { cfg, buildDir } = makeBook({ tex: { titlePage: true } });
+    const tex = frontMatterTex(cfg, buildDir);
+
+    expect(tex.split("\\begin{titlepage}")).toHaveLength(2);
   });
 
   it("sets the title page with the tagline and author, escaping them", () => {

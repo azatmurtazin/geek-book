@@ -84,7 +84,7 @@
       "type": "string"
     },
     "cover": {
-      "description": "The cover image for the PDF (default: <bookDir>/cover.jpg; may be absent).",
+      "description": "The cover image for the PDF (default: <bookDir>/cover.jpg). With no image, the title, tagline and author form a typographic cover.",
       "type": "string"
     },
     "output": {
@@ -381,7 +381,7 @@
           "minimum": 0
         },
         "titlePage": {
-          "description": "Print a typographic title page — the title, the tagline and the author — before the table of contents (default: false).",
+          "description": "Print a typographic title page — the title, the tagline and the author — after a picture cover (default: false). With no cover image the typographic cover already carries it.",
           "type": "boolean"
         },
         "copyright": {

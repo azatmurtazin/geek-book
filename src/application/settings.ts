@@ -249,7 +249,8 @@ export interface BookSettings {
   /** Absolute path of the website's home page (default `<bookDir>/README.md`;
    * with no file there the home page redirects to the first chapter). */
   readme: string;
-  /** Cover image for the PDF (default `<bookDir>/cover.jpg`; may be absent). */
+  /** Cover image for the PDF (default `<bookDir>/cover.jpg`); with no file,
+   *  the title, tagline and author form a typographic cover. */
   cover: string;
   /** Absolute output paths. */
   outputWeb: string;

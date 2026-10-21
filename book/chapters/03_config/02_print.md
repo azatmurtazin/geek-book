@@ -22,6 +22,15 @@ millimetres. The text block the print build measures pictures against is derived
 from these, so a book that changes its page changes what fits with it and says
 nothing else.
 
+## Cover and front matter
+
+`cover` names the cover image (default `book/images/cover.jpg`). With no image,
+the title, tagline and author are set as a typographic cover, so a book without
+artwork still opens with a cover rather than straight onto the contents.
+`tex.titlePage` adds a title page after a picture cover; on a typographic cover
+it would repeat the same page, so it adds nothing there. `tex.copyright` and
+`tex.isbn` add the imprint page that follows.
+
 ## The palette
 
 Nine colours, each `#rrggbb`:

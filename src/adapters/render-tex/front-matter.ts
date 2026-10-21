@@ -1,10 +1,12 @@
 // The printed edition's front matter: what stands before the table of contents.
 //
-// An optional cover image, an optional typographic title page, and an optional
-// imprint page carrying the copyright and ISBN the config names, plus a
-// colophon naming the typefaces. The whole block is emitted under the empty page
-// style, so the front matter carries no running head or folio; the build
-// restores the fancy style once the contents are past.
+// A cover — the image the config names, or a typographic one built from the
+// title, tagline and author when there is no image — an optional title page
+// after a picture cover, and an optional imprint page carrying the copyright
+// and ISBN the config names, plus a colophon naming the typefaces. The whole
+// block is emitted under the empty page style, so the front matter carries no
+// running head or folio; the build restores the fancy style once the contents
+// are past.
 //
 // It sits apart from the serializer (tex.ts) because the walk does not write it;
 // it is the same LaTeX on every build.
@@ -25,7 +27,8 @@ function coverPage(cfg: BookSettings, buildDir: string): string {
   ].join("\n");
 }
 
-/** A typographic title page: the title, the tagline and the author. */
+/** A typographic page with the title, the tagline and the author. It is the
+ *  title page after a picture cover, and the cover itself when there is none. */
 function titlePage(cfg: BookSettings): string {
   const lines = [
     "\\begin{titlepage}",
@@ -78,13 +81,21 @@ function imprintPage(cfg: BookSettings): string {
   return lines.join("\n");
 }
 
-/** Everything before the table of contents: the cover, the title and imprint
- *  pages, and the contents itself, with the page style restored after it. */
+/** Everything before the table of contents: the cover, an optional title page
+ *  after a picture cover, the imprint, and the contents itself, with the page
+ *  style restored after it.
+ *
+ *  With no cover image the typographic page is the cover, so `tex.titlePage`
+ *  adds nothing there: a second copy of the same page would only repeat it. */
 export function frontMatterTex(cfg: BookSettings, buildDir: string): string {
   const parts = ["\\pagestyle{empty}"];
   const cover = coverPage(cfg, buildDir);
-  if (cover) parts.push(cover);
-  if (cfg.tex.titlePage) parts.push(titlePage(cfg));
+  if (cover) {
+    parts.push(cover);
+    if (cfg.tex.titlePage) parts.push(titlePage(cfg));
+  } else {
+    parts.push(titlePage(cfg));
+  }
   const imprint = imprintPage(cfg);
   if (imprint) parts.push(imprint);
   parts.push("\\tableofcontents", "\\clearpage", "\\pecnumberedplain");
