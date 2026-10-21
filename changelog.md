@@ -1,20 +1,26 @@
 # Changelog
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
-tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`); the top section is the
-unreleased work on `main`, then each released version. Short commit hashes are
+tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`); the section
+at the top collects everything released as **0.1.5**. Short commit hashes are
 given in parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
-| Unreleased          | —          |
+| 0.1.5               | 2026-10-21 |
 | 0.1.4               | 2026-10-20 |
 | 0.1.3               | 2026-10-17 |
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
 
-## [Unreleased]
+## [0.1.5] — 2026-10-21
+
+This release hardens the safety net rather than the engine. The unit suite now
+runs in CI on every supported Node release, a release can no longer publish a
+tree whose baseline does not verify, and the linter's rules, the printed front
+matter and the CLI surface have direct tests. Nothing observable changes: the
+only baseline diff is the version string.
 
 ### Under the hood
 
