@@ -23,3 +23,5 @@ this guide is exercised by the build that produced it.
 - [Media](chapters/02_media/00_index.md) — images and diagrams.
 - [Configuration](chapters/03_config/00_index.md) — the full `book.config.json`.
 - [Publishing](chapters/04_publishing/00_index.md) — commands, linting and CI.
+- [Inside the engine](chapters/05_engine/00_index.md) — the layers, the rules,
+  and where new code goes.

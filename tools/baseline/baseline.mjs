@@ -5,7 +5,8 @@
 //   node tools/baseline/baseline.mjs compare <ref> <dir>  diff them
 //
 // Six artifacts freeze what the engine produces today, so a refactor can prove
-// it changed nothing (see docs/ARCHITECTURE_REFACTORING_PLAN.md §9):
+// it changed nothing (see "Inside the engine" in the guide,
+// book/chapters/05_engine/00_index.md):
 //
 //   web.sha256   sorted sha256 of every file under build/html/ (path-relative;
 //                fetched images/remote/ excluded — see below)

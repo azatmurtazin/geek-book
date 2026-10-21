@@ -6,8 +6,8 @@
 // only place that turns a failure into a number, and the `Reporter` port is
 // the only place that turns a `Diagnostic` into a line of text.
 //
-// Pure: no imports outside `domain/` (see docs/ARCHITECTURE_REFACTORING_PLAN.md
-// §3 and `domain-is-pure` in .dependency-cruiser.cjs).
+// Pure: no imports outside `domain/` (see `domain-is-pure` in
+// .dependency-cruiser.cjs and "Inside the engine" in the guide).
 
 /** How loud a diagnostic is. The word doubles as the printed prefix. */
 export type Severity = "error" | "warning" | "note";

@@ -35,3 +35,7 @@
   - [Commands](chapters/04_publishing/01_commands.md)
   - [Linting](chapters/04_publishing/02_lint.md)
   - [Continuous integration](chapters/04_publishing/03_ci.md)
+
+## The engine
+
+- [Inside the engine](chapters/05_engine/00_index.md)

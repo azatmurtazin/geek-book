@@ -3,7 +3,9 @@
 The engine builds a book from Markdown into two editions — a static website and
 a print-ready PDF — and the two must not drift. The architecture is what keeps
 them from drifting: one model, one walk, one set of values, and the environment
-pushed to the edge. Two rules matter more than style:
+pushed to the edge. The guide tells the same story in
+[Inside the engine](./book/chapters/05_engine/00_index.md). Two rules matter
+more than style:
 
 ## 1. Dependencies point inward
 
@@ -11,8 +13,8 @@ pushed to the edge. Two rules matter more than style:
 cli  →  adapters  →  application  →  domain
 ```
 
-- **`src/domain/`** is the pure core: the document model, the values (paths,
-  fonts, palettes, slugs) and the services that assemble and resolve it. It
+- **`src/domain/`** is the pure core: the document model, the values (slugs,
+  fonts, palettes, geometry) and the services that assemble and resolve it. It
   imports nothing outside `domain/` — no `node:` builtins, no third-party
   packages, no outer layer.
 - **`src/application/`** holds ports, use cases, pipelines and settings. It may
@@ -36,7 +38,9 @@ The built book is frozen: `test/baseline/` holds the website's checksums, the
 PDF's extracted text and page facts, the linter's output, the resolved config
 and one standalone page. `just verify` rebuilds and diffs them.
 
-- A diff is a bug, never a baseline update. Fix the code, not the baseline.
+- A diff is a bug unless the change was meant to move the output (a new
+  chapter, a new version). Fix the code, not the baseline; refresh the baseline
+  only for a change that was supposed to alter what the book says.
 - Add a test before changing a renderer. The golden fixtures
   (`test/fixtures/golden/`) guard the LaTeX and HTML per construct; the baseline
   guards the whole guide.

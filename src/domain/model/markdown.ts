@@ -11,8 +11,8 @@
 // that consume it may not import the application layer; the port is the
 // application's name for the same types.
 //
-// A few details are not in CLEAN_CODE_ARCHITECTURE.md §7.1, and are here so the
-// port reproduces `marked` exactly: a fenced block records whether `marked`
+// A few details the guide's architecture chapter does not spell out, and are
+// here so the port reproduces `marked` exactly: a fenced block records whether `marked`
 // already escaped its text (`escaped`); text a backslash escaped carries
 // `verbatim` so the typographer leaves it as written; and a tight list item's
 // run is a `text` node of its own, which the walk keeps as prose rather than

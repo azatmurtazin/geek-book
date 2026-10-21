@@ -2,7 +2,7 @@
 //
 // `.dependency-cruiser.cjs` is the same rule set `just boundaries` (and so
 // `just lint`) runs; this test drives it through dependency-cruiser's API so a
-// violation fails `just test` too (docs/ARCHITECTURE_REFACTORING_PLAN.md §9.3).
+// violation fails `just test` too (see book/chapters/05_engine/00_index.md).
 // The refactor is complete, so the rules are errors and the tree must satisfy
 // all of them.
 //

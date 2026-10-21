@@ -1,9 +1,9 @@
 // .dependency-cruiser.cjs — the architectural boundaries, as rules.
 //
-// These mirror docs/CLEAN_CODE_ARCHITECTURE.md §13 and the invariants of
-// docs/ARCHITECTURE_REFACTORING_PLAN.md §3. They are **enforced** (severity:
-// "error"): the refactor has landed, `just boundaries` is part of `just lint`,
-// and every violation fails the build.
+// This is the dependency rule the guide describes in "Inside the engine"
+// (book/chapters/05_engine/00_index.md). They are **enforced** (severity:
+// "error"): `just boundaries` is part of `just lint`, and every violation
+// fails the build.
 //
 // Run with `just boundaries`. `test/architecture.test.ts` asserts the same rules
 // programmatically, so a violation also fails `just test`.
