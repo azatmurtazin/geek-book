@@ -42,8 +42,7 @@ repos:
         pass_filenames: false
         always_run: true
 
-      # `npm test` — the unit tests for the shared helpers and the two
-      # Markdown pipelines.
+      # `just test` — the domain, use-case, adapter and CLI suites.
       - id: test
         name: run the unit tests
         entry: just test

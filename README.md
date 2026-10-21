@@ -77,17 +77,23 @@ in the working directory; `--config <file>` points it at another config instead.
 
 ## This repository
 
-This repository builds its own book — the guide above — which doubles as the
-fixture the engine is tested against: `just lint`, `just html` and `just pdf`
-exercise the linter and both editions on every change, and CI runs the same
-three in the `book` image. There are no unit tests; a book that builds is the
-contract.
+This repository builds its own book — the guide above — and that book is also
+the end-to-end fixture. `just lint`, `just html` and `just pdf` exercise the
+linter and both editions on every change, and `just test` covers the domain,
+the use cases and the adapters. `just verify` rebuilds both editions and diffs
+them against `test/baseline/`, so a change that moves the website's bytes, the
+PDF's text and page count, the lint messages or the resolved config fails even
+when the build itself is green. CI runs the tests on Node 20, 22 and 26 and the
+same build and verify steps in the `book` image.
 
 ```sh
-just html     # build build/html/
-just pdf      # build build/book.pdf
-just serve    # preview build/html/ on http://localhost:4000
-just lint     # type-check, lint the guide, check the architectural boundaries
+just html      # build build/html/
+just pdf       # build build/book.pdf
+just serve     # preview build/html/ on http://localhost:4000
+just lint      # type-check, lint the guide, check the architectural boundaries
+just test      # run the unit suite
+just coverage  # the unit suite with a coverage report
+just verify    # rebuild and diff both editions against test/baseline/
 ```
 
 The same build runs in Docker with no host setup beyond Docker itself:
@@ -111,7 +117,7 @@ The engine is one dependency rule deep: `domain` knows nothing outside itself,
 | Path               | What lives there                                                                                  |
 | ------------------ | ------------------------------------------------------------------------------------------------- |
 | `bin/`             | The `geek-book` launcher (registers tsx, imports `src/cli/main.ts`).                              |
-| `src/domain/`      | The pure core: the document model, values (paths, fonts, palettes, slugs) and services (assemble, links, images, summary, anchors). No `node:` and no third-party imports. |
+| `src/domain/`      | The pure core: the document model, values (slugs, fonts, palettes, geometry) and services (assemble, links, images, summary, anchors). No `node:` and no third-party imports. |
 | `src/application/` | Ports, use cases, pipelines and settings. `BookSettings` and the lenient readers; one use case per command. |
 | `src/adapters/`    | The outside world behind the ports: `markdown/` (marked), `diagrams/` (mermaid + jsdom), `render-html/`, `render-tex/`, `web/`, `http/`, `fs/`, `process/`, `config/`, `lint/`, `templates/`, `images/`, `reporting/`. |
 | `src/cli/`         | The composition root (`main.ts`, `context.ts`) and one thin command per subcommand.               |
