@@ -2,11 +2,12 @@
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
 tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`,
-`v0.1.7`, `v0.1.8`); each released version follows, most recent first. Short
-commit hashes are given in parentheses for traceability.
+`v0.1.7`, `v0.1.8`, `v0.1.9`); each released version follows, most recent first.
+Short commit hashes are given in parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| 0.1.9               | 2026-10-22 |
 | 0.1.8               | 2026-10-22 |
 | 0.1.7               | 2026-10-21 |
 | 0.1.6               | 2026-10-21 |
@@ -16,6 +17,27 @@ commit hashes are given in parentheses for traceability.
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [0.1.9] — 2026-10-22
+
+The PDF's info dictionary now carries the book's identity: Title, Author and
+Subject are filled from `title`, `author` and `web.description` (the tagline by
+default), so a reader's document properties show the book rather than blank
+fields. The page count and layout are unchanged.
+
+### Added
+
+- The built-in preamble writes `\hypersetup` metadata from the resolved book
+  settings. An empty author or description omits that field instead of writing
+  an empty one (`8eac8a2`).
+- The PDF baseline's `book.info` now pins Title, Subject and Author alongside
+  the page count and page size, so missing metadata fails `just verify`
+  (`8eac8a2`).
+
+### Documentation
+
+- The print and commands chapters describe the metadata mapping and the fields
+  `geek-book pdf-info` reports (`8eac8a2`).
 
 ## [0.1.8] — 2026-10-22
 
