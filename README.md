@@ -102,6 +102,17 @@ The same build runs in Docker with no host setup beyond Docker itself:
 just docker-book
 ```
 
+A release is cut from a clean `main` whose changelog already carries the new
+version's section and table row:
+
+```sh
+just release 0.1.6
+```
+
+The recipe bumps `package.json` and the lock, refreshes the baseline in the
+`book` image, verifies it there, commits, tags `v0.1.6` and pushes both. The
+tag's workflow then builds and publishes the three assets.
+
 A book repository depends on the engine by path and copies the book-side
 scaffolding under [`templates/`](./templates/) — a `book.config.json`, a
 `Justfile`, a compose service, a pre-commit config and three workflows (lint +

@@ -8,6 +8,7 @@
 #   just test         run the unit tests
 #   just boundaries   check the architectural boundary rules
 #   just verify       rebuild and diff against the reference baseline
+#   just release 0.1.6  bump, refresh the baseline, tag and push a release
 #   just clean        remove build/
 #   just install-tools  report the toolchain
 #
@@ -140,6 +141,48 @@ coverage:
     set -euo pipefail
     [[ -d node_modules ]] || "{{npm}}" install
     "{{npm}}" run test:coverage
+
+# --- releasing --------------------------------------------------------------
+
+# Cut a release. The changelog must already carry the version's section
+# (`## [0.1.6] — 2026-10-21`) and its row in the table; everything else is
+# mechanical: a clean `main`, the bump, the baseline in the pinned image, a
+# verify there, then a commit, an annotated tag and both pushes. The tag's
+# workflow builds and publishes; nothing is published from here.
+release version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! "{{version}}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "release: version must look like 1.2.3, got '{{version}}'" >&2
+        exit 1
+    fi
+    if [[ "$(git branch --show-current)" != "main" ]]; then
+        echo "release: cut releases from main" >&2
+        exit 1
+    fi
+    if [[ -n "$(git status --porcelain)" ]]; then
+        echo "release: the working tree must be clean" >&2
+        exit 1
+    fi
+    if git rev-parse -q --verify "refs/tags/v{{version}}" >/dev/null; then
+        echo "release: tag v{{version}} already exists" >&2
+        exit 1
+    fi
+    if ! grep -Fq "## [{{version}}] — " changelog.md; then
+        echo "release: add a '## [{{version}}] — <date>' section to changelog.md first" >&2
+        exit 1
+    fi
+
+    "{{npm}}" version "{{version}}" --no-git-tag-version
+    just docker-baseline
+    docker compose run --rm book just verify
+
+    git --no-pager diff --stat test/baseline
+    git add package.json package-lock.json changelog.md test/baseline
+    git commit -m "Release {{version}}."
+    git tag -a "v{{version}}" -m "geek-book {{version}}"
+    git push origin main
+    git push origin "v{{version}}"
 
 # --- housekeeping -----------------------------------------------------------
 
