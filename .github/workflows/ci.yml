@@ -81,17 +81,14 @@ jobs:
 
       # The `book` service starts as root, chowns its node_modules volume and
       # drops to the image's `node` user (uid 1000). The GitHub workspace is
-      # owned by uid 1001, so hand it to 1000 first; the compose service then
-      # builds build/html/ and build/book.pdf on the bind-mounted repo.
-      - name: Build the book
+      # owned by uid 1001, so hand it to 1000 first. `just verify` cleans and
+      # rebuilds both editions on the bind-mounted repo, then diffs them
+      # against test/baseline/ inside the image, so poppler/fonts match the
+      # reference.
+      - name: Build and verify the book
         run: |
           sudo chown -R 1000:1000 .
-          docker compose run --rm book
-
-      # Re-runs the same build (up to date) and diffs the artifacts against
-      # test/baseline/ inside the image, so poppler/fonts match the reference.
-      - name: Verify against the baseline
-        run: docker compose run --rm book just verify
+          docker compose run --rm book just verify
 
       - uses: actions/upload-artifact@v7
         with:

@@ -35,14 +35,14 @@ list:
 
 # --- website -----------------------------------------------------------------
 
-# build/html/ — the guide as a static website. Rebuilds only when a source is
-# newer than the last build.
+# build/html/ — the guide as a static website. Rebuilds when any book file,
+# the book's config or the engine is newer than the last build.
 html:
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ -f "{{html}}/index.html" ]] && \
-       [[ -z "$(find "{{book}}" -name '*.md' -newer "{{html}}/index.html" -print -quit)" ]] && \
-       [[ -z "$(find src bin package.json -type f -newer "{{html}}/index.html" -print -quit)" ]]; then
+       [[ -z "$(find "{{book}}" book.config.json package.json src bin \
+                 -type f -newer "{{html}}/index.html" -print -quit)" ]]; then
         echo "html -> {{html}}/ (up to date)"
     else
         [[ -d node_modules ]] || "{{npm}}" install
@@ -56,15 +56,15 @@ serve:
 # --- pdf ---------------------------------------------------------------------
 
 # build/book.pdf — the whole book in one print-ready file, typeset with
-# LuaLaTeX. Rebuilds only when a source changes.
+# LuaLaTeX. Rebuilds when any book file, the book's config or the engine is
+# newer than the last build.
 pdf:
     #!/usr/bin/env bash
     set -euo pipefail
     [[ -d node_modules ]] || "{{npm}}" install
     if [[ -f "{{pdf}}" ]] && \
-       [[ -z "$(find "{{book}}" \( -name '*.md' -o -name 'cover.jpg' \) \
-                 -newer "{{pdf}}" -print -quit)" ]] && \
-       [[ -z "$(find src bin package.json -type f -newer "{{pdf}}" -print -quit)" ]]; then
+       [[ -z "$(find "{{book}}" book.config.json package.json src bin \
+                 -type f -newer "{{pdf}}" -print -quit)" ]]; then
         echo "pdf -> {{pdf}} (up to date)"
     else
         {{engine}} pdf "{{pdf}}"
@@ -81,11 +81,13 @@ docker-book:
 # --- baseline ----------------------------------------------------------------
 
 # capture the reference baseline under test/baseline/ (canonical: in the book
-# image, via `just docker-baseline`, so poppler and fonts do not drift).
+# image, via `just docker-baseline`, so poppler and fonts do not drift). The
+# build starts clean, so a stale timestamp can never enter the reference.
 baseline:
     #!/usr/bin/env bash
     set -euo pipefail
     [[ -d node_modules ]] || "{{npm}}" install
+    just clean
     just html
     just pdf
     "{{node}}" tools/baseline/baseline.mjs capture test/baseline
@@ -93,14 +95,17 @@ baseline:
 # capture the baseline inside the pinned book image — the reproducible reference
 docker-baseline:
     docker compose run --rm --build book /bin/sh -c \
-        'just html && just pdf && node tools/baseline/baseline.mjs capture test/baseline'
+        'just clean && just html && just pdf && node tools/baseline/baseline.mjs capture test/baseline'
 
-# rebuild both editions and diff them against the committed baseline. The two
-# PDF artifacts are compared only inside the book image (poppler/font drift).
+# rebuild both editions from a clean build and diff them against the committed
+# baseline. The clean step makes the check authoritative: the timestamp checks
+# in html/pdf are a convenience for editing, not evidence for verification. The
+# two PDF artifacts are compared only inside the book image (poppler/font drift).
 verify:
     #!/usr/bin/env bash
     set -euo pipefail
     [[ -d node_modules ]] || "{{npm}}" install
+    just clean
     just html
     just pdf
     scratch="{{build-dir}}/baseline-check"

@@ -66,13 +66,12 @@ jobs:
       # The `book` service drops to the image's `node` user (uid 1000) but the
       # GitHub workspace is owned by uid 1001, so hand it to 1000 first, then
       # back to the runner so the steps below can read and write `build/`.
-      # `just verify` runs while the workspace is still 1000-owned: it captures
-      # into build/, and a published tag must be the verified tree — a stale
+      # `just verify` cleans and rebuilds while the workspace is still
+      # 1000-owned; a published tag must be the verified tree — a stale
       # baseline must fail here, before anything is uploaded.
-      - name: Build, lint, test and verify the guide
+      - name: Lint, test and verify the guide
         run: |
           sudo chown -R 1000:1000 .
-          docker compose run --rm book
           docker compose run --rm book just lint
           docker compose run --rm book just test
           docker compose run --rm book just verify

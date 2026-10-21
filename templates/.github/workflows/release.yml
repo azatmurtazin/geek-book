@@ -44,12 +44,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # The `book` service drops to the image's `node` user (uid 1000) but the
-      # GitHub workspace is owned by uid 1001, so hand it to 1000 first, then
-      # back to the runner so the steps below can read and write `build/`.
-      - name: Build the book
+      # A tag can point at any commit, including one whose CI run failed, so
+      # the release repeats the structural checks before it builds. The
+      # `book` service drops to the image's `node` user (uid 1000) but the
+      # GitHub workspace is owned by uid 1001, so hand it to 1000 first.
+      - name: Lint the book
         run: |
           sudo chown -R 1000:1000 .
+          docker compose run --rm book just lint
+
+      # Build both editions; then hand the workspace back to the runner so the
+      # packing steps can read and write `build/`.
+      - name: Build the book
+        run: |
           docker compose run --rm book
           sudo chown -R "$(id -u):$(id -g)" .
 

@@ -50,8 +50,9 @@ adapter directory only.
 
 ## The safety net
 
-`just test` runs the unit suite. `just verify` rebuilds both editions and diffs
-six artifacts against `test/baseline/`: the website's checksums, the PDF's
+`just test` runs the unit suite. `just verify` rebuilds both editions from a
+clean output directory and diffs six artifacts against `test/baseline/`: the
+website's checksums, the PDF's
 extracted text and page facts, the linter's output, the resolved config and one
 standalone page. A diff is a bug unless the change was meant to move the output
 — a new chapter or a new version is; a refactor is not. Diagnostic text, exit

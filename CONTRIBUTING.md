@@ -36,7 +36,8 @@ only from the adapter directory that owns them.
 
 The built book is frozen: `test/baseline/` holds the website's checksums, the
 PDF's extracted text and page facts, the linter's output, the resolved config
-and one standalone page. `just verify` rebuilds and diffs them.
+and one standalone page. `just verify` rebuilds from a clean output directory
+and diffs them.
 
 - A diff is a bug unless the change was meant to move the output (a new
   chapter, a new version). Fix the code, not the baseline; refresh the baseline
@@ -63,7 +64,7 @@ and one standalone page. `just verify` rebuilds and diffs them.
 ```sh
 just lint     # tsc, the guide's own lint, and the boundary rules
 just test
-just verify   # rebuilds the guide and diffs the baseline (use Docker for the PDF)
+just verify   # clean rebuild, then diff the baseline (use Docker for the PDF)
 ```
 
 The pre-commit hook runs the same checks and builds both editions.

@@ -22,7 +22,7 @@ three placeholders to replace when you copy a file:
 | `.pre-commit-config.yaml` | File hygiene plus "lint and build both editions" on every commit. |
 | `lychee.toml` | Link-rot config for the external-link check. |
 | `.github/workflows/ci.yml` | Lint, then build both editions in Docker, keeping them as artifacts. |
-| `.github/workflows/release.yml` | On a `v*` tag, attach the PDF and a zip of the site to the Release. |
+| `.github/workflows/release.yml` | On a `v*` tag, lint and build the book, then attach the PDF and a zip of the site to the Release. |
 | `.github/workflows/link-check.yml` | External-link check on pushes, PRs, weekly and on demand. |
 
 ## Using them

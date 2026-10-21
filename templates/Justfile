@@ -51,13 +51,13 @@ _engine:
 
 # --- website -----------------------------------------------------------------
 
-# build/html/ — the book as a static website. Rebuilds only when a source, the
+# build/html/ — the book as a static website. Rebuilds when any book file, the
 # book's config or the engine is newer than the last build.
 html: _engine
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ -f "{{html}}/index.html" ]] && \
-       [[ -z "$(find "{{book}}" -name '*.md' -newer "{{html}}/index.html" -print -quit)" ]] && \
+       [[ -z "$(find "{{book}}" -type f -newer "{{html}}/index.html" -print -quit)" ]] && \
        [[ -z "$(find book.config.json package.json -newer "{{html}}/index.html" -print -quit)" ]] && \
        [[ ! -d "{{engine-src}}" || \
           -z "$(find "{{engine-src}}" -type f -newer "{{html}}/index.html" -print -quit)" ]]; then
@@ -73,14 +73,13 @@ serve: _engine
 # --- pdf ---------------------------------------------------------------------
 
 # build/book.pdf — cover + table of contents + all chapters in one print-ready
-# file, typeset by the engine's LaTeX build (LuaLaTeX). Rebuilds only when a
-# source, the book's config or the engine changes.
+# file, typeset by the engine's LaTeX build (LuaLaTeX). Rebuilds when any book
+# file, the book's config or the engine changes.
 pdf: _engine
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ -f "{{pdf}}" ]] && \
-       [[ -z "$(find "{{book}}" \( -name '*.md' -o -name 'cover.jpg' \) \
-                 -newer "{{pdf}}" -print -quit)" ]] && \
+       [[ -z "$(find "{{book}}" -type f -newer "{{pdf}}" -print -quit)" ]] && \
        [[ -z "$(find book.config.json package.json -newer "{{pdf}}" -print -quit)" ]] && \
        [[ ! -d "{{engine-src}}" || \
           -z "$(find "{{engine-src}}" -type f -newer "{{pdf}}" -print -quit)" ]]; then

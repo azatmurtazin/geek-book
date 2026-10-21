@@ -1470,7 +1470,8 @@ Three workflows come with the templates:
 the PDF as artifacts for a few days.
 • Link check — visit every external link on a push, a pull request, a weekly schedule and on
 demand, so link rot is noticed without failing the ordinary build.
-• Release — on a v* tag, attach the PDF and a zip of the site to the GitHub Release.
+• Release — on a v* tag, lint the book, then attach the PDF and a zip of the site to the GitHub
+Release.
 
 A book repository holds the Markdown and almost nothing else. The renderers, the linter, the
 preview server and the build image all come from the engine, which the book depends on by
@@ -1525,11 +1526,11 @@ mermaid are each allowed from one adapter directory only.
 
 
 The safety net
-just test runs the unit suite. just verify rebuilds both editions and diffs six artifacts
-against test/baseline/ : the website’s checksums, the PDF’s extracted text and page facts, the
-linter’s output, the resolved config and one standalone page. A diff is a bug unless the change was
-meant to move the output — a new chapter or a new version is; a refactor is not. Diagnostic text,
-exit codes, config keys and CLI flags belong to the same contract.
+just test runs the unit suite. just verify rebuilds both editions from a clean output di-
+rectory and diffs six artifacts against test/baseline/ : the website’s checksums, the PDF’s
+extracted text and page facts, the linter’s output, the resolved config and one standalone page. A
+diff is a bug unless the change was meant to move the output — a new chapter or a new version is;
+a refactor is not. Diagnostic text, exit codes, config keys and CLI flags belong to the same contract.
 
 38
 

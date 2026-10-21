@@ -80,11 +80,12 @@ in the working directory; `--config <file>` points it at another config instead.
 This repository builds its own book — the guide above — and that book is also
 the end-to-end fixture. `just lint`, `just html` and `just pdf` exercise the
 linter and both editions on every change, and `just test` covers the domain,
-the use cases and the adapters. `just verify` rebuilds both editions and diffs
-them against `test/baseline/`, so a change that moves the website's bytes, the
-PDF's text and page count, the lint messages or the resolved config fails even
-when the build itself is green. CI runs the tests on Node 20, 22 and 26 and the
-same build and verify steps in the `book` image.
+the use cases and the adapters. `just verify` rebuilds both editions from a
+clean output directory and diffs them against `test/baseline/`, so a change
+that moves the website's bytes, the PDF's text and page count, the lint messages
+or the resolved config fails even when the build itself is green. CI runs the
+tests on Node 20, 22 and 26 and the same build and verify steps in the `book`
+image.
 
 ```sh
 just html      # build build/html/
@@ -93,7 +94,7 @@ just serve     # preview build/html/ on http://localhost:4000
 just lint      # type-check, lint the guide, check the architectural boundaries
 just test      # run the unit suite
 just coverage  # the unit suite with a coverage report
-just verify    # rebuild and diff both editions against test/baseline/
+just verify    # clean rebuild and diff both editions against test/baseline/
 ```
 
 The same build runs in Docker with no host setup beyond Docker itself:
