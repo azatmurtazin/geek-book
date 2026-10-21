@@ -122,6 +122,19 @@ function contentsLine(cfg: BookSettings, babel: string): string {
   return `\\AtBeginDocument{\\renewcommand{\\contentsname}{${texEscape(name)}}}`;
 }
 
+/**
+ * The PDF info dictionary: the book's title, author and description. Empty
+ * fields are left out rather than written as empty strings; `web.description`
+ * already defaults to the tagline, so the Subject carries the one-line
+ * description a book gives its website.
+ */
+function pdfMetadata(cfg: BookSettings): string {
+  const fields = [`pdftitle={${texEscape(cfg.title)}}`];
+  if (cfg.author) fields.push(`pdfauthor={${texEscape(cfg.author)}}`);
+  if (cfg.web.description) fields.push(`pdfsubject={${texEscape(cfg.web.description)}}`);
+  return `\\hypersetup{\n  ${fields.join(",\n  ")}\n}`;
+}
+
 /** Every value preamble.tex names, from the book's config. */
 function placeholders(cfg: BookSettings): Record<string, string> {
   const { geometry, type } = cfg.tex;
@@ -129,6 +142,7 @@ function placeholders(cfg: BookSettings): Record<string, string> {
   return {
     babel,
     contents: contentsLine(cfg, babel),
+    "pdf-meta": pdfMetadata(cfg),
     "text-font": texEscape(cfg.fonts.text),
     // Fontspec takes the bold face as an option, and only when the book names
     // one: empty leaves `\setmainfont{…}` bare.

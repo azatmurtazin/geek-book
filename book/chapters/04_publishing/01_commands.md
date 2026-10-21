@@ -14,7 +14,7 @@ that config file instead.
 | `geek-book serve [dir] [port]` | Preview the built site (default: web output, 4000). |
 | `geek-book lint [family…]` | Check the sources: `summary`, `chapters`, `links`, `config`. |
 | `geek-book md <in> [out]` | Render one Markdown file to a standalone page. |
-| `geek-book pdf-info <pdf>` | Page count, size and friends, via poppler. |
+| `geek-book pdf-info <pdf>` | Page count, size and metadata, via poppler. |
 | `geek-book config` | Print the resolved book configuration. |
 
 ## Choosing the book
@@ -65,4 +65,4 @@ has the details.
 `config` prints everything the engine resolved, defaults and overrides alike. It
 is the fastest way to answer "what did that setting actually do?", and it is what
 a bug report should carry. `pdf-info` is a thin wrapper over poppler's `pdfinfo`,
-for the page count and page size of a finished PDF.
+for the metadata, page count and page size of a finished PDF.

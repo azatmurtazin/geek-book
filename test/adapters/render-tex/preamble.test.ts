@@ -50,6 +50,18 @@ describe("preambleTex — the book's own values", () => {
     expect(tex).toContain("Fixture Book");
   });
 
+  it("sets the PDF info dictionary from the book's metadata", () => {
+    expect(tex).toContain(
+      [
+        "\\hypersetup{",
+        "  pdftitle={Fixture Book},",
+        "  pdfauthor={Test Author},",
+        "  pdfsubject={a book for tests}",
+        "}",
+      ].join("\n"),
+    );
+  });
+
   it("sets the TOC depth and names the contents page", () => {
     expect(tex).toContain("\\setcounter{tocdepth}{0}");
     expect(tex).toContain("\\renewcommand{\\contentsname}{Table of Contents}");
@@ -66,6 +78,31 @@ describe("preambleTex — the book's choices", () => {
     const tex = preambleTex(book);
     expect(tex).toContain("\\documentclass[11pt,a4paper,twoside]{report}");
     expect(tex).toContain("\\setcounter{tocdepth}{2}");
+  });
+
+  it("leaves empty PDF info fields out", () => {
+    const book: BookSettings = {
+      ...cfg,
+      author: "",
+      web: { ...cfg.web, description: "" },
+    };
+    const tex = preambleTex(book);
+    expect(tex).toContain("pdftitle={Fixture Book}");
+    expect(tex).not.toContain("pdfauthor");
+    expect(tex).not.toContain("pdfsubject");
+  });
+
+  it("escapes the PDF info fields", () => {
+    const book: BookSettings = {
+      ...cfg,
+      title: "A & B",
+      author: "C_D",
+      web: { ...cfg.web, description: "100% done" },
+    };
+    const tex = preambleTex(book);
+    expect(tex).toContain("pdftitle={A \\& B}");
+    expect(tex).toContain("pdfauthor={C\\_D}");
+    expect(tex).toContain("pdfsubject={100\\% done}");
   });
 
   it("recolours the palette", () => {

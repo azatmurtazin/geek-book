@@ -11,7 +11,8 @@
 //   web.sha256   sorted sha256 of every file under build/html/ (path-relative;
 //                fetched images/remote/ excluded — see below)
 //   book.txt     pdftotext -layout of build/book.pdf, whitespace-normalised
-//   book.info    Pages: / Page size: lines from pdfinfo
+//   book.info    Title: / Subject: / Author: / Pages: / Page size: lines from
+//                pdfinfo
 //   lint.txt     `geek-book lint` on the guide (stdout+stderr)
 //   config.json  `geek-book config`
 //   md.html      `geek-book md test/fixtures/golden/chapter.md`
@@ -117,13 +118,13 @@ function pdfText() {
   );
 }
 
-/** The Pages: and Page size: lines from pdfinfo, spacing normalised. */
+/** The metadata, page count and page size lines from pdfinfo, normalised. */
 function pdfInfo() {
   if (!fs.existsSync(pdfFile)) fail(`no ${path.relative(root, pdfFile)} — run \`just pdf\` first`);
   const info = tool("pdfinfo", [pdfFile]);
   const lines = info
     .split("\n")
-    .filter((line) => /^(Pages:|Page size:)/.test(line))
+    .filter((line) => /^(Title:|Subject:|Author:|Pages:|Page size:)/.test(line))
     .map((line) => line.replace(/\s+/g, " ").trim());
   return `${lines.join("\n")}\n`;
 }

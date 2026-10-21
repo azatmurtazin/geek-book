@@ -31,6 +31,12 @@ artwork still opens with a cover rather than straight onto the contents.
 it would repeat the same page, so it adds nothing there. `tex.copyright` and
 `tex.isbn` add the imprint page that follows.
 
+## PDF information
+
+The PDF's info dictionary carries the book's `title`, `author` and
+`web.description` (the `tagline` by default) as its Title, Author and Subject.
+`geek-book pdf-info` prints them with the page count and page size.
+
 ## The palette
 
 Nine colours, each `#rrggbb`:

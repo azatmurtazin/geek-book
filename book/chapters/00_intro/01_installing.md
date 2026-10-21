@@ -29,7 +29,7 @@ The PDF build fails early and says what is missing. It wants:
 
 - **LuaLaTeX** — the typesetting engine (MacTeX, TeX Live, or the Docker image).
 - **rsvg-convert** — turns a diagram's SVG into a PDF figure (`librsvg`).
-- **pdfinfo** — poppler; the engine reads a PDF's page count and size back.
+- **pdfinfo** — poppler; the engine reads a PDF's metadata, page count and size back.
 - **The book's fonts** — the families `book.config.json` names have to be
   installed where the PDF is built; the defaults ship with the Docker image.
 

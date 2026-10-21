@@ -102,7 +102,7 @@ The PDF build fails early and says what is missing. It wants:
 
 • LuaLaTeX — the typesetting engine (MacTeX, TeX Live, or the Docker image).
 • rsvg-convert — turns a diagram’s SVG into a PDF figure ( librsvg ).
-• pdfinfo — poppler; the engine reads a PDF’s page count and size back.
+• pdfinfo — poppler; the engine reads a PDF’s metadata, page count and size back.
 • The book's fonts — the families book.config.json names have to be installed where the
 PDF is built; the defaults ship with the Docker image.
 
@@ -1024,8 +1024,23 @@ picture cover; on a typographic cover it would repeat the same page, so it adds 
 tex.copyright and tex.isbn add the imprint page that follows.
 
 
+PDF information
+The PDF’s info dictionary carries the book’s title , author and web.description (the
+tagline by default) as its Title, Author and Subject. geek-book pdf-info prints them with
+the page count and page size.
+
+
 The palette
 Nine colours, each #rrggbb :
+
+
+
+
+27
+
+geek-book The printed page
+
+
 
 Key What it colours
 
@@ -1042,11 +1057,6 @@ calloutForeground the text inside a callout
 The website reads the same nine: they become its --fg , --muted , --rule , code-panel and
 callout custom properties, so a book’s palette reaches both editions. The colours with no printed
 counterpart — the site’s accent, its page and sidebar backgrounds — are not here; see The website.
-
-
-27
-
-geek-book The printed page
 
 
 The type scale
@@ -1293,7 +1303,7 @@ geek-book serve [dir] [port] Preview the built site (default: web output, 4000).
 geek-book lint [family…] Check the sources: summary , chapters , links ,
 config .
 geek-book md <in> [out] Render one Markdown file to a standalone page.
-geek-book pdf-info <pdf> Page count, size and friends, via poppler.
+geek-book pdf-info <pdf> Page count, size and metadata, via poppler.
 geek-book config Print the resolved book configuration.
 
 
@@ -1345,8 +1355,8 @@ a group with no index page — do not fail the build. Linting has the details.
 Inspecting
 config prints everything the engine resolved, defaults and overrides alike. It is the fastest
 way to answer ”what did that setting actually do?”, and it is what a bug report should carry.
-pdf-info is a thin wrapper over poppler’s pdfinfo , for the page count and page size of a fin-
-ished PDF.
+pdf-info is a thin wrapper over poppler’s pdfinfo , for the metadata, page count and page size
+of a finished PDF.
 
 
 
