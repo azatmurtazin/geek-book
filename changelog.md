@@ -2,11 +2,12 @@
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
 tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`,
-`v0.1.7`, `v0.1.8`, `v0.1.9`); each released version follows, most recent first.
-Short commit hashes are given in parentheses for traceability.
+`v0.1.7`, `v0.1.8`, `v0.1.9`, `v0.1.10`); each released version follows, most
+recent first. Short commit hashes are given in parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| 0.1.10              | 2026-10-22 |
 | 0.1.9               | 2026-10-22 |
 | 0.1.8               | 2026-10-22 |
 | 0.1.7               | 2026-10-21 |
@@ -17,6 +18,40 @@ Short commit hashes are given in parentheses for traceability.
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [0.1.10] — 2026-10-22
+
+The local build shortcuts no longer hide changes. `just html` and `just pdf`
+rebuild when the book's config or any file under `book/` changes, not only
+Markdown (and, for the PDF, `cover.jpg`). `just verify`, `just baseline` and
+`just docker-baseline` start from a clean output directory, so a stale build can
+no longer pass as the reference. The template release now repeats the linter
+before it publishes.
+
+### Fixed
+
+- The `html` and `pdf` recipes watch every file under `book/` plus
+  `book.config.json`; changing a chapter image, the palette or a custom
+  stylesheet no longer leaves the old output reported as up to date
+  (`be2940a`).
+- `verify` and the two baseline recipes remove `build/` before building. The
+  timestamp check is now only an editing convenience; verification always sees
+  fresh output (`be2940a`).
+- The book template's `html` and `pdf` recipes apply the same rule, and its
+  release workflow runs `just lint` before the build, so a tag cannot publish
+  a book whose structure or links fail (`be2940a`).
+
+### Changed
+
+- CI and the engine's release workflow run `just verify` directly instead of
+  building first and then re-checking the same output as "up to date". The
+  clean rebuild is the build the artifacts come from (`be2940a`).
+
+### Documentation
+
+- The README, the contributing guide and the engine chapter say that
+  verification starts clean, and the template README records the release lint
+  gate (`be2940a`).
 
 ## [0.1.9] — 2026-10-22
 
