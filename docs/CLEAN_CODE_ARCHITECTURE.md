@@ -1,7 +1,7 @@
-# Clean Code Architecture — the target
+# Clean Code Architecture — the current shape
 
-> This describes the target architecture, and the refactoring that reached it is
-> complete (Phases 0–8 of
+> This describes the architecture the engine follows, and the refactoring that
+> reached it is complete (Phases 0–8 of
 > [`ARCHITECTURE_REFACTORING_PLAN.md`](./ARCHITECTURE_REFACTORING_PLAN.md)). The
 > code now follows this shape; where it deliberately differs from this sketch,
 > the phase's "Outcome (landed)" section records the deviation. The refactor kept
@@ -48,9 +48,13 @@ enforced by tooling it is marked **[auto]** (see §13).
    (`adapters`). The domain declares no ports — it needs nothing.
 5. **Ports and adapters are explicit at the edge.** `fs`, `http`, `child_process`,
    `marked`, `jsdom`, `mermaid` appear in `adapters`/`cli` only. **[auto]**
-6. **Represent boundaries in the type system.** Paths that mean different things
-   (`BookPath`, `OutputPath`, `SourcePath`) are distinct types, so the compiler
-   catches the mix-ups the current `string`-everywhere code cannot.
+6. **Represent boundaries in the type system.** A heading id is branded
+   (`Anchor`), so it cannot be passed where a path or ordinary prose is wanted.
+   *Deviation:* the branded path types this document sketches (`BookPath`,
+   `OutputPath`, `SourcePath`) were **not** adopted — paths remain plain
+   strings. Phase 2 allowed splitting that work out, and it was never worth a
+   change at every call site for no runtime difference; the unused types were
+   removed in 0.1.5 rather than left as a promise nothing enforced.
 7. **Failures are values.** A use case returns a `Result` with `Diagnostic`s; it
    does not `console.log`, does not write to `stderr`, and does not choose an
    exit code. The CLI maps results to exit codes and renders diagnostics.

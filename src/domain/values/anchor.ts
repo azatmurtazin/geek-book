@@ -4,7 +4,9 @@
 // same way, so a link names the same heading on the site, on the page, and in a
 // check. Pure: no imports outside `domain/`.
 
-import type { Anchor } from "./paths.js";
+/** A heading id, as both editions emit it. A string at runtime; the brand keeps
+ *  a slug from being passed where an ordinary string is expected by accident. */
+export type Anchor = string & { readonly __brand: "Anchor" };
 
 /** Approximate the header identifier algorithm the renderers emit, close enough to check. */
 export function slugify(text: string): Anchor {
