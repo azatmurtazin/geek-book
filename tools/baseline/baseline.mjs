@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/baseline/baseline.mjs — the reference baseline for the rewrite.
+// tools/baseline/baseline.mjs — the reference baseline for the guide's output.
 //
 //   node tools/baseline/baseline.mjs capture <dir>     write the artifacts
 //   node tools/baseline/baseline.mjs compare <ref> <dir>  diff them

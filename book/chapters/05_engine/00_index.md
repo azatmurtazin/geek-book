@@ -27,8 +27,8 @@ not two pipelines that must be kept in step.
 
 Anything that touches the outside world sits behind a port: the filesystem, the
 HTTP client, the process runner, the PDF toolchain, the template store, the
-config source, the Markdown parser, the diagram renderer, the image store and
-measurer, the reporters, and the preview server. `application/` defines the
+config source, the Markdown parser, the diagram renderer, the image store, the
+reporters, and the preview server. `application/` defines the
 interfaces, `adapters/` implements them, and `cli/context.ts` chooses the real
 ones while `cli/main.ts` wires them into commands.
 

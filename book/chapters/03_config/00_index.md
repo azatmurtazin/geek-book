@@ -56,6 +56,12 @@ checks the file against it — the same schema, so the two can never disagree.
 | `lint` | 100 / 240 / 80 | Line budgets the chapter check enforces. |
 | `markdown.smartTypography` | off | Curly quotes and en/em dashes in the prose. See [Formatting](../01_writing/04_formatting.md). |
 | `markdown.breaks` | off | A single newline in a paragraph becomes a line break on the website. See [Formatting](../01_writing/04_formatting.md). |
+| `images.timeout` | 30 | Seconds one remote-image fetch may take. See [Remote images](../02_media/02_remote.md). |
+| `images.maxBytes` | 20 MiB | The largest remote image the build accepts, in bytes. See [Remote images](../02_media/02_remote.md). |
+| `images.types` | the built-in map | Accepted image content types, each mapped to the extension it is saved under. |
+| `diagrams.theme` | auto | A Mermaid theme, or `auto` for the book's own palette. See [Diagrams](../02_media/03_diagrams.md). |
+| `diagrams.fontSize` | 13 | The diagram type size, in pixels. |
+| `serve.port` | 4000 | The port `geek-book serve` listens on by default. |
 | `fonts` | Literata, JetBrains Mono | See [Fonts](01_fonts.md). |
 | `tex` | the engine's page | See [The printed page](02_print.md). |
 | `web` | none | The site's metadata, stylesheet and `<head>` HTML. See [The website](03_web.md). |

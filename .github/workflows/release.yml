@@ -1,7 +1,8 @@
 name: Release
 
-# On a version tag (v*), build both editions of the guide with the engine's own
-# Docker image and publish them as assets on the GitHub Release: the print PDF
+# On a version tag (v*), lint and test the tree, build both editions of the
+# guide with the engine's own Docker image and publish them as assets on the
+# GitHub Release: the print PDF
 # (geek-book-<version>.pdf), the website packed as a zip
 # (geek-book-<version>-web.zip), and the
 # engine package itself (geek-book-<version>.tgz, from `npm pack`), so a book
@@ -68,10 +69,12 @@ jobs:
       # `just verify` runs while the workspace is still 1000-owned: it captures
       # into build/, and a published tag must be the verified tree — a stale
       # baseline must fail here, before anything is uploaded.
-      - name: Build and verify the guide
+      - name: Build, lint, test and verify the guide
         run: |
           sudo chown -R 1000:1000 .
           docker compose run --rm book
+          docker compose run --rm book just lint
+          docker compose run --rm book just test
           docker compose run --rm book just verify
           sudo chown -R "$(id -u):$(id -g)" .
 
