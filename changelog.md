@@ -2,11 +2,12 @@
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
 tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`,
-`v0.1.7`); each released version follows, most recent first. Short commit
-hashes are given in parentheses for traceability.
+`v0.1.7`, `v0.1.8`); each released version follows, most recent first. Short
+commit hashes are given in parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| 0.1.8               | 2026-10-22 |
 | 0.1.7               | 2026-10-21 |
 | 0.1.6               | 2026-10-21 |
 | 0.1.5               | 2026-10-21 |
@@ -15,6 +16,25 @@ hashes are given in parentheses for traceability.
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [0.1.8] — 2026-10-22
+
+A book without a cover image no longer opens straight onto the contents: the
+printed edition sets its typographic page — title, tagline and author — as the
+cover. A book with a cover image is unchanged, and `tex.titlePage` still adds a
+title page after that picture.
+
+### Added
+
+- The printed edition falls back to a typographic cover when `cover` names no
+  file. The fallback reuses the title page, so a book without artwork gets the
+  same type as a book that asked for `tex.titlePage`; the option does not add a
+  second copy of the page when there is no picture cover (`b80daf5`).
+
+### Documentation
+
+- The writing and print chapters, the schema and the settings comments describe
+  the fallback and the narrowed meaning of `tex.titlePage` (`b80daf5`).
 
 ## [0.1.7] — 2026-10-21
 
