@@ -35,7 +35,7 @@ geek-book is a build engine for books. You write the prose in Markdown, keep it 
 directory, and the engine produces two editions from the same sources: a static website you can
 serve from any file host, and a print-ready PDF you can send to a printer or a reader.
 There is no database, no templating language and no separate build tool. A book is a directory of
-text files, and the engine is the program that reads them. This guide documents version 0.1.7.
+text files, and the engine is the program that reads them. This guide documents version 0.1.8.
 
 
 The two editions
@@ -280,9 +280,9 @@ are the output.web and output.pdf keys.
 Assets
 
 book/images/ holds the pictures, including the cover. The cover is book/images/cover.jpg
-by default and may be absent — a book with no cover simply has no cover page in the PDF. It
-belongs to the printed edition alone — the website never uses it — and it must be a png or jpeg, the
-formats LaTeX can place.
+by default and may be absent — a book with no picture gets a typographic cover from its title,
+tagline and author. It belongs to the printed edition alone — the website never uses it — and it
+must be a png or jpeg, the formats LaTeX can place.
 Nothing else in the repository is read as a book. The engine’s own src/ and docker/ directories,
 and the build output under build/ , are the engine’s furniture, not the book’s.
 
@@ -1015,6 +1015,15 @@ block the print build measures pictures against is derived from these, so a book
 page changes what fits with it and says nothing else.
 
 
+Cover and front matter
+
+cover names the cover image (default book/images/cover.jpg ). With no image, the ti-
+tle, tagline and author are set as a typographic cover, so a book without artwork still opens
+with a cover rather than straight onto the contents. tex.titlePage adds a title page after a
+picture cover; on a typographic cover it would repeat the same page, so it adds nothing there.
+tex.copyright and tex.isbn add the imprint page that follows.
+
+
 The palette
 Nine colours, each #rrggbb :
 
@@ -1035,6 +1044,11 @@ callout custom properties, so a book’s palette reaches both editions. The colo
 counterpart — the site’s accent, its page and sidebar backgrounds — are not here; see The website.
 
 
+27
+
+geek-book The printed page
+
+
 The type scale
 
 JSON
@@ -1044,11 +1058,6 @@ JSON
 "type": { "base": 11, "chapter": 20, "section": 15, "subsection": 12.5 }
 }
 }
-
-
-27
-
-geek-book The printed page
 
 
 base is the document class size — 10, 11 or 12 — and the rest are heading sizes in points. A head-
