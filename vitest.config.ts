@@ -11,9 +11,10 @@ export default defineConfig({
       // a PARSE_ERROR trying to read those as JavaScript.
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.d.ts'],
-      // Floors, not targets: the suite sits at ~69% lines today. They keep the
-      // number from drifting down unnoticed; raise them as the gaps close.
-      thresholds: { statements: 65, branches: 55, functions: 70, lines: 65 },
+      // Floors, not targets: the suite sits at ~81% lines today (the CLI commands
+      // are spawned, so they read as unimported). A margin below the current
+      // numbers keeps the report honest without making it brittle.
+      thresholds: { statements: 79, branches: 69, functions: 87, lines: 79 },
     },
   },
 });
