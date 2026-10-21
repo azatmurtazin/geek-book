@@ -33,11 +33,21 @@ default: list
 list:
   @just --list
 
+# Make sure the host install is complete. A fresh Docker volume starts with
+# production dependencies only (the image's `npm ci --omit=dev`); the recipes
+# that type-check or test need the dev tools too, so check for one of them
+# rather than merely for the directory.
+[private]
+deps:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [[ -x node_modules/.bin/tsc && -x node_modules/.bin/tsx ]] || "{{npm}}" install
+
 # --- website -----------------------------------------------------------------
 
 # build/html/ — the guide as a static website. Rebuilds when any book file,
 # the book's config or the engine is newer than the last build.
-html:
+html: deps
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ -f "{{html}}/index.html" ]] && \
@@ -45,7 +55,6 @@ html:
                  -type f -newer "{{html}}/index.html" -print -quit)" ]]; then
         echo "html -> {{html}}/ (up to date)"
     else
-        [[ -d node_modules ]] || "{{npm}}" install
         {{engine}} web "{{html}}"
     fi
 
@@ -58,10 +67,9 @@ serve:
 # build/book.pdf — the whole book in one print-ready file, typeset with
 # LuaLaTeX. Rebuilds when any book file, the book's config or the engine is
 # newer than the last build.
-pdf:
+pdf: deps
     #!/usr/bin/env bash
     set -euo pipefail
-    [[ -d node_modules ]] || "{{npm}}" install
     if [[ -f "{{pdf}}" ]] && \
        [[ -z "$(find "{{book}}" book.config.json package.json src bin \
                  -type f -newer "{{pdf}}" -print -quit)" ]]; then
@@ -86,7 +94,6 @@ docker-book:
 baseline:
     #!/usr/bin/env bash
     set -euo pipefail
-    [[ -d node_modules ]] || "{{npm}}" install
     just clean
     just html
     just pdf
@@ -104,7 +111,6 @@ docker-baseline:
 verify:
     #!/usr/bin/env bash
     set -euo pipefail
-    [[ -d node_modules ]] || "{{npm}}" install
     just clean
     just html
     just pdf
@@ -114,37 +120,33 @@ verify:
     "{{node}}" tools/baseline/baseline.mjs compare test/baseline "$scratch"
 
 # report the architectural boundary rules. They are errors: a violation fails.
-boundaries:
+boundaries: deps
     #!/usr/bin/env bash
     set -euo pipefail
-    [[ -d node_modules ]] || "{{npm}}" install
     npx --no-install depcruise src
 
 # --- checks -----------------------------------------------------------------
 
 # type-check the engine, lint the guide, then check the architectural
 # boundaries (the rule set in .dependency-cruiser.cjs).
-lint:
+lint: deps
     #!/usr/bin/env bash
     set -euo pipefail
-    [[ -d node_modules ]] || "{{npm}}" install
     "{{npm}}" run lint
     just boundaries
 
 # run the unit tests: the domain, the use cases, the adapters and the
 # cross-pipeline parity suite.
-test:
+test: deps
     #!/usr/bin/env bash
     set -euo pipefail
-    [[ -d node_modules ]] || "{{npm}}" install
     "{{npm}}" run test
 
 # the same suite with a coverage report (coverage/index.html) and the floors
 # from vitest.config.ts
-coverage:
+coverage: deps
     #!/usr/bin/env bash
     set -euo pipefail
-    [[ -d node_modules ]] || "{{npm}}" install
     "{{npm}}" run test:coverage
 
 # --- releasing --------------------------------------------------------------
