@@ -1,12 +1,13 @@
 # Changelog
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
-tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`);
-each released version follows, most recent first. Short commit hashes are
-given in parentheses for traceability.
+tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`,
+`v0.1.7`); each released version follows, most recent first. Short commit
+hashes are given in parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| 0.1.7               | 2026-10-21 |
 | 0.1.6               | 2026-10-21 |
 | 0.1.5               | 2026-10-21 |
 | 0.1.4               | 2026-10-20 |
@@ -14,6 +15,33 @@ given in parentheses for traceability.
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [0.1.7] — 2026-10-21
+
+The safety net now covers the release itself: a tag cannot publish before lint
+and the unit suite pass in the same job. The refactor had left one port with no
+consumer, and a new test rejects any source module the CLI cannot reach. No
+book builds differently, except that the guide's configuration chapter now
+documents the `images`, `diagrams` and `serve` keys.
+
+### Changed
+
+- The release workflow runs `just lint` and `just test` in the book image before
+  `just verify`, so publishing no longer races the separate CI run (`cd81bc4`).
+- Removed the unused `ImageMeasurer` port and `HeaderImageMeasurer` adapter; the
+  printed edition reads `imagePixels` directly. A reachability test walks
+  relative imports from `src/cli/main.ts` and fails on any source module nothing
+  reaches (`cd81bc4`).
+- The `image-size` adapter is covered from 19% to 94% (png fixtures, a jpeg that
+  walks junk, fill and standalone markers, truncation and a bad segment length),
+  and the standalone renderer's `md/render` failure path is tested. The floors
+  rise to 82/72/90/82 (`cd81bc4`).
+
+### Documentation
+
+- The configuration chapter lists `images.timeout`, `images.maxBytes`,
+  `images.types`, `diagrams.theme`, `diagrams.fontSize` and `serve.port`
+  (`cd81bc4`).
 
 ## [0.1.6] — 2026-10-21
 
