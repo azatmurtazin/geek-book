@@ -1,17 +1,38 @@
 # Changelog
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
-tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`); the section at the top
-collects everything released as **0.1.4**. Short commit hashes are given in
-parentheses for traceability.
+tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`); the top section is the
+unreleased work on `main`, then each released version. Short commit hashes are
+given in parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| Unreleased          | —          |
 | 0.1.4               | 2026-10-20 |
 | 0.1.3               | 2026-10-17 |
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [Unreleased]
+
+### Under the hood
+
+- CI runs the unit suite for the first time — on Node 20, 22 and 26, so the
+  `engines` promise is exercised — and the book job waits for it (`81391ab`).
+- The release workflow runs `just verify` before publishing, so a stale
+  baseline can no longer ship, and it accepts `workflow_dispatch` so an
+  existing tag can be re-published without moving it (`74e5936`).
+- The unit suite fails early when `test/baseline/config.json` lags
+  `package.json`, naming the `just docker-baseline` fix (`9debb30`).
+- `just coverage` and `npm run test:coverage` produce a report again (the
+  provider was trying to read the stylesheets as JavaScript) and enforce
+  floors (`c4a253d`).
+- Direct tests for the linter's rules and file handling, the printed front
+  matter, and the CLI's exit codes and stream split; line coverage under
+  `src/` rises from 69% to 81% (`02cd72b`, `3f0105f`).
+- The unused branded path types (`BookPath`, `OutputPath`, `SourcePath`) are
+  removed; `Anchor` stays (`2ed6a70`).
 
 ## [0.1.4] — 2026-10-20
 
