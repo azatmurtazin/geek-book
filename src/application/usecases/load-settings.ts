@@ -17,6 +17,7 @@ import type { RawConfig } from "../ports/config-source.js";
 import {
   asBaseUrl,
   asBool,
+  asBytes,
   asContentTypes,
   asMillimetres,
   asOptionalString,
@@ -126,6 +127,7 @@ export function loadSettings(rawConfig: RawConfig): LoadedSettings {
     images: {
       timeout: asSeconds(images.timeout, DEFAULTS.images.timeout),
       types: asContentTypes(images.types),
+      maxBytes: asBytes(images.maxBytes, DEFAULTS.images.maxBytes),
     },
     lint: readLint(lint),
     markdown: readMarkdown(markdown),

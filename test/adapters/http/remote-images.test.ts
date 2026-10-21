@@ -7,7 +7,7 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { NoRemoteImages, RemoteImages } from "../../../src/adapters/http/remote-images.js";
-import type { HttpClient, HttpResponse } from "../../../src/application/ports/http-client.js";
+import type { HttpClient, HttpGetOptions, HttpResponse } from "../../../src/application/ports/http-client.js";
 import type { MdNode } from "../../../src/domain/model/markdown.js";
 import { MemoryFileSystem } from "../../helpers/memory-fs.js";
 
@@ -15,12 +15,14 @@ import { MemoryFileSystem } from "../../helpers/memory-fs.js";
 class FakeHttp implements HttpClient {
   readonly asked: string[] = [];
   readonly timeouts: number[] = [];
+  readonly limits: (number | undefined)[] = [];
 
   constructor(private readonly responses: Map<string, HttpResponse | Error>) {}
 
-  async get(url: string, options: { timeoutMs: number }): Promise<HttpResponse> {
+  async get(url: string, options: HttpGetOptions): Promise<HttpResponse> {
     this.asked.push(url);
     this.timeouts.push(options.timeoutMs);
+    this.limits.push(options.maxBytes);
     const response = this.responses.get(url);
     if (response === undefined) throw new Error("no such host");
     if (response instanceof Error) throw response;
@@ -103,6 +105,20 @@ describe("RemoteImages", () => {
     await store.collect(picture(url));
 
     expect(http.timeouts).toEqual([5000]);
+  });
+
+  it("passes the configured byte limit, and defaults to 20 MiB", async () => {
+    const url = "https://example.test/bird.png";
+    const http = new FakeHttp(new Map([[url, image("image/png")]]));
+    const store = new RemoteImages("/img", http, new MemoryFileSystem(), { maxBytes: 4096 });
+    await store.collect(picture(url));
+
+    const fallback = new FakeHttp(new Map([[url, image("image/png")]]));
+    const unbounded = new RemoteImages("/img", fallback, new MemoryFileSystem());
+    await unbounded.collect(picture(url));
+
+    expect(http.limits).toEqual([4096]);
+    expect(fallback.limits).toEqual([20 * 1024 * 1024]);
   });
 
   it("refuses a format the printed edition cannot embed", async () => {

@@ -6,9 +6,20 @@
 // (`adapters/http/node-http-client.ts`) wraps the global `fetch`; a test hands
 // in a canned response.
 
+/** What a caller asks of one request: a time budget and an optional size cap. */
+export interface HttpGetOptions {
+  /** Give up after this many milliseconds. */
+  readonly timeoutMs: number;
+  /** Refuse a body larger than this many bytes; no limit when absent. */
+  readonly maxBytes?: number;
+}
+
 export interface HttpClient {
-  /** GET `url`, giving up after `options.timeoutMs`. Rejects on a network error. */
-  get(url: string, options: { timeoutMs: number }): Promise<HttpResponse>;
+  /**
+   * GET `url`, giving up after `options.timeoutMs` and refusing a body larger
+   * than `options.maxBytes`. Rejects on a network error or a limit.
+   */
+  get(url: string, options: HttpGetOptions): Promise<HttpResponse>;
 }
 
 export interface HttpResponse {

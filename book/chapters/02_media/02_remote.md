@@ -23,3 +23,13 @@ A fetch that fails, or that answers with something other than an image, stops
 the build with the URL. The printed edition can embed png and jpeg only; any
 other format is refused with a message, since LaTeX cannot place it. The website
 alone would accept more, but a book is built for both editions.
+
+A fetch may take `images.timeout` seconds (30 by default) and carry at most
+`images.maxBytes` bytes (20 MiB). A slower or larger answer stops the build with
+the URL instead of holding the build open or in memory:
+
+```json
+{
+  "images": { "timeout": 10, "maxBytes": 5242880 }
+}
+```

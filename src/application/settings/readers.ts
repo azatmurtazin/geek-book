@@ -111,6 +111,11 @@ export function asSeconds(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+/** A size in bytes: a positive whole number, else the default. */
+export function asBytes(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : fallback;
+}
+
 /** A TCP port: a whole number in range, else the default. */
 export function asPort(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 65535

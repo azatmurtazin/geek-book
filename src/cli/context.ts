@@ -91,6 +91,7 @@ export function composeContext(
       new RemoteImages(dir, new NodeHttpClient(), fs, {
         print,
         timeout: settings.images.timeout,
+        maxBytes: settings.images.maxBytes,
         types: settings.images.types,
       }),
   };

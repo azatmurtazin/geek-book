@@ -9,6 +9,10 @@ import type { PaperName, TypeConfig } from "../settings.js";
 import { DEFAULT_COLORS } from "../../domain/values/palette.js";
 import { DEFAULT_FONTS } from "../../domain/values/fonts.js";
 
+/** The largest remote image a build accepts, in bytes (20 MiB). Big enough for
+ *  a full-page photograph, small enough that a wrong URL cannot exhaust memory. */
+export const DEFAULT_IMAGE_MAX_BYTES = 20 * 1024 * 1024;
+
 export const DEFAULTS = {
   language: "en",
   bookDir: "book",
@@ -16,7 +20,7 @@ export const DEFAULTS = {
   pdfOutput: "build/book.pdf",
   docs: ["README.md", "CONTRIBUTING.md"],
   outputClean: true,
-  images: { timeout: 30, types: {} },
+  images: { timeout: 30, types: {}, maxBytes: DEFAULT_IMAGE_MAX_BYTES },
   serve: { port: 4000 },
   lint: { proseWidth: 100, tableWidth: 240, diagramWidth: 80 },
   markdown: { smartTypography: false, breaks: false },

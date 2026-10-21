@@ -23,6 +23,7 @@ import type { MdInline, MdNode } from "../../domain/model/markdown.js";
 import type { FileSystem } from "../../application/ports/file-system.js";
 import type { HttpClient } from "../../application/ports/http-client.js";
 import type { ImageStore, StoredImage } from "../../application/ports/image-store.js";
+import { DEFAULT_IMAGE_MAX_BYTES } from "../../application/settings/defaults.js";
 
 /** Extension for each content type a server may label an image with. */
 const CONTENT_TYPES: Record<string, string> = {
@@ -53,6 +54,8 @@ export interface RemoteImageOptions {
   print?: boolean;
   /** Seconds one fetch may take before it fails (default 30). */
   timeout?: number;
+  /** The largest response a fetch accepts, in bytes (default 20 MiB). */
+  maxBytes?: number;
   /** Accepted content type → the extension the file is saved as (default: the
    * built-in map). */
   types?: Record<string, string>;
@@ -70,6 +73,7 @@ export class RemoteImages implements ImageStore {
   private readonly fs: FileSystem;
   private readonly print: boolean;
   private readonly timeoutMs: number;
+  private readonly maxBytes: number;
   private readonly types: Record<string, string>;
   private readonly extensions: Set<string>;
   private readonly files = new Map<string, string>();
@@ -81,6 +85,7 @@ export class RemoteImages implements ImageStore {
     this.fs = fs;
     this.print = options.print === true;
     this.timeoutMs = (options.timeout ?? 0) > 0 ? (options.timeout as number) * 1000 : DEFAULT_TIMEOUT_S * 1000;
+    this.maxBytes = options.maxBytes ?? DEFAULT_IMAGE_MAX_BYTES;
     // An empty map is the engine's own: a book only names types to narrow or
     // extend what a fetch accepts.
     this.types = options.types && Object.keys(options.types).length > 0 ? options.types : CONTENT_TYPES;
@@ -124,7 +129,7 @@ export class RemoteImages implements ImageStore {
   private async fetch(url: string): Promise<void> {
     let response;
     try {
-      response = await this.http.get(url, { timeoutMs: this.timeoutMs });
+      response = await this.http.get(url, { timeoutMs: this.timeoutMs, maxBytes: this.maxBytes });
     } catch (error) {
       throw new Error(`cannot fetch image ${url}: ${(error as Error).message}`);
     }

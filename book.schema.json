@@ -203,6 +203,11 @@
           "type": "number",
           "exclusiveMinimum": 0
         },
+        "maxBytes": {
+          "description": "The largest remote image the build will accept, in bytes (default: 20971520, 20 MiB).",
+          "type": "integer",
+          "minimum": 1
+        },
         "types": {
           "description": "Accepted content types, each mapped to the file extension it is saved as. Empty keeps the engine's built-in map; a type left out is refused.",
           "type": "object",

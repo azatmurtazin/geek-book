@@ -203,6 +203,9 @@ export interface ImagesConfig {
   /** Accepted content types, each mapped to the extension the file is saved
    *  as. Empty keeps the engine's built-in map. */
   types: Record<string, string>;
+  /** The largest response a fetch accepts, in bytes (default 20 MiB), so a
+   *  wrong URL or an endless stream cannot exhaust the build's memory. */
+  maxBytes: number;
 }
 
 /** The preview server's defaults. */

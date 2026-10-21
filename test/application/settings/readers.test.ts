@@ -37,6 +37,28 @@ describe("load — diagrams", () => {
   });
 });
 
+describe("load — images", () => {
+  it("defaults to a 30-second fetch capped at 20 MiB", () => {
+    expect(loadFrom(book({})).images).toEqual({
+      timeout: 30,
+      types: {},
+      maxBytes: 20 * 1024 * 1024,
+    });
+  });
+
+  it("reads the timeout, the accepted types and the byte limit", () => {
+    const cfg = loadFrom(
+      book({ images: { timeout: 5, types: { "image/png": ".png" }, maxBytes: 4096 } }),
+    );
+    expect(cfg.images).toEqual({ timeout: 5, types: { "image/png": ".png" }, maxBytes: 4096 });
+  });
+
+  it("falls back on a fractional or non-positive byte limit", () => {
+    expect(loadFrom(book({ images: { maxBytes: 1024.5 } })).images.maxBytes).toBe(20 * 1024 * 1024);
+    expect(loadFrom(book({ images: { maxBytes: 0 } })).images.maxBytes).toBe(20 * 1024 * 1024);
+  });
+});
+
 describe("load — markdown", () => {
   it("defaults both switches off", () => {
     expect(loadFrom(book({})).markdown).toEqual({ smartTypography: false, breaks: false });
