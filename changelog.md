@@ -1,13 +1,13 @@
 # Changelog
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
-tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`); the top
-section is the unreleased work on `main`, then each released version. Short
-commit hashes are given in parentheses for traceability.
+tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`);
+each released version follows, most recent first. Short commit hashes are
+given in parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
-| Unreleased          | —          |
+| 0.1.6               | 2026-10-21 |
 | 0.1.5               | 2026-10-21 |
 | 0.1.4               | 2026-10-20 |
 | 0.1.3               | 2026-10-17 |
@@ -15,7 +15,34 @@ commit hashes are given in parentheses for traceability.
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
 
-## [Unreleased]
+## [0.1.6] — 2026-10-21
+
+This release hardens the two places where the engine reads something it does
+not control: the request path a preview server receives and the response a
+remote image host sends. Both now fail closed, and both have tests that drive a
+real socket. A valid book builds as before; the baseline moves for the new
+config key, the paragraph documenting it, and the version string.
+
+### Added
+
+- `images.maxBytes` bounds one remote-image response, in bytes (20 MiB by
+  default). `images.timeout` already bounded time; together they keep a wrong
+  URL or an endless stream from holding the build open or exhausting its
+  memory. The fetch stops with the URL when an answer is too large
+  (`1beb047`).
+- `just release X.Y.Z` checks a clean `main`, bumps `package.json` and the
+  lock, refreshes and verifies the baseline in the pinned book image, then
+  commits, tags and pushes. The changelog section stays the one human step, and
+  the recipe refuses to run without it (`cfbc2ec`).
+
+### Fixed
+
+- `geek-book serve` refuses a request that climbs out of the site root with an
+  encoded `..`. The old check compared path prefixes, so a sibling directory
+  whose name began with the root's was reachable (`1beb047`).
+- A malformed request path such as `/%zz` answers 400 instead of throwing out
+  of the request listener and taking the preview down; a directory without an
+  `index.html` answers 404 instead of failing mid-stream (`1beb047`).
 
 ### Documentation
 
