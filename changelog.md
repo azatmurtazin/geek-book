@@ -1,18 +1,29 @@
 # Changelog
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
-tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`); the section
-at the top collects everything released as **0.1.5**. Short commit hashes are
-given in parentheses for traceability.
+tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`); the top
+section is the unreleased work on `main`, then each released version. Short
+commit hashes are given in parentheses for traceability.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| Unreleased          | —          |
 | 0.1.5               | 2026-10-21 |
 | 0.1.4               | 2026-10-20 |
 | 0.1.3               | 2026-10-17 |
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [Unreleased]
+
+### Documentation
+
+- The architecture notes now live in the guide: "Inside the engine" describes
+  the four layers, the dependency rule, the ports, the safety net and where new
+  code goes (`fdafe78`). The four files under `docs/` — the current and target
+  architecture, the refactoring plan and its checklist — are removed;
+  `CONTRIBUTING.md` keeps the contributor-facing summary.
 
 ## [0.1.5] — 2026-10-21
 
