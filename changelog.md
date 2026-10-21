@@ -2,12 +2,13 @@
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
 tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`,
-`v0.1.7`, `v0.1.8`, `v0.1.9`, `v0.1.10`); each released version follows, most
+`v0.1.7`, `v0.1.8`, `v0.1.9`, `v0.1.11`); each released version follows, most
 recent first. Short commit hashes are given in parentheses for traceability.
+`v0.1.10` was tagged but withdrawn before publication; see 0.1.11.
 
 | Version             | Date       |
 | ------------------- | ---------- |
-| 0.1.10              | 2026-10-22 |
+| 0.1.11              | 2026-10-22 |
 | 0.1.9               | 2026-10-22 |
 | 0.1.8               | 2026-10-22 |
 | 0.1.7               | 2026-10-21 |
@@ -19,7 +20,13 @@ recent first. Short commit hashes are given in parentheses for traceability.
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
 
-## [0.1.10] — 2026-10-22
+## [0.1.11] — 2026-10-22
+
+The clean-build work first cut as `v0.1.10` is published here. That tag was
+withdrawn before publication: on a fresh Docker volume the image's production
+dependencies were present but the dev tools were not, so the release stopped at
+`just lint` before it could build. The dependency guard below fixes the first
+run, and the tag is removed; use 0.1.11.
 
 The local build shortcuts no longer hide changes. `just html` and `just pdf`
 rebuild when the book's config or any file under `book/` changes, not only
@@ -30,6 +37,10 @@ before it publishes.
 
 ### Fixed
 
+- A private `deps` recipe checks for the type-checker and the TypeScript
+  runner, not merely for `node_modules/`, and installs the full dependency set
+  when either is missing. A fresh CI or release Docker volume now bootstraps
+  itself before `lint`, `test`, `html`, `pdf` or `boundaries` (`cfccfb9`).
 - The `html` and `pdf` recipes watch every file under `book/` plus
   `book.config.json`; changing a chapter image, the palette or a custom
   stylesheet no longer leaves the old output reported as up to date
