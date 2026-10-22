@@ -2,12 +2,13 @@
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
 tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`,
-`v0.1.7`, `v0.1.8`, `v0.1.9`, `v0.1.11`); each released version follows, most
-recent first. Short commit hashes are given in parentheses for traceability.
-`v0.1.10` was tagged but withdrawn before publication; see 0.1.11.
+`v0.1.7`, `v0.1.8`, `v0.1.9`, `v0.1.11`, `v0.1.12`); each released version
+follows, most recent first. Short commit hashes are given in parentheses for
+traceability. `v0.1.10` was tagged but withdrawn before publication; see 0.1.11.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| 0.1.12              | 2026-10-22 |
 | 0.1.11              | 2026-10-22 |
 | 0.1.9               | 2026-10-22 |
 | 0.1.8               | 2026-10-22 |
@@ -19,6 +20,39 @@ recent first. Short commit hashes are given in parentheses for traceability.
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [0.1.12] — 2026-10-22
+
+`geek-book serve` now treats a socket that will not bind as a normal failure.
+An invalid port and a port already in use each print one `serve:` line and exit
+1 instead of a Node stack trace, and `serve 0` reports the port the kernel
+actually bound. The preview also refuses a symlink that points outside the
+built site and answers only `GET` and `HEAD`.
+
+### Fixed
+
+- The `SiteServer` port's `listen` is asynchronous and returns a `Result`; the
+  Node adapter turns an invalid port, `EADDRINUSE` and other bind errors into
+  diagnostics. The use case passes them through, so the CLI never sees an
+  exception (`656759f`).
+- `serve 0` now logs and returns the bound URL and port, not
+  `http://localhost:0` (`656759f`).
+- A request that reaches outside the site through a symlink is refused with
+  403, after both the root and the target are resolved to real paths
+  (`656759f`).
+- The preview answers `405 Method Not Allowed` (with `Allow: GET, HEAD`) to
+  other methods, and `HEAD` no longer opens the file stream (`656759f`).
+
+### Tests
+
+- Real-socket tests cover an invalid port, an occupied port, a symlink escape,
+  `HEAD` and a rejected `POST`; the CLI test checks the single-line diagnostic
+  and the absence of a stack trace (`656759f`).
+
+### Documentation
+
+- The commands chapter describes the one-line failure, port `0`, the allowed
+  methods and the symlink refusal (`656759f`).
 
 ## [0.1.11] — 2026-10-22
 
