@@ -4,6 +4,7 @@
 #   just pdf          build/book.pdf
 #   just docker-book  build/html/ + build/book.pdf inside Docker
 #   just serve        preview build/html/ on http://localhost:4000
+#   just serve --watch  the same, rebuilding when a book file is saved
 #   just lint         type-check the engine, lint the guide, check boundaries
 #   just test         run the unit tests
 #   just boundaries   check the architectural boundary rules
@@ -58,9 +59,9 @@ html: deps
         {{engine}} web "{{html}}"
     fi
 
-# Static preview of the built site (no auto-rebuild). Rebuild first with `just`.
-serve:
-    {{engine}} serve "{{html}}" 4000
+# Preview of the built site. With --watch, build first and rebuild on saves.
+serve *args:
+    {{engine}} serve "{{html}}" 4000 {{args}}
 
 # --- pdf ---------------------------------------------------------------------
 

@@ -62,7 +62,7 @@ to your book, and `npx geek-book config` prints what the engine resolved. See
 | ------------------------- | ---------------------------------------------------------- |
 | `geek-book web [dir]`     | Build the website.                                         |
 | `geek-book pdf [file]`    | Build the PDF (needs LuaLaTeX, `rsvg-convert`, `pdfinfo`). |
-| `geek-book serve [dir]`   | Preview the built website.                                 |
+| `geek-book serve [dir] [--watch]` | Preview the built website (`--watch` rebuilds on saves). |
 | `geek-book lint [family]` | Check the tree, the chapters and the links.                |
 | `geek-book md <in> <out>` | Render one Markdown file to a standalone page.             |
 | `geek-book config`        | Show the book the engine resolved.                         |
@@ -91,6 +91,7 @@ image.
 just html      # build build/html/
 just pdf       # build build/book.pdf
 just serve     # preview build/html/ on http://localhost:4000
+just serve --watch  # the same, rebuilding when a book file is saved
 just lint      # type-check, lint the guide, check the architectural boundaries
 just test      # run the unit suite
 just coverage  # the unit suite with a coverage report

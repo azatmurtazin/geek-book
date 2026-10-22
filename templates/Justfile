@@ -4,6 +4,7 @@
 #   just pdf            build/book.pdf (single-file PDF via the LaTeX pipeline)
 #   just docker-book    build/html/ + build/book.pdf inside Docker
 #   just serve          preview build/html/ on http://localhost:4000
+#   just serve --watch  the same, rebuilding when a book file is saved
 #   just lint           structure / link / style checks
 #   just link-check     check the external links (needs the network)
 #   just clean          remove build/ and the PDF
@@ -66,9 +67,9 @@ html: _engine
         "{{engine}}" web "{{html}}"
     fi
 
-# Static preview of the built site (no auto-rebuild). Rebuild first with `just`.
-serve: _engine
-    "{{engine}}" serve "{{html}}" 4000
+# Preview of the built site. With --watch, build first and rebuild on saves.
+serve *args: _engine
+    "{{engine}}" serve "{{html}}" 4000 {{args}}
 
 # --- pdf ---------------------------------------------------------------------
 

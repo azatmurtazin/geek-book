@@ -9,7 +9,7 @@
 //
 //   geek-book web [dir]        build the website (default: build/html)
 //   geek-book pdf [file]       build the PDF     (default: build/book.pdf)
-//   geek-book serve [dir] [p]  preview the built website
+//   geek-book serve [dir] [p]  preview the built website (--watch rebuilds)
 //   geek-book lint [family…]   check the sources (summary, chapters, links, config)
 //   geek-book md <in> [out]    render one Markdown file on its own
 //   geek-book pdf-info <pdf>   page count, page size and friends

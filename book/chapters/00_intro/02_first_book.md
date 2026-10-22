@@ -67,7 +67,7 @@ Three commands do the work, and a fourth adds the print edition:
 ```sh
 npx geek-book lint   # check the tree and the prose
 npx geek-book web    # write build/html/
-npx geek-book serve  # preview it on http://localhost:4000
+npx geek-book serve --watch  # preview and rebuild on saves
 npx geek-book pdf    # write build/book.pdf
 ```
 

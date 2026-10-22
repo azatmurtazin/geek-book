@@ -11,7 +11,7 @@ that config file instead.
 | --- | --- |
 | `geek-book web [dir]` | Build the website (default: `build/html`). |
 | `geek-book pdf [file]` | Build the PDF (default: `build/book.pdf`). |
-| `geek-book serve [dir] [port]` | Preview the built site (default: web output, 4000). |
+| `geek-book serve [dir] [port] [--watch]` | Preview the built site (default: web output, 4000); `--watch` rebuilds on saves. |
 | `geek-book lint [family…]` | Check the sources: `summary`, `chapters`, `links`, `config`. |
 | `geek-book md <in> [out]` | Render one Markdown file to a standalone page. |
 | `geek-book pdf-info <pdf>` | Page count, size and metadata, via poppler. |
@@ -42,6 +42,25 @@ rebuilding it, so run a build first:
 geek-book web build/html
 geek-book serve build/html 4000
 ```
+
+With `--watch`, `serve` builds the website first, then watches the book sources
+and rebuilds after each save. The preview directory is the one you named (or the
+website output by default), so the same command works from a clean checkout:
+
+```sh
+geek-book serve --watch
+just serve --watch
+```
+
+`--watch` watches the Markdown and assets under the book directory, plus any
+configured stylesheet, head file, favicon, summary or readme that lives outside
+it. Writes under the output directory are ignored, so a rebuild does not trigger
+itself. If the first build fails, the command exits with its diagnostics before
+serving; a rebuild that fails after that prints the diagnostics and leaves the
+server running, so fixing the source and saving again is enough. Changes to
+`book.config.json` need a restart,
+because the Markdown parser, diagram theme and image limits are built from those
+settings once. Ctrl-C stops the preview.
 
 A missing directory, an invalid port or a port already in use is one `serve:`
 line and exit status 1, not a stack trace. Port `0` asks the kernel for a free

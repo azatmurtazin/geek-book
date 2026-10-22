@@ -169,4 +169,27 @@ describe("serve", () => {
     expect(run.stderr).not.toContain("RangeError");
     expect(run.stderr).not.toContain("Server.listen");
   });
+
+  it("takes --watch as a flag and builds before validating the port", () => {
+    const root = tinyBook();
+
+    const run = cli(["serve", "build/html", "70000", "--watch"], root);
+
+    expect(run.code).toBe(1);
+    expect(run.stdout).toContain("build/html/ (1 chapters + index)");
+    expect(run.stderr).toBe("serve: 70000: port must be an integer between 0 and 65535\n");
+  });
+
+  it("prints a usage line and exits 2 for an unknown flag", () => {
+    const run = cli(["serve", "--watchh"], tempDir());
+    expect(run.code).toBe(2);
+    expect(run.stderr).toBe("usage: geek-book serve [dir] [port] [--watch]\n");
+  });
+
+  it("prints the build's diagnostics and exits 1 when --watch cannot build", () => {
+    const run = cli(["serve", "--watch"], tempDir());
+    expect(run.code).toBe(1);
+    expect(run.stderr).toContain("geek-book: no SUMMARY.md");
+    expect(run.stdout).toBe("");
+  });
 });

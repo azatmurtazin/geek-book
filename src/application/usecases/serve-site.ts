@@ -40,10 +40,15 @@ export interface ServeSite {
   readonly handle: SiteHandle;
 }
 
+/** The directory a serve request names, or the book's website output. */
+export function serveRoot(settings: BookSettings, dir: string | undefined): string {
+  return dir ? resolve(settings.root, dir) : settings.outputWeb;
+}
+
 /** Serve the built website until the process ends. */
 export async function serveSite(deps: ServeSiteDeps, options: ServeSiteOptions): Promise<Result<ServeSite>> {
   const { settings } = deps;
-  const root = options.dir ? resolve(settings.root, options.dir) : settings.outputWeb;
+  const root = serveRoot(settings, options.dir);
   if (!deps.fs.exists(root)) {
     return fail({
       severity: "error",
