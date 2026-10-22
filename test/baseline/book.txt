@@ -35,7 +35,7 @@ geek-book is a build engine for books. You write the prose in Markdown, keep it 
 directory, and the engine produces two editions from the same sources: a static website you can
 serve from any file host, and a print-ready PDF you can send to a printer or a reader.
 There is no database, no templating language and no separate build tool. A book is a directory of
-text files, and the engine is the program that reads them. This guide documents version 0.1.12.
+text files, and the engine is the program that reads them. This guide documents version 0.1.13.
 
 
 The two editions
@@ -718,9 +718,10 @@ A book that uses remote images needs the network to build, which is the one thin
 about them — and so do the pre-commit hook and CI, which build the same book. The linter
 reports each remote source it finds, so the requirement is visible rather than surprising.
 A fetch that fails, or that answers with something other than an image, stops the build with
-the URL. The printed edition can embed png and jpeg only; any other format is refused with a
-message, since LaTeX cannot place it. The website alone would accept more, but a book is built for
-both editions.
+the URL. The build fetches up to four pictures at a time; if several fail, the message names the
+first source in reading order rather than whichever request happened to reject first. The printed
+edition can embed png and jpeg only; any other format is refused with a message, since LaTeX
+cannot place it. The website alone would accept more, but a book is built for both editions.
 A fetch may take images.timeout seconds (30 by default) and carry at most images.maxBytes
 bytes (20 MiB). A slower or larger answer stops the build with the URL instead of holding the
 build open or in memory:
@@ -730,7 +731,6 @@ JSON
 {
 "images": { "timeout": 10, "maxBytes": 5242880 }
 }
-
 
 
 
