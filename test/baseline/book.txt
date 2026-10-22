@@ -35,7 +35,7 @@ geek-book is a build engine for books. You write the prose in Markdown, keep it 
 directory, and the engine produces two editions from the same sources: a static website you can
 serve from any file host, and a print-ready PDF you can send to a printer or a reader.
 There is no database, no templating language and no separate build tool. A book is a directory of
-text files, and the engine is the program that reads them. This guide documents version 0.1.11.
+text files, and the engine is the program that reads them. This guide documents version 0.1.12.
 
 
 The two editions
@@ -1332,20 +1332,26 @@ geek-book web build/html
 geek-book serve build/html 4000
 
 
+A missing directory, an invalid port or a port already in use is one serve: line and exit status 1,
+not a stack trace. Port 0 asks the kernel for a free port, and the printed URL names the port it
+chose. The server answers GET and HEAD only; it refuses a path that leaves the site through ..
+or a symlink.
 md renders a single file outside any book, through the same Markdown renderer and the stan-
 dalone page layout. It is how a chapter looks on its own, without the sidebar.
 
 
 Checking
-lint runs four families and can run them one at a time:
-
-geek-book lint # all four
-geek-book lint links # just the link check
-
 
 33
 
 geek-book Commands
+
+
+
+lint runs four families and can run them one at a time:
+
+geek-book lint # all four
+geek-book lint links # just the link check
 
 
 It exits non-zero on an error and writes a summary line. Warnings — an unusual fence language,
