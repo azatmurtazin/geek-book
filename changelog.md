@@ -2,12 +2,14 @@
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
 tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`,
-`v0.1.7`, `v0.1.8`, `v0.1.9`, `v0.1.11`, `v0.1.12`); each released version
-follows, most recent first. Short commit hashes are given in parentheses for
-traceability. `v0.1.10` was tagged but withdrawn before publication; see 0.1.11.
+`v0.1.7`, `v0.1.8`, `v0.1.9`, `v0.1.11`, `v0.1.12`, `v0.1.13`); each released
+version follows, most recent first. Short commit hashes are given in parentheses
+for traceability. `v0.1.10` was tagged but withdrawn before publication; see
+0.1.11.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| 0.1.13              | 2026-10-22 |
 | 0.1.12              | 2026-10-22 |
 | 0.1.11              | 2026-10-22 |
 | 0.1.9               | 2026-10-22 |
@@ -20,6 +22,35 @@ traceability. `v0.1.10` was tagged but withdrawn before publication; see 0.1.11.
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [0.1.13] — 2026-10-22
+
+Remote images now download with bounded parallelism instead of one at a time,
+and the print edition measures a picture by reading its header rather than the
+whole file. A page with several remote pictures waits for the slowest batch
+instead of the sum of every request, and repeated uses of one local picture are
+measured once.
+
+### Changed
+
+- `RemoteImages` runs up to four fetches at once. Workers claim URLs in reading
+  order; when one fails no new URL starts, and the error is the first failure in
+  reading order rather than the first request to reject (`62be035`).
+- `imagePixels` opens the file, reads the png header or walks the jpeg segment
+  lengths, and seeks past metadata payloads instead of buffering the whole
+  image. Results are memoized by path, size and modification time, so a changed
+  file is measured again (`62be035`).
+
+### Tests
+
+- A fake network checks the parallel limit and reading-order error selection;
+  the image fixtures include a jpeg with a 64 KiB metadata segment ahead of its
+  frame, plus a changed-file remeasurement (`62be035`).
+
+### Documentation
+
+- The remote-images chapter describes the four-at-a-time fetch and the
+  reading-order failure (`62be035`).
 
 ## [0.1.12] — 2026-10-22
 
