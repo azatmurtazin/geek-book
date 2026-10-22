@@ -35,7 +35,7 @@ geek-book is a build engine for books. You write the prose in Markdown, keep it 
 directory, and the engine produces two editions from the same sources: a static website you can
 serve from any file host, and a print-ready PDF you can send to a printer or a reader.
 There is no database, no templating language and no separate build tool. A book is a directory of
-text files, and the engine is the program that reads them. This guide documents version 0.1.13.
+text files, and the engine is the program that reads them. This guide documents version 0.1.14.
 
 
 The two editions
@@ -209,7 +209,7 @@ Shell
 
 npx geek-book lint # check the tree and the prose
 npx geek-book web # write build/html/
-npx geek-book serve # preview it on http://localhost:4000
+npx geek-book serve --watch # preview and rebuild on saves
 npx geek-book pdf # write build/book.pdf
 
 
@@ -1299,7 +1299,8 @@ Command What it does
 
 geek-book web [dir] Build the website (default: build/html ).
 geek-book pdf [file] Build the PDF (default: build/book.pdf ).
-geek-book serve [dir] [port] Preview the built site (default: web output, 4000).
+geek-book serve [dir] [port] [--watch] Preview the built site (default: web output, 4000);
+--watch rebuilds on saves.
 geek-book lint [family…] Check the sources: summary , chapters , links ,
 config .
 geek-book md <in> [out] Render one Markdown file to a standalone page.
@@ -1317,7 +1318,6 @@ Shell
 geek-book --config ../my-book/book.config.json web
 geek-book web --config ../my-book/book.config.json
 
-
 The option may sit before or after the command — the two lines above are the same — and the file
 it names must exist.
 
@@ -1332,6 +1332,28 @@ geek-book web build/html
 geek-book serve build/html 4000
 
 
+With --watch , serve builds the website first, then watches the book sources and rebuilds after
+each save. The preview directory is the one you named (or the website output by default), so the
+same command works from a clean checkout:
+Shell
+
+geek-book serve --watch
+just serve --watch
+
+
+--watch watches the Markdown and assets under the book directory, plus any configured
+stylesheet, head file, favicon, summary or readme that lives outside it. Writes under the output
+
+33
+
+geek-book Commands
+
+
+directory are ignored, so a rebuild does not trigger itself. If the first build fails, the command
+exits with its diagnostics before serving; a rebuild that fails after that prints the diagnostics
+and leaves the server running, so fixing the source and saving again is enough. Changes to
+book.config.json need a restart, because the Markdown parser, diagram theme and image
+limits are built from those settings once. Ctrl-C stops the preview.
 A missing directory, an invalid port or a port already in use is one serve: line and exit status 1,
 not a stack trace. Port 0 asks the kernel for a free port, and the printed URL names the port it
 chose. The server answers GET and HEAD only; it refuses a path that leaves the site through ..
@@ -1341,13 +1363,6 @@ dalone page layout. It is how a chapter looks on its own, without the sidebar.
 
 
 Checking
-
-33
-
-geek-book Commands
-
-
-
 lint runs four families and can run them one at a time:
 
 geek-book lint # all four
@@ -1501,6 +1516,7 @@ cli/ main.ts, the composition root
 
 
 
+
 One model, two renderers
 The build has a single spine. source-to-model turns a chapter’s Markdown into one Chapter
 tree for both editions: it substitutes diagrams, collects remote images, parses with the
@@ -1512,9 +1528,9 @@ LaTeX — two renderers over one model, not two pipelines that must be kept in s
 Ports and adapters
 Anything that touches the outside world sits behind a port: the filesystem, the HTTP client, the
 process runner, the PDF toolchain, the template store, the config source, the Markdown parser,
-the diagram renderer, the image store, the reporters, and the preview server. application/
-defines the interfaces, adapters/ implements them, and cli/context.ts chooses the real
-ones while cli/main.ts wires them into commands.
+the diagram renderer, the image store, the reporters, the preview server, and the source watcher.
+application/ defines the interfaces, adapters/ implements them, and cli/context.ts
+chooses the real ones while cli/main.ts wires them into commands.
 Because of that, a use case can run against an in-memory filesystem and a fake toolchain, and the
 domain never sees a package or a node: import.
 
