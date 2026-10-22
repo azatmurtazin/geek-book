@@ -157,3 +157,16 @@ describe("web", () => {
     expect(run.stderr).toBe("usage: geek-book web [output-dir]\n");
   });
 });
+
+describe("serve", () => {
+  it("prints one diagnostic and exits 1 for an invalid port, without a stack trace", () => {
+    const root = tinyBook();
+    expect(cli(["web"], root).code).toBe(0);
+
+    const run = cli(["serve", "build/html", "70000"], root);
+    expect(run.code).toBe(1);
+    expect(run.stderr).toBe("serve: 70000: port must be an integer between 0 and 65535\n");
+    expect(run.stderr).not.toContain("RangeError");
+    expect(run.stderr).not.toContain("Server.listen");
+  });
+});

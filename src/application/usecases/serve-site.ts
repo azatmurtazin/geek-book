@@ -3,8 +3,11 @@
 // The reader names a directory (relative to the book root) and a port, or
 // neither; the defaults are the website output directory and `serve.port`. The
 // directory has to exist — the usual reason it does not is that no website has
-// been built yet — so that is the one failure, and it says which command fixes
-// it. Starting the server is the `SiteServer` port's business.
+// been built yet — and the socket has to bind. Both are values, not exceptions:
+// a missing build and an occupied port each become one `serve:` diagnostic.
+//
+// The adapter owns the socket and reports the address it actually bound, so
+// `port: 0` (the kernel picks) still logs and returns a real URL.
 
 import { fail, ok, type Result } from "../../domain/diagnostics.js";
 import { resolve } from "../../domain/values/posix-path.js";
@@ -24,12 +27,13 @@ export interface ServeSiteDeps {
 export interface ServeSiteOptions {
   /** A directory relative to the book root; the website output by default. */
   readonly dir?: string;
-  /** A port; `serve.port` from the config by default. */
+  /** A port; `serve.port` from the config by default. `0` picks a free one. */
   readonly port?: number;
 }
 
 export interface ServeSite {
   readonly root: string;
+  /** The port actually bound, which differs from the request when it was 0. */
   readonly port: number;
   readonly url: string;
   /** Keeps the process alive; stop the server with `close()`. */
@@ -37,7 +41,7 @@ export interface ServeSite {
 }
 
 /** Serve the built website until the process ends. */
-export function serveSite(deps: ServeSiteDeps, options: ServeSiteOptions): Result<ServeSite> {
+export async function serveSite(deps: ServeSiteDeps, options: ServeSiteOptions): Promise<Result<ServeSite>> {
   const { settings } = deps;
   const root = options.dir ? resolve(settings.root, options.dir) : settings.outputWeb;
   if (!deps.fs.exists(root)) {
@@ -49,6 +53,10 @@ export function serveSite(deps: ServeSiteDeps, options: ServeSiteOptions): Resul
   }
 
   const port = options.port ?? settings.serve.port;
-  const handle = deps.server.listen(root, port, (url) => deps.logger.info(`serve: ${url} → ${root}`));
-  return ok({ root, port, url: `http://localhost:${port}`, handle });
+  const listening = await deps.server.listen(root, port);
+  if (!listening.ok) return listening;
+
+  const { url, port: boundPort, handle } = listening.value;
+  deps.logger.info(`serve: ${url} → ${root}`);
+  return ok({ root, port: boundPort, url, handle });
 }

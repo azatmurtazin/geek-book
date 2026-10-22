@@ -43,6 +43,11 @@ geek-book web build/html
 geek-book serve build/html 4000
 ```
 
+A missing directory, an invalid port or a port already in use is one `serve:`
+line and exit status 1, not a stack trace. Port `0` asks the kernel for a free
+port, and the printed URL names the port it chose. The server answers `GET` and
+`HEAD` only; it refuses a path that leaves the site through `..` or a symlink.
+
 `md` renders a single file outside any book, through the same Markdown renderer
 and the standalone page layout. It is how a chapter looks on its own, without
 the sidebar.
