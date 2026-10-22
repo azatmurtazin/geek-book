@@ -2,13 +2,14 @@
 
 Notable changes to **geek-book**, most recent first. Versions follow the git
 tags (`v0.1.0`, `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, `v0.1.5`, `v0.1.6`,
-`v0.1.7`, `v0.1.8`, `v0.1.9`, `v0.1.11`, `v0.1.12`, `v0.1.13`); each released
-version follows, most recent first. Short commit hashes are given in parentheses
-for traceability. `v0.1.10` was tagged but withdrawn before publication; see
-0.1.11.
+`v0.1.7`, `v0.1.8`, `v0.1.9`, `v0.1.11`, `v0.1.12`, `v0.1.13`, `v0.1.14`); each
+released version follows, most recent first. Short commit hashes are given in
+parentheses for traceability. `v0.1.10` was tagged but withdrawn before
+publication; see 0.1.11.
 
 | Version             | Date       |
 | ------------------- | ---------- |
+| 0.1.14              | 2026-10-22 |
 | 0.1.13              | 2026-10-22 |
 | 0.1.12              | 2026-10-22 |
 | 0.1.11              | 2026-10-22 |
@@ -22,6 +23,47 @@ for traceability. `v0.1.10` was tagged but withdrawn before publication; see
 | 0.1.2               | 2026-10-15 |
 | 0.1.1               | 2026-10-15 |
 | 0.1.0               | 2026-10-14 |
+
+## [0.1.14] — 2026-10-22
+
+`geek-book serve --watch` now builds the website, previews it, and rebuilds it
+when a book source is saved. The first build makes the command useful from a
+clean checkout; after that, a burst of editor events becomes one rebuild, and a
+broken save reports its diagnostics without taking the preview down.
+
+### Added
+
+- `serve --watch` builds once before binding, watches the book directory and any
+  configured stylesheet, head file, favicon, summary or readme outside it, and
+  rebuilds after a 100 ms quiet period. Writes under the output directory are
+  ignored, so a build cannot trigger itself. `just serve --watch` passes the
+  flag through (`5d7b59e`).
+- A new `FileWatcher` port and `NodeFileWatcher` adapter watch directories
+  recursively and files through their parent, so an editor that renames a
+  temporary file over the original is seen (`5d7b59e`).
+
+### Changed
+
+- A failed rebuild prints its diagnostics and leaves the preview running; the
+  initial build must succeed before the server binds. Configuration is read once,
+  so changing `book.config.json` needs a restart (`5d7b59e`).
+- The `serve` parser now treats `--watch` as a flag and rejects unknown flags
+  with a usage line instead of mistaking them for a directory (`5d7b59e`).
+
+### Tests
+
+- The watch use case is covered with fake build, server and watcher: initial
+  build, source rebuilding, output exclusion, burst coalescing, a failed
+  rebuild, and an initial failure that never binds (`5d7b59e`).
+- The real watcher test covers recursive directory events, rename-over saves,
+  and missing paths (`5d7b59e`); CLI tests cover `--watch`, an unknown flag, and
+  a failed initial build (`5d7b59e`).
+
+### Documentation
+
+- The commands chapter, README, first-book walkthrough and architecture guide
+  describe the watch mode, its watched sources, its output exclusion and the
+  restart needed for configuration changes (`5d7b59e`).
 
 ## [0.1.13] — 2026-10-22
 
