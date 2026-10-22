@@ -87,6 +87,50 @@ describe("RemoteImages", () => {
     expect(store.fetched).toBe(1);
   });
 
+  it("fetches several pictures in parallel, bounded by the configured limit", async () => {
+    const urls = Array.from({ length: 8 }, (_, index) => `https://example.test/${index}.png`);
+    const http = new FakeHttp(new Map());
+    let active = 0;
+    let peak = 0;
+    http.get = async () => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      active -= 1;
+      return image("image/png");
+    };
+    const store = new RemoteImages("/img", http, new MemoryFileSystem(), { concurrency: 3 });
+
+    await store.collect(urls.flatMap((url) => picture(url)));
+
+    expect(peak).toBe(3);
+    expect(store.fetched).toBe(8);
+    expect(urls.every((url) => store.nameFor(url) !== null)).toBe(true);
+  });
+
+  it("reports the first failure in reading order when fetches overlap", async () => {
+    const slow = "https://example.test/slow.png";
+    const fast = "https://example.test/fast.png";
+    const later = "https://example.test/later.png";
+    const http = new FakeHttp(new Map());
+    http.get = async (url) => {
+      if (url === slow) {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        throw new Error("slow failed");
+      }
+      if (url === fast) {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        throw new Error("fast failed");
+      }
+      return image("image/png");
+    };
+    const store = new RemoteImages("/img", http, new MemoryFileSystem(), { concurrency: 3 });
+
+    await expect(store.collect([...picture(slow), ...picture(fast), ...picture(later)])).rejects.toThrow(
+      `cannot fetch image ${slow}: slow failed`,
+    );
+  });
+
   it("falls back to the URL's extension when the host labels nothing", async () => {
     const url = "https://example.test/drawing.svg";
     const http = new FakeHttp(new Map([[url, image("application/octet-stream")]]));

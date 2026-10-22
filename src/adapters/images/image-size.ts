@@ -9,7 +9,9 @@
 // renders in: pixels, one to the inch's ninety-sixth.
 //
 // Only png and jpeg are read, the two formats the printed edition can embed
-// (see adapters/http/remote-images.ts). Anything else — or a file that is missing, or
+// (see adapters/http/remote-images.ts). The file is opened once, the bytes the
+// header walk needs are read, and the answer is memoized against the file's
+// size and modification time. Anything else — or a file that is missing, or
 // corrupt — comes back `null`, and the caller falls back on its own default.
 
 import fs from "node:fs";
@@ -20,17 +22,64 @@ export interface ImagePixels {
   height: number;
 }
 
+interface CachedPixels {
+  readonly size: number;
+  readonly mtimeMs: number;
+  readonly pixels: ImagePixels | null;
+}
+
+const cache = new Map<string, CachedPixels>();
+
 /** The pixel size of a png or jpeg file, or `null` when it cannot be read. */
 export function imagePixels(file: string): ImagePixels | null {
-  let header: Buffer;
+  let stat: fs.Stats;
   try {
-    // Headers are short, but a jpeg may carry a colour profile or an EXIF
-    // thumbnail ahead of the frame, so read enough to walk past one.
-    header = fs.readFileSync(file);
+    stat = fs.statSync(file);
   } catch {
     return null;
   }
-  return pngPixels(header) ?? jpegPixels(header);
+  if (!stat.isFile()) {
+    return null;
+  }
+
+  const cached = cache.get(file);
+  if (cached !== undefined && cached.size === stat.size && cached.mtimeMs === stat.mtimeMs) {
+    return cached.pixels;
+  }
+
+  const pixels = readPixels(file);
+  cache.set(file, { size: stat.size, mtimeMs: stat.mtimeMs, pixels });
+  return pixels;
+}
+
+/** Open `file` and measure its header without reading the rest of the image. */
+function readPixels(file: string): ImagePixels | null {
+  let fd: number;
+  try {
+    fd = fs.openSync(file, "r");
+  } catch {
+    return null;
+  }
+
+  try {
+    const pixels = pngPixels(readAt(fd, 24, 0));
+    return pixels ?? jpegPixels(fd);
+  } catch {
+    return null;
+  } finally {
+    try {
+      fs.closeSync(fd);
+    } catch {
+      // The size is still the answer; a close failure does not change it.
+    }
+  }
+}
+
+/** At most `length` bytes at `position`, possibly fewer at end of file. */
+function readAt(fd: number, length: number, position: number): Buffer {
+  const buffer = Buffer.allocUnsafe(length);
+  const read = fs.readSync(fd, buffer, 0, length, position);
+  return buffer.subarray(0, read);
 }
 
 /** The size a png's IHDR chunk names; `null` for anything but a png. */
@@ -41,18 +90,30 @@ function pngPixels(buffer: Buffer): ImagePixels | null {
   return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
 }
 
-/** The size a jpeg's frame header names; `null` for anything but a jpeg. */
-function jpegPixels(buffer: Buffer): ImagePixels | null {
-  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) {
+/**
+ * The size a jpeg's frame header names; `null` for anything but a jpeg.
+ *
+ * Segments carry a 16-bit length, so a large EXIF block or colour profile can
+ * sit ahead of the frame. The walk reads a marker and its length, then seeks
+ * past the payload; only the frame header itself is read in full.
+ */
+function jpegPixels(fd: number): ImagePixels | null {
+  const start = readAt(fd, 2, 0);
+  if (start.length < 2 || start[0] !== 0xff || start[1] !== 0xd8) {
     return null;
   }
+
   let offset = 2;
-  while (offset + 9 <= buffer.length) {
-    if (buffer[offset] !== 0xff) {
+  for (;;) {
+    const markerBytes = readAt(fd, 2, offset);
+    if (markerBytes.length < 2) {
+      return null;
+    }
+    if (markerBytes[0] !== 0xff) {
       offset += 1;
       continue;
     }
-    const marker = buffer[offset + 1];
+    const marker = markerBytes[1];
     if (marker === 0xff) {
       // Fill byte before a marker.
       offset += 1;
@@ -67,18 +128,29 @@ function jpegPixels(buffer: Buffer): ImagePixels | null {
       // End of image, reached without a frame header.
       return null;
     }
-    const length = buffer.readUInt16BE(offset + 2);
+
+    const lengthBytes = readAt(fd, 2, offset + 2);
+    if (lengthBytes.length < 2) {
+      return null;
+    }
+    const length = lengthBytes.readUInt16BE(0);
     if (length < 2) {
       return null;
     }
+
     // SOF0–SOF3, SOF5–SOF7, SOF9–SOF11 and SOF13–SOF15 hold the frame size.
     // The four that sit among them hold something else: 0xc4 huffman tables,
     // 0xc8 an extension, 0xcc arithmetic coding.
     const frame = marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
     if (frame) {
-      return { width: buffer.readUInt16BE(offset + 7), height: buffer.readUInt16BE(offset + 5) };
+      // After the length: precision (1 byte), height (2), width (2).
+      const header = readAt(fd, 5, offset + 4);
+      if (header.length < 5) {
+        return null;
+      }
+      return { width: header.readUInt16BE(3), height: header.readUInt16BE(1) };
     }
+
     offset += 2 + length;
   }
-  return null;
 }

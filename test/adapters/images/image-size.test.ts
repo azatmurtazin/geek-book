@@ -32,6 +32,15 @@ function written(name: string, bytes: Uint8Array | string): string {
   return file;
 }
 
+/** A minimal png header carrying `width` × `height`. */
+function png(width: number, height: number): Uint8Array {
+  const bytes = Buffer.alloc(24);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  bytes.writeUInt32BE(width, 16);
+  bytes.writeUInt32BE(height, 20);
+  return bytes;
+}
+
 /** A jpeg with a few segments the walk must pass before the frame header. */
 const JPEG = Uint8Array.from([
   0xff, 0xd8, // start of image
@@ -52,6 +61,26 @@ describe("imagePixels", () => {
 
   it("walks a jpeg's segments to its frame header", () => {
     expect(imagePixels(written("frame.jpg", JPEG))).toEqual({ width: 40, height: 20 });
+  });
+
+  it("skips a large metadata segment without reading its payload", () => {
+    const appPayload = new Uint8Array(65533);
+    const appHeader = Uint8Array.from([0xff, 0xd8, 0xff, 0xe1, 0xff, 0xff]);
+    const frame = Uint8Array.from([0xff, 0xc2, 0x00, 0x11, 0x08, 0x00, 0x14, 0x00, 0x28]);
+    const bytes = new Uint8Array(appHeader.length + appPayload.length + frame.length);
+    bytes.set(appHeader);
+    bytes.set(appPayload, appHeader.length);
+    bytes.set(frame, appHeader.length + appPayload.length);
+
+    expect(imagePixels(written("large-metadata.jpg", bytes))).toEqual({ width: 40, height: 20 });
+  });
+
+  it("remeasures a file after its size changes", () => {
+    const file = written("changed.png", png(10, 20));
+    expect(imagePixels(file)).toEqual({ width: 10, height: 20 });
+
+    fs.writeFileSync(file, Buffer.concat([png(30, 40), Buffer.from([0])]));
+    expect(imagePixels(file)).toEqual({ width: 30, height: 40 });
   });
 
   it("answers null for a file that is not there", () => {

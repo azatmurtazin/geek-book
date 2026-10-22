@@ -49,6 +49,9 @@ const PRINT_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".pdf"]);
 /** Seconds one fetch may take when the config names no timeout. */
 const DEFAULT_TIMEOUT_S = 30;
 
+/** How many image fetches may be in flight at once. */
+const DEFAULT_CONCURRENCY = 4;
+
 export interface RemoteImageOptions {
   /** Reject formats the printed edition cannot embed. */
   print?: boolean;
@@ -56,6 +59,8 @@ export interface RemoteImageOptions {
   timeout?: number;
   /** The largest response a fetch accepts, in bytes (default 20 MiB). */
   maxBytes?: number;
+  /** How many fetches may run at once (default 4). */
+  concurrency?: number;
   /** Accepted content type → the extension the file is saved as (default: the
    * built-in map). */
   types?: Record<string, string>;
@@ -74,6 +79,7 @@ export class RemoteImages implements ImageStore {
   private readonly print: boolean;
   private readonly timeoutMs: number;
   private readonly maxBytes: number;
+  private readonly concurrency: number;
   private readonly types: Record<string, string>;
   private readonly extensions: Set<string>;
   private readonly files = new Map<string, string>();
@@ -86,6 +92,10 @@ export class RemoteImages implements ImageStore {
     this.print = options.print === true;
     this.timeoutMs = (options.timeout ?? 0) > 0 ? (options.timeout as number) * 1000 : DEFAULT_TIMEOUT_S * 1000;
     this.maxBytes = options.maxBytes ?? DEFAULT_IMAGE_MAX_BYTES;
+    this.concurrency =
+      Number.isInteger(options.concurrency) && (options.concurrency as number) > 0
+        ? (options.concurrency as number)
+        : DEFAULT_CONCURRENCY;
     // An empty map is the engine's own: a book only names types to narrow or
     // extend what a fetch accepts.
     this.types = options.types && Object.keys(options.types).length > 0 ? options.types : CONTENT_TYPES;
@@ -119,10 +129,38 @@ export class RemoteImages implements ImageStore {
   async collect(nodes: readonly MdNode[]): Promise<void> {
     const urls: string[] = [];
     collectRemoteUrls(nodes, urls);
-    for (const url of urls) {
-      if (!this.files.has(url)) {
-        await this.fetch(url);
+    const pending = urls.filter((url) => !this.files.has(url));
+    if (pending.length === 0) {
+      return;
+    }
+
+    // Workers claim URLs in reading order. Once one fails, no new URL starts,
+    // but every earlier URL has already been claimed; the lowest-index failure
+    // is therefore the same one a sequential build would have reported.
+    const failures: (Error | undefined)[] = new Array(pending.length);
+    let next = 0;
+    let halted = false;
+    const worker = async (): Promise<void> => {
+      for (;;) {
+        if (halted) return;
+        const index = next;
+        next += 1;
+        if (index >= pending.length) return;
+        try {
+          await this.fetch(pending[index]);
+        } catch (error) {
+          failures[index] = error as Error;
+          halted = true;
+        }
       }
+    };
+
+    const workers = Array.from({ length: Math.min(this.concurrency, pending.length) }, () => worker());
+    await Promise.all(workers);
+
+    const first = failures.findIndex((error) => error !== undefined);
+    if (first !== -1) {
+      throw failures[first];
     }
   }
 
